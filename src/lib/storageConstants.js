@@ -7,7 +7,7 @@ export const STORAGE_CONFIG = {
   // Global Settings
   GLOBAL: {
     VAT_RATE: 0.14, // 14% ضريبة القيمة المضافة
-    DEFAULT_EXCHANGE_RATE: 53.1971, // سعر صرف افتراضي (يمكن تحديثه)
+    DEFAULT_EXCHANGE_RATE: Number(process.env.NEXT_PUBLIC_DEFAULT_EXCHANGE_RATE) || 53.1971, // سعر صرف افتراضي (يمكن تحديثه)
     MARTYR_STAMP_FEE: 5, // طابع شهيد (5 جنيهات ثابتة على الفاتورة)
     BASE_CURRENCY: 'EGP',
     STORAGE_CURRENCY: 'USD'

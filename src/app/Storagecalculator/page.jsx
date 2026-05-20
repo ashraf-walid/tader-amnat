@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { STORAGE_CONFIG, SERVICES_LIST } from "@/lib/storageConstants";
 import { ArrowLeft } from "lucide-react"
-import { calculateFinalInvoice, calculateMultiContainerInvoice } from "@/lib/storageCalculator";
+import { calculateMultiContainerInvoice } from "@/lib/storageCalculator";
 import ArabicDatePicker from "@/components/ArabicDatePicker";
 
 // ─────────────────────────────────────────────
@@ -369,10 +369,23 @@ export default function StorageCalculator({
   const [cargoType, setCargoType] = useState("FULL");
 
   // ── Exchange rate ──
+  const [dynamicAdminRate, setDynamicAdminRate] = useState(adminExchangeRate);
   const [isEditingRate, setIsEditingRate] = useState(false);
   const [isRateOverridden, setIsRateOverridden] = useState(false);
   const [customRate, setCustomRate] = useState(String(adminExchangeRate));
-  const exchangeRate = isRateOverridden ? (Number(customRate) || adminExchangeRate) : adminExchangeRate;
+  const exchangeRate = isRateOverridden ? (Number(customRate) || dynamicAdminRate) : dynamicAdminRate;
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.exchangeRate) {
+          setDynamicAdminRate(data.exchangeRate);
+          setCustomRate(prev => isRateOverridden ? prev : String(data.exchangeRate));
+        }
+      })
+      .catch(err => console.error("Failed to fetch exchange rate", err));
+  }, [isRateOverridden]);
 
   // ── Advanced / secondary state ──
   const [advOpen, setAdvOpen] = useState(false);
@@ -380,13 +393,20 @@ export default function StorageCalculator({
   const [nonStdType, setNonStdType] = useState("OOG");
   const [isDangerous, setIsDangerous] = useState(false);
   const [services, setServices] = useState({});
+  const [serviceQuantities, setServiceQuantities] = useState({});
 
   // ── Result ──
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
 
   function toggleService(id) {
-    setServices(prev => ({ ...prev, [id]: !prev[id] }));
+    setServices(prev => {
+      const isNowOn = !prev[id];
+      if (!isNowOn) {
+        setServiceQuantities(q => { const newQ = { ...q }; delete newQ[id]; return newQ; });
+      }
+      return { ...prev, [id]: isNowOn };
+    });
   }
 
   function liveDays() {
@@ -460,7 +480,12 @@ export default function StorageCalculator({
         });
       }
 
-      const selectedServices = SERVICES_LIST.filter(s => services[s.id]);
+      const selectedServices = SERVICES_LIST.filter(s => services[s.id]).map(s => ({
+        ...s,
+        quantity: serviceQuantities[s.id] !== undefined && serviceQuantities[s.id] !== "" 
+          ? Number(serviceQuantities[s.id]) 
+          : (twentyCount + fortyCount)
+      }));
 
       const invoice = calculateMultiContainerInvoice(
         arrStr, relStr, containerGroups, STORAGE_CONFIG.GLOBAL,
@@ -506,7 +531,7 @@ export default function StorageCalculator({
             <span className="sc2-rate-dot" style={{ background: isRateOverridden ? 'var(--acc)' : 'var(--green)', boxShadow: isRateOverridden ? '0 0 8px var(--acc)' : '0 0 8px var(--green)' }} />
             <div>
               <div className="sc2-rate-label">{isRateOverridden ? "سعر صرف مخصص" : "سعر الصرف اليوم"}</div>
-              <div className="sc2-rate-val">{fmt(isRateOverridden ? exchangeRate : adminExchangeRate)} <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--txt2)' }}>ج.م / $</span></div>
+              <div className="sc2-rate-val">{fmt(isRateOverridden ? exchangeRate : dynamicAdminRate)} <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--txt2)' }}>ج.م / $</span></div>
               <div className="sc2-rate-sub">{isRateOverridden ? "تم التعديل بواسطة المستخدم" : "مُسجَّل بواسطة الإدارة"}</div>
             </div>
           </div>
@@ -514,7 +539,7 @@ export default function StorageCalculator({
           {!isEditingRate ? (
             <div style={{ display: 'flex', gap: 8 }}>
               {isRateOverridden && (
-                <button className="sc2-rate-edit" style={{ color: 'var(--red)', borderColor: 'var(--red-d)' }} onClick={() => { setIsRateOverridden(false); setCustomRate(String(adminExchangeRate)); }}>
+                <button className="sc2-rate-edit" style={{ color: 'var(--red)', borderColor: 'var(--red-d)' }} onClick={() => { setIsRateOverridden(false); setCustomRate(String(dynamicAdminRate)); }}>
                   إلغاء المخصص
                 </button>
               )}
@@ -550,7 +575,7 @@ export default function StorageCalculator({
                   ✓ تأكيد
                 </button>
 
-                <button className="sc2-rate-override-cancel" onClick={() => { setIsEditingRate(false); if(!isRateOverridden) setCustomRate(String(adminExchangeRate)); }} title="إلغاء التعديل">✕</button>
+                <button className="sc2-rate-override-cancel" onClick={() => { setIsEditingRate(false); if(!isRateOverridden) setCustomRate(String(dynamicAdminRate)); }} title="إلغاء التعديل">✕</button>
               </div>
             </div>
           )}
@@ -684,17 +709,38 @@ export default function StorageCalculator({
             <div className="sc2-svcs">
               {SERVICES_LIST.map(svc => {
                 const on = !!services[svc.id];
+                const qty = serviceQuantities[svc.id] !== undefined ? serviceQuantities[svc.id] : (twentyCount + fortyCount);
                 return (
-                  <label key={svc.id} className={`sc2-svc${on ? " on" : ""}`}>
-                    <input type="checkbox" checked={on} onChange={() => toggleService(svc.id)} />
-                    <span className="sc2-chk">
-                      <svg className="sc2-chk-ico" width="11" height="9" viewBox="0 0 11 9" fill="none">
-                        <path d="M1 4L4 7.5L10 1" stroke="#0b1120" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
-                    <span className="sc2-svc-name">{svc.name}</span>
-                    <span className="sc2-svc-price">${svc.rate}</span>
-                  </label>
+                  <div key={svc.id} style={{ display: 'flex', gap: 6, alignItems: 'stretch' }}>
+                    <label className={`sc2-svc${on ? " on" : ""}`} style={{ flex: 1, margin: 0 }}>
+                      <input type="checkbox" checked={on} onChange={() => toggleService(svc.id)} />
+                      <span className="sc2-chk">
+                        <svg className="sc2-chk-ico" width="11" height="9" viewBox="0 0 11 9" fill="none">
+                          <path d="M1 4L4 7.5L10 1" stroke="#0b1120" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                      <span className="sc2-svc-name">{svc.name}</span>
+                      <span className="sc2-svc-price">${svc.rate}</span>
+                    </label>
+                    {on && (
+                      <input 
+                        type="number" min={1}
+                        placeholder="العدد"
+                        value={qty}
+                        onChange={(e) => setServiceQuantities(p => ({...p, [svc.id]: e.target.value}))}
+                        style={{
+                          width: '60px', 
+                          background: 'var(--inp)', 
+                          border: `1.5px solid var(--acc)`, 
+                          borderRadius: 'var(--r)', 
+                          color: 'var(--txt)', 
+                          textAlign: 'center',
+                          fontSize: 13,
+                          outline: 'none'
+                        }}
+                      />
+                    )}
+                  </div>
                 );
               })}
             </div>
