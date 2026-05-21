@@ -1,9 +1,9 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://ashrafelgezery2014_db_user:EX5qBtWNXHW3KLV8@cluster0.zs1mfkh.mongodb.net/?appName=Cluster0";
+const MONGODB_URI = process.env.MONGODB_URI;
 
 // Fallback to directly reading the .local.env file content string since NextJS might not load .local.env by default depending on version
-const uri = MONGODB_URI.includes("cluster0") ? MONGODB_URI : "mongodb+srv://ashrafelgezery2014_db_user:EX5qBtWNXHW3KLV8@cluster0.zs1mfkh.mongodb.net/?appName=Cluster0";
+const uri = MONGODB_URI;
 
 let cached = global.mongoose;
 

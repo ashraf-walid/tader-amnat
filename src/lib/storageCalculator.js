@@ -320,7 +320,8 @@ export function calculateMultiContainerInvoice(arrivalDate, releaseDate, contain
 
     // E. Cargo Service Fee
     if (hasCargoService && adjustedConfig.CARGO_SERVICE_FEE) {
-      totalCargoServiceFeeUSD += adjustedConfig.CARGO_SERVICE_FEE * count;
+      const activeCount = group.cargoServiceCount !== undefined ? group.cargoServiceCount : count;
+      totalCargoServiceFeeUSD += adjustedConfig.CARGO_SERVICE_FEE * activeCount;
     }
   });
 

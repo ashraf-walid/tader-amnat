@@ -28,6 +28,14 @@ export const STORAGE_CONFIG = {
     },
     SHIFTING: {
       YARD_TO_YARD: { name: 'نقل بين الساحات', rate: 88, unit: 'per_container' }
+    },
+    DANGER_YARD: {
+      // تخزين في ساحة الخطر — يُحسب بالشرائح لكل حاوية
+      GRACE_PERIOD_DAYS: 0,
+      TIERS: [
+        { name: 'الشريحة 1 (خطر)', minDay: 1, maxDay: 3,        rate: 33 },
+        { name: 'الشريحة 2 (خطر)', minDay: 4, maxDay: Infinity,  rate: 66 }
+      ]
     }
   },
 

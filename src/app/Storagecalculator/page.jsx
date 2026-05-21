@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { STORAGE_CONFIG, SERVICES_LIST } from "@/lib/storageConstants";
 import { ArrowLeft } from "lucide-react"
-import { calculateMultiContainerInvoice } from "@/lib/storageCalculator";
+import { calculateMultiContainerInvoice, calculateStorageFee } from "@/lib/storageCalculator";
 import ArabicDatePicker from "@/components/ArabicDatePicker";
 
 // ─────────────────────────────────────────────
@@ -392,6 +392,12 @@ export default function StorageCalculator({
   const [prevDays, setPrevDays] = useState(0);
   const [nonStdType, setNonStdType] = useState("OOG");
   const [isDangerous, setIsDangerous] = useState(false);
+  
+  // ── New Appended Features ──
+  const [isHolidayRelease, setIsHolidayRelease] = useState(false);
+  const [hasCargoStripping, setHasCargoStripping] = useState(false);
+  const [hasDangerYard, setHasDangerYard] = useState(false);
+
   const [services, setServices] = useState({});
   const [serviceQuantities, setServiceQuantities] = useState({});
 
@@ -428,6 +434,18 @@ export default function StorageCalculator({
 
       const containerGroups = [];
       const isDangerousCargo = cargoType === "DANGEROUS";
+      const totalConts = twentyCount + fortyCount;
+
+      // Extract quantities for special services
+      const strippedQty = serviceQuantities['stripping'] !== undefined ? Number(serviceQuantities['stripping']) : totalConts;
+      const holidayQty  = serviceQuantities['holiday']  !== undefined ? Number(serviceQuantities['holiday'])  : totalConts;
+      const dangerYardQty = serviceQuantities['dangeryard'] !== undefined ? Number(serviceQuantities['dangeryard']) : totalConts;
+
+      // Distribute stripping qty (prioritize 40ft as standard, then 20ft)
+      let remStripped = strippedQty;
+      const stripping40 = fortyCount > 0 ? Math.min(remStripped, fortyCount) : 0;
+      remStripped -= stripping40;
+      const stripping20 = twentyCount > 0 ? Math.min(remStripped, twentyCount) + Math.max(0, remStripped - twentyCount) : remStripped;
 
       // تجهيز بيانات حاويات 20 قدم
       if (twentyCount > 0) {
@@ -449,8 +467,8 @@ export default function StorageCalculator({
           dangerousConfig: baseConfig.DANGEROUS,
           surchargeConfig,
           isDangerous: isDangerousCargo,
-          // note: these could be made per-group in UI if needed, for now global
-          hasCargoService: false,
+          hasCargoService: hasCargoStripping && stripping20 > 0,
+          cargoServiceCount: stripping20,
           hasCargoStorage: false
         });
       }
@@ -475,17 +493,47 @@ export default function StorageCalculator({
           dangerousConfig: baseConfig.DANGEROUS,
           surchargeConfig,
           isDangerous: isDangerousCargo,
-          hasCargoService: false,
+          hasCargoService: hasCargoStripping && stripping40 > 0,
+          cargoServiceCount: stripping40,
           hasCargoStorage: false
         });
       }
 
-      const selectedServices = SERVICES_LIST.filter(s => services[s.id]).map(s => ({
-        ...s,
-        quantity: serviceQuantities[s.id] !== undefined && serviceQuantities[s.id] !== "" 
-          ? Number(serviceQuantities[s.id]) 
-          : (twentyCount + fortyCount)
-      }));
+      // تطبيق القواعد الخاصة على الخدمات إذا تم اختيار يوم عطلة
+      const selectedServices = SERVICES_LIST.filter(s => services[s.id]).map(s => {
+        let finalRate = s.rate;
+        // زيادة 50% على النقل بين الساحات في يوم العطلة
+        if (s.id === 'yard' && isHolidayRelease) {
+             finalRate = s.rate * 1.5;
+        }
+
+        return {
+          ...s,
+          rate: finalRate, // تمرير السعر المعدل
+          quantity: serviceQuantities[s.id] !== undefined && serviceQuantities[s.id] !== "" 
+            ? Number(serviceQuantities[s.id]) 
+            : (twentyCount + fortyCount)
+        };
+      });
+
+      // إضافة خدمة يوم العطلة إذا تم تفعيلها
+      if (isHolidayRelease) {
+        selectedServices.push({
+           name: "صرف يوم العطلة",
+           rate: 10,
+           quantity: holidayQty
+        });
+      }
+
+      // حساب تخزين ساحة الخطر (بالشرائح) إذا تم تفعيله
+      let dangerYardUSD = 0;
+      let dangerYardBreakdown = [];
+      if (hasDangerYard) {
+        const dyConfig = STORAGE_CONFIG.SERVICES.DANGER_YARD;
+        const dyRes = calculateStorageFee(days, dyConfig, {});
+        dangerYardUSD = dyRes.storageFeeUSD * dangerYardQty;
+        dangerYardBreakdown = dyRes.breakdown;
+      }
 
       const invoice = calculateMultiContainerInvoice(
         arrStr, relStr, containerGroups, STORAGE_CONFIG.GLOBAL,
@@ -495,9 +543,47 @@ export default function StorageCalculator({
           previousDays: prevDays,
           isExternalStorage: false, // can be added to UI
           additionalServices: selectedServices,
-          isDangerous: isDangerousCargo
+          isDangerous: isDangerousCargo,
+          isHolidayRelease // Pass this if needed down the line, but cargo stripping is handled via config in storageCalculator override
         }
       );
+      
+      // Override cargo stripping cost if we're on a holiday release (+50%)
+      if (isHolidayRelease && hasCargoStripping) {
+        // Find existing cargo stripping costs and add 50%
+        invoice.usd.cargoServiceFee = invoice.usd.cargoServiceFee * 1.5;
+        // Also update subtotal
+        invoice.usd.subtotal = invoice.usd.storageFee + invoice.usd.fixedFees + invoice.usd.additionalServices + invoice.usd.cargoServiceFee;
+        
+        // Recalculate EGP
+        const newEgpSubtotal = invoice.usd.subtotal * exchangeRate;
+        const vatRate = STORAGE_CONFIG.GLOBAL.VAT_RATE || 0.14;
+        const martyrStamp = STORAGE_CONFIG.GLOBAL.MARTYR_STAMP_FEE || 5;
+        const vatAmount = newEgpSubtotal * vatRate;
+        
+        invoice.egp.subtotal = newEgpSubtotal;
+        invoice.egp.vatAmount = vatAmount;
+        invoice.egp.total = Math.ceil(newEgpSubtotal + vatAmount + martyrStamp);
+      }
+
+      // دمج تكلفة ساحة الخطر في الفاتورة النهائية
+      if (hasDangerYard && dangerYardUSD > 0) {
+        // إضافة 50% إذا كان يوم عطلة
+        const dyFee = isHolidayRelease ? dangerYardUSD * 1.5 : dangerYardUSD;
+        invoice.usd.dangerYardFee = dyFee;
+        invoice.usd.subtotal += dyFee;
+        if (dangerYardBreakdown.length) {
+          invoice.details.dangerYardBreakdown = dangerYardBreakdown;
+        }
+        // إعادة حساب الإجماليات
+        const newEgpSubtotal2 = invoice.usd.subtotal * exchangeRate;
+        const vatRate2 = STORAGE_CONFIG.GLOBAL.VAT_RATE || 0.14;
+        const martyrStamp2 = STORAGE_CONFIG.GLOBAL.MARTYR_STAMP_FEE || 5;
+        const vatAmount2 = newEgpSubtotal2 * vatRate2;
+        invoice.egp.subtotal = newEgpSubtotal2;
+        invoice.egp.vatAmount = vatAmount2;
+        invoice.egp.total = Math.ceil(newEgpSubtotal2 + vatAmount2 + martyrStamp2);
+      }
       setResult(invoice);
       // scroll to result on mobile
       setTimeout(() => document.getElementById('sc2-result')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
@@ -707,6 +793,96 @@ export default function StorageCalculator({
             {/* الخدمات الإضافية */}
             <div className="sc2-sec-lbl" style={{ marginBottom: '.6rem' }}>خدمات إضافية</div>
             <div className="sc2-svcs">
+              
+              {/* خيارات جديدة: تفريغ مشمول وصرف يوم عطلة */}
+              <div style={{ display: 'flex', gap: 6, alignItems: 'stretch' }}>
+                <label className={`sc2-svc${hasCargoStripping ? " on" : ""}`} style={{ flex: 1, margin: 0 }}>
+                  <input type="checkbox" checked={hasCargoStripping} onChange={() => setHasCargoStripping(!hasCargoStripping)} />
+                  <span className="sc2-chk">
+                    <svg className="sc2-chk-ico" width="11" height="9" viewBox="0 0 11 9" fill="none">
+                      <path d="M1 4L4 7.5L10 1" stroke="#0b1120" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                  <span className="sc2-svc-name">تفريغ مشمول <span style={{fontSize: 10, opacity: 0.8}}>(60$ للـ 20ق / 120$ للـ 40ق)</span></span>
+                </label>
+                {hasCargoStripping && (
+                  <div className="sc2-counter" style={{ width: '90px', borderRadius: 'var(--r)',  border: '1.5px solid var(--acc)' }}>
+                    <button 
+                      className="sc2-counter-btn" 
+                      style={{ width: '30px', height: '100%', fontSize: '18px' }}
+                      onClick={() => setServiceQuantities(p => ({...p, stripping: Math.max(1, Number(serviceQuantities['stripping'] !== undefined ? serviceQuantities['stripping'] : (twentyCount + fortyCount)) - 1)}))}
+                    >−</button>
+                    <div className="sc2-counter-val" style={{ fontSize: '14px' }}>
+                      {serviceQuantities['stripping'] !== undefined ? serviceQuantities['stripping'] : (twentyCount + fortyCount)}
+                    </div>
+                    <button 
+                      className="sc2-counter-btn" 
+                      style={{ width: '30px', height: '100%', fontSize: '18px' }}
+                      onClick={() => setServiceQuantities(p => ({...p, stripping: Number(serviceQuantities['stripping'] !== undefined ? serviceQuantities['stripping'] : (twentyCount + fortyCount)) + 1}))}
+                    >+</button>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: 6, alignItems: 'stretch' }}>
+                <label className={`sc2-svc${isHolidayRelease ? " on" : ""}`} style={{ flex: 1, margin: 0 }}>
+                  <input type="checkbox" checked={isHolidayRelease} onChange={() => setIsHolidayRelease(!isHolidayRelease)} />
+                  <span className="sc2-chk">
+                    <svg className="sc2-chk-ico" width="11" height="9" viewBox="0 0 11 9" fill="none">
+                      <path d="M1 4L4 7.5L10 1" stroke="#0b1120" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                  <span className="sc2-svc-name">صرف يوم عطلة <span style={{fontSize: 10, opacity: 0.8}}>(10$ / حاوية)</span></span>
+                </label>
+                {isHolidayRelease && (
+                  <div className="sc2-counter" style={{ width: '90px', borderRadius: 'var(--r)',  border: '1.5px solid var(--acc)' }}>
+                    <button 
+                      className="sc2-counter-btn" 
+                      style={{ width: '30px', height: '100%', fontSize: '18px' }}
+                      onClick={() => setServiceQuantities(p => ({...p, holiday: Math.max(1, Number(serviceQuantities['holiday'] !== undefined ? serviceQuantities['holiday'] : (twentyCount + fortyCount)) - 1)}))}
+                    >−</button>
+                    <div className="sc2-counter-val" style={{ fontSize: '14px' }}>
+                      {serviceQuantities['holiday'] !== undefined ? serviceQuantities['holiday'] : (twentyCount + fortyCount)}
+                    </div>
+                    <button 
+                      className="sc2-counter-btn" 
+                      style={{ width: '30px', height: '100%', fontSize: '18px' }}
+                      onClick={() => setServiceQuantities(p => ({...p, holiday: Number(serviceQuantities['holiday'] !== undefined ? serviceQuantities['holiday'] : (twentyCount + fortyCount)) + 1}))}
+                    >+</button>
+                  </div>
+                )}
+              </div>
+
+              {/* تخزين ساحة الخطر */}
+              <div style={{ display: 'flex', gap: 6, alignItems: 'stretch' }}>
+                <label className={`sc2-svc${hasDangerYard ? " on" : ""}`} style={{ flex: 1, margin: 0 }}>
+                  <input type="checkbox" checked={hasDangerYard} onChange={() => setHasDangerYard(!hasDangerYard)} />
+                  <span className="sc2-chk">
+                    <svg className="sc2-chk-ico" width="11" height="9" viewBox="0 0 11 9" fill="none">
+                      <path d="M1 4L4 7.5L10 1" stroke="#0b1120" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                  <span className="sc2-svc-name">تخزين ساحة الخطر <span style={{fontSize: 10, opacity: 0.8}}>(33$ أول 3 أيام / 66$ بعدها)</span></span>
+                </label>
+                {hasDangerYard && (
+                  <div className="sc2-counter" style={{ width: '90px', borderRadius: 'var(--r)', border: '1.5px solid var(--acc)' }}>
+                    <button
+                      className="sc2-counter-btn"
+                      style={{ width: '30px', height: '100%', fontSize: '18px' }}
+                      onClick={() => setServiceQuantities(p => ({...p, dangeryard: Math.max(1, Number(serviceQuantities['dangeryard'] !== undefined ? serviceQuantities['dangeryard'] : (twentyCount + fortyCount)) - 1)}))}
+                    >−</button>
+                    <div className="sc2-counter-val" style={{ fontSize: '14px' }}>
+                      {serviceQuantities['dangeryard'] !== undefined ? serviceQuantities['dangeryard'] : (twentyCount + fortyCount)}
+                    </div>
+                    <button
+                      className="sc2-counter-btn"
+                      style={{ width: '30px', height: '100%', fontSize: '18px' }}
+                      onClick={() => setServiceQuantities(p => ({...p, dangeryard: Number(serviceQuantities['dangeryard'] !== undefined ? serviceQuantities['dangeryard'] : (twentyCount + fortyCount)) + 1}))}
+                    >+</button>
+                  </div>
+                )}
+              </div>
+
               {SERVICES_LIST.map(svc => {
                 const on = !!services[svc.id];
                 const qty = serviceQuantities[svc.id] !== undefined ? serviceQuantities[svc.id] : (twentyCount + fortyCount);
@@ -720,25 +896,24 @@ export default function StorageCalculator({
                         </svg>
                       </span>
                       <span className="sc2-svc-name">{svc.name}</span>
-                      <span className="sc2-svc-price">${svc.rate}</span>
+                      <span className="sc2-svc-price">${svc.id === 'yard' && isHolidayRelease ? svc.rate * 1.5 : svc.rate}</span>
                     </label>
                     {on && (
-                      <input 
-                        type="number" min={1}
-                        placeholder="العدد"
-                        value={qty}
-                        onChange={(e) => setServiceQuantities(p => ({...p, [svc.id]: e.target.value}))}
-                        style={{
-                          width: '60px', 
-                          background: 'var(--inp)', 
-                          border: `1.5px solid var(--acc)`, 
-                          borderRadius: 'var(--r)', 
-                          color: 'var(--txt)', 
-                          textAlign: 'center',
-                          fontSize: 13,
-                          outline: 'none'
-                        }}
-                      />
+                      <div className="sc2-counter" style={{ width: '90px', borderRadius: 'var(--r)',  border: '1.5px solid var(--acc)' }}>
+                        <button 
+                          className="sc2-counter-btn" 
+                          style={{ width: '30px', height: '100%', fontSize: '18px' }}
+                          onClick={() => setServiceQuantities(p => ({...p, [svc.id]: Math.max(1, Number(qty) - 1)}))}
+                        >−</button>
+                        <div className="sc2-counter-val" style={{ fontSize: '14px' }}>
+                          {qty}
+                        </div>
+                        <button 
+                          className="sc2-counter-btn" 
+                          style={{ width: '30px', height: '100%', fontSize: '18px' }}
+                          onClick={() => setServiceQuantities(p => ({...p, [svc.id]: Number(qty) + 1}))}
+                        >+</button>
+                      </div>
                     )}
                   </div>
                 );
@@ -786,15 +961,21 @@ export default function StorageCalculator({
 
               {/* Rows */}
               {[
-                ["رسوم التخزين", `$${fmt(result.usd.storageFee)}`, false],
-                ["رسوم الخدمات الثابتة", `$${fmt(result.usd.fixedFees)}`, false],
+                ["رسوم التخزين",             `$${fmt(result.usd.storageFee)}`,       false],
+                ["رسوم الخدمات الثابتة",     `$${fmt(result.usd.fixedFees)}`,         false],
                 ...(result.usd.additionalServices > 0
-                  ? [["الخدمات الإضافية", `$${fmt(result.usd.additionalServices)}`, false]]
+                  ? [["الخدمات الإضافية",    `$${fmt(result.usd.additionalServices)}`, false]]
                   : []),
-                ["الإجمالي بالدولار", `$${fmt(result.usd.subtotal)}`, true],
-                ["الإجمالي بالجنيه", `${fmt(result.egp.subtotal, 0)} ج.م`, false],
-                ["ضريبة القيمة المضافة 14%", `${fmt(result.egp.vatAmount, 0)} ج.م`, false],
-                ["طابع الشهيد", `${result.egp.martyrStamp} ج.م`, false],
+                ...(result.usd.cargoServiceFee > 0
+                  ? [["تفريغ مشمول",          `$${fmt(result.usd.cargoServiceFee)}`,   false]]
+                  : []),
+                ...(result.usd.dangerYardFee > 0
+                  ? [["تخزين ساحة الخطر",    `$${fmt(result.usd.dangerYardFee)}`,     false]]
+                  : []),
+                ["الإجمالي بالدولار",        `$${fmt(result.usd.subtotal)}`,           true],
+                ["الإجمالي بالجنيه",         `${fmt(result.egp.subtotal, 0)} ج.م`,    false],
+                ["ضريبة القيمة المضافة 14%", `${fmt(result.egp.vatAmount, 0)} ج.م`,   false],
+                ["طابع الشهيد",              `${result.egp.martyrStamp} ج.م`,         false],
               ].map(([l, v, sub]) => (
                 <div key={l} className={`sc2-trow${sub ? " subtotal" : ""}`}>
                   <span className="tl">{l}</span>
@@ -811,6 +992,18 @@ export default function StorageCalculator({
                 <div className="sc2-brk">
                   <div className="sc2-brk-title">تفصيل شرائح التخزين</div>
                   {result.details.storageBreakdown.map((b, i) => (
+                    <div key={i} className="sc2-brk-row">
+                      <span>{b.tierName} — {b.days} يوم (من {b.fromDay} إلى {b.toDay})</span>
+                      <span className="bv">${fmt(b.subtotal)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {result.details.dangerYardBreakdown?.length > 0 && (
+                <div className="sc2-brk">
+                  <div className="sc2-brk-title">تفصيل شرائح ساحة الخطر</div>
+                  {result.details.dangerYardBreakdown.map((b, i) => (
                     <div key={i} className="sc2-brk-row">
                       <span>{b.tierName} — {b.days} يوم (من {b.fromDay} إلى {b.toDay})</span>
                       <span className="bv">${fmt(b.subtotal)}</span>

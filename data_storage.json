@@ -122,16 +122,16 @@
     "account": "التحصيل النقدى-عملاء  ح 171",
     "accountCode": "171414",
     "openingBalance": {
-      "debit": 331858.96,
+      "debit": 294961.54,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 166903.14
+      "credit": 525829.5
     },
     "closingBalance": {
-      "debit": 164955.82,
-      "credit": 0
+      "debit": 0,
+      "credit": 230867.96
     },
     "transactions": []
   },
@@ -160,12 +160,12 @@
       "credit": 127126684.58
     },
     "totals": {
-      "debit": 0,
+      "debit": 55742722.48,
       "credit": 0
     },
     "closingBalance": {
       "debit": 0,
-      "credit": 127126684.58
+      "credit": 71383962.1
     },
     "transactions": []
   },
@@ -449,12 +449,12 @@
       "credit": 35471.57
     },
     "totals": {
-      "debit": 0,
+      "debit": 1502996.98,
       "credit": 0
     },
     "closingBalance": {
-      "debit": 0,
-      "credit": 35471.57
+      "debit": 1467525.41,
+      "credit": 0
     },
     "transactions": []
   },
@@ -738,12 +738,12 @@
       "credit": 1776091.04
     },
     "totals": {
-      "debit": 0,
+      "debit": 929757.19,
       "credit": 0
     },
     "closingBalance": {
       "debit": 0,
-      "credit": 1776091.04
+      "credit": 846333.85
     },
     "transactions": []
   },
@@ -871,7 +871,7 @@
     "accountCode": "1714928",
     "openingBalance": {
       "debit": 0,
-      "credit": 44506921.68
+      "credit": 31793866.66
     },
     "totals": {
       "debit": 0,
@@ -879,7 +879,7 @@
     },
     "closingBalance": {
       "debit": 0,
-      "credit": 44506921.68
+      "credit": 31793866.66
     },
     "transactions": []
   },
@@ -973,7 +973,7 @@
     "accountCode": "1714961",
     "openingBalance": {
       "debit": 0,
-      "credit": 8451819.32
+      "credit": 5716260.01
     },
     "totals": {
       "debit": 0,
@@ -981,7 +981,7 @@
     },
     "closingBalance": {
       "debit": 0,
-      "credit": 8451819.32
+      "credit": 5716260.01
     },
     "transactions": []
   },
@@ -990,7 +990,7 @@
     "accountCode": "1714967",
     "openingBalance": {
       "debit": 0,
-      "credit": 21007216.09
+      "credit": 11550731.74
     },
     "totals": {
       "debit": 0,
@@ -998,7 +998,7 @@
     },
     "closingBalance": {
       "debit": 0,
-      "credit": 21007216.09
+      "credit": 11550731.74
     },
     "transactions": []
   },
@@ -1027,12 +1027,12 @@
       "credit": 4783849.53
     },
     "totals": {
-      "debit": 0,
+      "debit": 3883631.95,
       "credit": 0
     },
     "closingBalance": {
       "debit": 0,
-      "credit": 4783849.53
+      "credit": 900217.58
     },
     "transactions": []
   },
@@ -1142,32 +1142,27 @@
     "account": "امون تو للتخليص الجمركى",
     "accountCode": "1714986",
     "openingBalance": {
-      "debit": 202827.49,
+      "debit": 177877.53,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 24949.96
+      "credit": 72975.57
     },
     "closingBalance": {
-      "debit": 177877.53,
+      "debit": 104901.96,
       "credit": 0
     },
     "transactions": [
       {
         "type": "deduction",
-        "amount": 7000,
-        "date": "2026-05-20T14:56:57.908Z"
+        "amount": 49730,
+        "date": "2026-05-21T15:58:11.798Z"
       },
       {
         "type": "deduction",
-        "amount": 20000,
-        "date": "2026-05-20T15:23:53.729Z"
-      },
-      {
-        "type": "deduction",
-        "amount": 30400,
-        "date": "2026-05-20T16:44:45.675Z"
+        "amount": 8300,
+        "date": "2026-05-21T16:04:47.547Z"
       }
     ]
   },
@@ -1209,7 +1204,7 @@
     "account": "ميد ايجيبت لخدمات النقل واللوجستيك",
     "accountCode": "1714992",
     "openingBalance": {
-      "debit": 720869.33,
+      "debit": 2167313.58,
       "credit": 0
     },
     "totals": {
@@ -1217,7 +1212,7 @@
       "credit": 0
     },
     "closingBalance": {
-      "debit": 720869.33,
+      "debit": 2167313.58,
       "credit": 0
     },
     "transactions": []
@@ -1243,37 +1238,22 @@
     "account": "المصرى لأعمال النقل",
     "accountCode": "1714994",
     "openingBalance": {
-      "debit": 84635.69,
+      "debit": 57333.05,
       "credit": 0
     },
     "totals": {
-      "debit": 0,
-      "credit": 60502.64
+      "debit": 50000,
+      "credit": 77538.82
     },
     "closingBalance": {
-      "debit": 24133.05,
+      "debit": 29794.23,
       "credit": 0
     },
     "transactions": [
       {
         "type": "deduction",
-        "amount": 18100,
-        "date": "2026-05-20T14:03:27.520Z"
-      },
-      {
-        "type": "deduction",
-        "amount": 8620,
-        "date": "2026-05-20T15:19:47.611Z"
-      },
-      {
-        "type": "deduction",
-        "amount": 8000,
-        "date": "2026-05-20T15:22:44.510Z"
-      },
-      {
-        "type": "addition",
-        "amount": 15000,
-        "date": "2026-05-20T15:43:48.432Z"
+        "amount": 21820,
+        "date": "2026-05-21T15:17:11.251Z"
       }
     ]
   },
@@ -1332,18 +1312,24 @@
     "account": "دعاء للإستيراد و التصدير و الخدمات الجمركية",
     "accountCode": "17142002",
     "openingBalance": {
-      "debit": 64073.09,
+      "debit": 12839.37,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 61508.72
-    },
-    "closingBalance": {
-      "debit": 2564.37,
       "credit": 0
     },
-    "transactions": []
+    "closingBalance": {
+      "debit": 12839.37,
+      "credit": 0
+    },
+    "transactions": [
+      {
+        "type": "deduction",
+        "amount": 4265,
+        "date": "2026-05-21T16:26:30.255Z"
+      }
+    ]
   },
   {
     "account": "ار ايه ام (رمضان عبدالمجيد محمد)",
@@ -1383,41 +1369,46 @@
     "account": "القدس لأعمال النقل و التخليص الجمركى (محمد سمير)",
     "accountCode": "17142005",
     "openingBalance": {
-      "debit": 142103.77,
+      "debit": 29057.06,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 113046.71
+      "credit": 1521.12
     },
     "closingBalance": {
-      "debit": 29057.06,
+      "debit": 27535.94,
       "credit": 0
     },
-    "transactions": [
-      {
-        "type": "deduction",
-        "amount": 4500,
-        "date": "2026-05-20T14:53:06.561Z"
-      }
-    ]
+    "transactions": []
   },
   {
     "account": "شركة الرضوان للنقل (احمد صابر)",
     "accountCode": "17142006",
     "openingBalance": {
-      "debit": 799.04,
+      "debit": 20799.04,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 0
+      "credit": 20624.2
     },
     "closingBalance": {
-      "debit": 799.04,
+      "debit": 174.84,
       "credit": 0
     },
-    "transactions": []
+    "transactions": [
+      {
+        "type": "addition",
+        "amount": 8000,
+        "date": "2026-05-21T13:58:53.558Z"
+      },
+      {
+        "type": "deduction",
+        "amount": 4540,
+        "date": "2026-05-21T13:58:53.558Z"
+      }
+    ]
   },
   {
     "account": "شركة ليدر فور ترانس (منتصر فاروق عوض)",
@@ -1440,61 +1431,78 @@
     "account": "شركة البنا للنقل (محمود جمعه البنا)",
     "accountCode": "17142008",
     "openingBalance": {
-      "debit": 4196.19,
+      "debit": 35977.02,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 3219.17
+      "credit": 34147.96
     },
     "closingBalance": {
-      "debit": 977.02,
-      "credit": 0
-    },
-    "transactions": []
-  },
-  {
-    "account": "شركة وسام مصر للتخليص الجمركى",
-    "accountCode": "17142009",
-    "openingBalance": {
-      "debit": 48532.86,
-      "credit": 0
-    },
-    "totals": {
-      "debit": 0,
-      "credit": 40338.72
-    },
-    "closingBalance": {
-      "debit": 8194.14,
-      "credit": 0
-    },
-    "transactions": []
-  },
-  {
-    "account": "المصرية لأعمال النقل (احمد محسن)",
-    "accountCode": "17142010",
-    "openingBalance": {
-      "debit": 16555.54,
-      "credit": 0
-    },
-    "totals": {
-      "debit": 0,
-      "credit": 0
-    },
-    "closingBalance": {
-      "debit": 16555.54,
+      "debit": 1829.06,
       "credit": 0
     },
     "transactions": [
       {
         "type": "deduction",
-        "amount": 20100,
-        "date": "2026-05-20T14:35:52.345Z"
+        "amount": 1520,
+        "date": "2026-05-21T12:44:16.780Z"
       },
       {
         "type": "addition",
-        "amount": 20000,
-        "date": "2026-05-20T14:36:09.248Z"
+        "amount": 1,
+        "date": "2026-05-21T14:54:48.223Z"
+      },
+      {
+        "type": "deduction",
+        "amount": 1,
+        "date": "2026-05-21T14:54:48.223Z"
+      }
+    ]
+  },
+  {
+    "account": "شركة وسام مصر للتخليص الجمركى",
+    "accountCode": "17142009",
+    "openingBalance": {
+      "debit": 8194.14,
+      "credit": 0
+    },
+    "totals": {
+      "debit": 0,
+      "credit": 0
+    },
+    "closingBalance": {
+      "debit": 8194.14,
+      "credit": 0
+    },
+    "transactions": [
+      {
+        "type": "deduction",
+        "amount": 30640,
+        "date": "2026-05-21T16:20:35.749Z"
+      }
+    ]
+  },
+  {
+    "account": "المصرية لأعمال النقل (احمد محسن)",
+    "accountCode": "17142010",
+    "openingBalance": {
+      "debit": 53359.54,
+      "credit": 0
+    },
+    "totals": {
+      "debit": 16804,
+      "credit": 56181.99
+    },
+    "closingBalance": {
+      "debit": 13981.55,
+      "credit": 0
+    },
+    "transactions": [
+      {
+        "type": "deduction",
+        "amount": 3030,
+        "date": "2026-05-21T13:58:04.277Z"
       }
     ]
   },
@@ -1502,39 +1510,50 @@
     "account": "ليدر ترانس انترناشونال (عوض سعد الراجحى)",
     "accountCode": "17142011",
     "openingBalance": {
-      "debit": 20331.02,
+      "debit": 14018.97,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 6312.05
+      "credit": 0
     },
     "closingBalance": {
       "debit": 14018.97,
       "credit": 0
     },
-    "transactions": []
+    "transactions": [
+      {
+        "type": "addition",
+        "amount": 21000,
+        "date": "2026-05-21T14:55:12.128Z"
+      },
+      {
+        "type": "deduction",
+        "amount": 22400,
+        "date": "2026-05-21T14:55:56.078Z"
+      }
+    ]
   },
   {
     "account": "شركة حورس للشحن البرى و التخليص الجمركى",
     "accountCode": "17142012",
     "openingBalance": {
-      "debit": 82642.61,
+      "debit": 72813.17,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 9829.44
+      "credit": 20442.26
     },
     "closingBalance": {
-      "debit": 72813.17,
+      "debit": 52370.91,
       "credit": 0
     },
     "transactions": [
       {
         "type": "deduction",
-        "amount": 20450,
-        "date": "2026-05-20T13:30:23.523Z"
+        "amount": 24500,
+        "date": "2026-05-21T13:05:31.840Z"
       }
     ]
   },
@@ -1576,34 +1595,18 @@
     "account": "شركة لاهاى لأعمال النقل محمد طه",
     "accountCode": "17142015",
     "openingBalance": {
-      "debit": 54913.24,
+      "debit": 73913.24,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 0
+      "credit": 73748.95
     },
     "closingBalance": {
-      "debit": 54913.24,
+      "debit": 164.29,
       "credit": 0
     },
-    "transactions": [
-      {
-        "type": "addition",
-        "amount": 15000,
-        "date": "2026-05-20T15:44:06.998Z"
-      },
-      {
-        "type": "deduction",
-        "amount": 73800,
-        "date": "2026-05-20T15:44:30.972Z"
-      },
-      {
-        "type": "addition",
-        "amount": 4000,
-        "date": "2026-05-20T15:55:37.584Z"
-      }
-    ]
+    "transactions": []
   },
   {
     "account": "مكتب احمد عبدالله حسن عبدالهادى تخليص جمركى",
@@ -1614,19 +1617,13 @@
     },
     "totals": {
       "debit": 0,
-      "credit": 0
+      "credit": 4917.22
     },
     "closingBalance": {
-      "debit": 11197.32,
+      "debit": 6280.1,
       "credit": 0
     },
-    "transactions": [
-      {
-        "type": "deduction",
-        "amount": 4920,
-        "date": "2026-05-20T13:36:18.419Z"
-      }
-    ]
+    "transactions": []
   },
   {
     "account": "العنانى للشحن و النقل",
@@ -1683,38 +1680,32 @@
     "account": "شركة الفهد للنقل و المقاولات (السيد قنير)",
     "accountCode": "17142021",
     "openingBalance": {
-      "debit": 9293.43,
-      "credit": 0
-    },
-    "totals": {
-      "debit": 97000,
-      "credit": 0
-    },
-    "closingBalance": {
       "debit": 106293.43,
       "credit": 0
     },
-    "transactions": [
-      {
-        "type": "deduction",
-        "amount": 66500,
-        "date": "2026-05-20T14:09:33.036Z"
-      }
-    ]
+    "totals": {
+      "debit": 0,
+      "credit": 95581.04
+    },
+    "closingBalance": {
+      "debit": 10712.39,
+      "credit": 0
+    },
+    "transactions": []
   },
   {
     "account": "ريمارين للاستيراد و التصدير",
     "accountCode": "17142022",
     "openingBalance": {
-      "debit": 133.62,
+      "debit": 4143.62,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 0
+      "credit": 3037.23
     },
     "closingBalance": {
-      "debit": 133.62,
+      "debit": 1106.39,
       "credit": 0
     },
     "transactions": []
@@ -1723,12 +1714,12 @@
     "account": "شركة احمد محمود احمد الداودى",
     "accountCode": "17142023",
     "openingBalance": {
-      "debit": 509.23,
+      "debit": 2809.64,
       "credit": 0
     },
     "totals": {
-      "debit": 78000,
-      "credit": 75699.59
+      "debit": 0,
+      "credit": 0
     },
     "closingBalance": {
       "debit": 2809.64,
@@ -1740,44 +1731,18 @@
     "account": "التمساح لأعمال النقل و الأستيراد و التصدير",
     "accountCode": "17142024",
     "openingBalance": {
-      "debit": 39171.43,
+      "debit": 69202.85,
       "credit": 0
     },
     "totals": {
-      "debit": 0,
-      "credit": 37968.58
+      "debit": 500,
+      "credit": 69574.47
     },
     "closingBalance": {
-      "debit": 1202.85,
+      "debit": 128.38,
       "credit": 0
     },
-    "transactions": [
-      {
-        "type": "addition",
-        "amount": 3000,
-        "date": "2026-05-20T14:39:39.109Z"
-      },
-      {
-        "type": "deduction",
-        "amount": 3900,
-        "date": "2026-05-20T14:39:50.072Z"
-      },
-      {
-        "type": "addition",
-        "amount": 40000,
-        "date": "2026-05-20T16:19:34.420Z"
-      },
-      {
-        "type": "addition",
-        "amount": 25000,
-        "date": "2026-05-20T16:19:38.531Z"
-      },
-      {
-        "type": "deduction",
-        "amount": 65745,
-        "date": "2026-05-20T16:21:46.284Z"
-      }
-    ]
+    "transactions": []
   },
   {
     "account": "الأمانى لخدمات النقل (ايهاب نعمان العفيفى)",
@@ -1794,33 +1759,44 @@
       "debit": 45108.83,
       "credit": 0
     },
-    "transactions": []
+    "transactions": [
+      {
+        "type": "addition",
+        "amount": 1,
+        "date": "2026-05-21T14:54:38.488Z"
+      },
+      {
+        "type": "deduction",
+        "amount": 1,
+        "date": "2026-05-21T14:54:38.488Z"
+      }
+    ]
   },
   {
     "account": "الشروق لأعمال النقل (سمير الشربينى لبيب)",
     "accountCode": "17142026",
     "openingBalance": {
-      "debit": 1503.53,
+      "debit": 16503.53,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 0
+      "credit": 10860.4
     },
     "closingBalance": {
-      "debit": 1503.53,
+      "debit": 5643.13,
       "credit": 0
     },
     "transactions": [
       {
         "type": "addition",
-        "amount": 15000,
-        "date": "2026-05-20T12:31:29.821Z"
+        "amount": 400000,
+        "date": "2026-05-21T14:21:07.007Z"
       },
       {
         "type": "deduction",
-        "amount": 10900,
-        "date": "2026-05-20T12:31:38.187Z"
+        "amount": 373775,
+        "date": "2026-05-21T14:21:53.814Z"
       }
     ]
   },
@@ -1828,69 +1804,63 @@
     "account": "شركة النجمة للنقل (محمود عبدالبارى)",
     "accountCode": "17142027",
     "openingBalance": {
-      "debit": 17085.59,
+      "debit": 18585.59,
       "credit": 0
     },
     "totals": {
-      "debit": 0,
-      "credit": 0
+      "debit": 30000,
+      "credit": 45190.3
     },
     "closingBalance": {
-      "debit": 17085.59,
-      "credit": 0
-    },
-    "transactions": [
-      {
-        "type": "deduction",
-        "amount": 18200,
-        "date": "2026-05-20T12:52:06.905Z"
-      },
-      {
-        "type": "addition",
-        "amount": 1500,
-        "date": "2026-05-20T12:56:13.751Z"
-      }
-    ]
-  },
-  {
-    "account": "شهاب لأعمال النقل (احمد فاروق شهاب)",
-    "accountCode": "17142028",
-    "openingBalance": {
-      "debit": 1993.03,
-      "credit": 0
-    },
-    "totals": {
-      "debit": 21000,
-      "credit": 21412.58
-    },
-    "closingBalance": {
-      "debit": 1580.45,
+      "debit": 3395.29,
       "credit": 0
     },
     "transactions": []
   },
   {
-    "account": "شركة الضحى للنقل و التخليص الجمركى (السعيد مرعى)",
-    "accountCode": "17142029",
+    "account": "شهاب لأعمال النقل (احمد فاروق شهاب)",
+    "accountCode": "17142028",
     "openingBalance": {
-      "debit": 3958.26,
+      "debit": 1580.45,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 975.32
+      "credit": 0
     },
     "closingBalance": {
-      "debit": 2982.94,
+      "debit": 1580.45,
       "credit": 0
     },
     "transactions": [
       {
+        "type": "addition",
+        "amount": 480000,
+        "date": "2026-05-21T14:54:19.757Z"
+      },
+      {
         "type": "deduction",
-        "amount": 1500,
-        "date": "2026-05-20T18:23:39.693Z"
+        "amount": 478000,
+        "date": "2026-05-21T14:54:19.757Z"
       }
     ]
+  },
+  {
+    "account": "شركة الضحى للنقل و التخليص الجمركى (السعيد مرعى)",
+    "accountCode": "17142029",
+    "openingBalance": {
+      "debit": 25982.94,
+      "credit": 0
+    },
+    "totals": {
+      "debit": 0,
+      "credit": 25788.99
+    },
+    "closingBalance": {
+      "debit": 193.95,
+      "credit": 0
+    },
+    "transactions": []
   },
   {
     "account": "شركة الاخوة للنقل (محمد محمد السيد النجار)",
@@ -1900,11 +1870,11 @@
       "credit": 0
     },
     "totals": {
-      "debit": 0,
-      "credit": 0
+      "debit": 60000,
+      "credit": 59679.38
     },
     "closingBalance": {
-      "debit": 2655.26,
+      "debit": 2975.88,
       "credit": 0
     },
     "transactions": []
@@ -1947,24 +1917,18 @@
     "account": "العوضى لأعمال النقل",
     "accountCode": "17142033",
     "openingBalance": {
-      "debit": 37082.5,
+      "debit": 1903.58,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 35178.92
+      "credit": 1278.54
     },
     "closingBalance": {
-      "debit": 1903.58,
+      "debit": 625.04,
       "credit": 0
     },
-    "transactions": [
-      {
-        "type": "deduction",
-        "amount": 1280,
-        "date": "2026-05-20T14:00:25.231Z"
-      }
-    ]
+    "transactions": []
   },
   {
     "account": "الجوخ للنقل و التجارة",
@@ -2055,22 +2019,22 @@
     "account": "المؤسسة للتخليص الجمركى (تحت التسوية)",
     "accountCode": "17142039",
     "openingBalance": {
-      "debit": 23945.53,
+      "debit": 21636.03,
       "credit": 0
     },
     "totals": {
-      "debit": 0,
-      "credit": 2309.5
+      "debit": 10000,
+      "credit": 7661.24
     },
     "closingBalance": {
-      "debit": 21636.03,
+      "debit": 23974.79,
       "credit": 0
     },
     "transactions": [
       {
         "type": "deduction",
-        "amount": 5000,
-        "date": "2026-05-20T14:55:33.422Z"
+        "amount": 1520,
+        "date": "2026-05-21T13:54:38.199Z"
       }
     ]
   },
@@ -2197,44 +2161,18 @@
     "account": "الصلاح للنقل محمد صلاح (تحت التسوية)",
     "accountCode": "17142048",
     "openingBalance": {
-      "debit": 0,
-      "credit": 1.07
-    },
-    "totals": {
-      "debit": 0,
+      "debit": 22498.93,
       "credit": 0
     },
-    "closingBalance": {
-      "debit": 0,
-      "credit": 1.07
+    "totals": {
+      "debit": 700,
+      "credit": 23176.27
     },
-    "transactions": [
-      {
-        "type": "addition",
-        "amount": 13000,
-        "date": "2026-05-20T13:57:07.978Z"
-      },
-      {
-        "type": "deduction",
-        "amount": 12560,
-        "date": "2026-05-20T13:57:07.978Z"
-      },
-      {
-        "type": "addition",
-        "amount": 9500,
-        "date": "2026-05-20T16:17:58.398Z"
-      },
-      {
-        "type": "deduction",
-        "amount": 10620,
-        "date": "2026-05-20T16:18:13.554Z"
-      },
-      {
-        "type": "addition",
-        "amount": 700,
-        "date": "2026-05-20T16:27:22.268Z"
-      }
-    ]
+    "closingBalance": {
+      "debit": 22.66,
+      "credit": 0
+    },
+    "transactions": []
   },
   {
     "account": "جلوبال لوجستيكس المصرية للتجارة والنقل الدولى متعدد الوسائط",
@@ -2308,29 +2246,18 @@
     "account": "شركة الإيمان لأعمال النقل",
     "accountCode": "17142055",
     "openingBalance": {
-      "debit": 4756.49,
+      "debit": 54756.49,
       "credit": 0
     },
     "totals": {
-      "debit": 0,
-      "credit": 0
+      "debit": 15000,
+      "credit": 65026.11
     },
     "closingBalance": {
-      "debit": 4756.49,
+      "debit": 4730.38,
       "credit": 0
     },
-    "transactions": [
-      {
-        "type": "addition",
-        "amount": 50000,
-        "date": "2026-05-20T16:48:57.857Z"
-      },
-      {
-        "type": "deduction",
-        "amount": 14810,
-        "date": "2026-05-20T16:49:51.487Z"
-      }
-    ]
+    "transactions": []
   },
   {
     "account": "ايجى بورت للتخليص الجمركى",
@@ -2472,16 +2399,16 @@
     "account": "الشركة المصرية لخدمات الوكالة الملاحية واللوجستيات E.S.G",
     "accountCode": "17142066",
     "openingBalance": {
-      "debit": 0,
-      "credit": 76094.94
+      "debit": 28.86,
+      "credit": 0
     },
     "totals": {
       "debit": 0,
       "credit": 0
     },
     "closingBalance": {
-      "debit": 0,
-      "credit": 76094.94
+      "debit": 28.86,
+      "credit": 0
     },
     "transactions": []
   },
@@ -2489,15 +2416,15 @@
     "account": "مؤسسة ايجيبت بورتس",
     "accountCode": "17142067",
     "openingBalance": {
-      "debit": 13282.86,
+      "debit": 663.76,
       "credit": 0
     },
     "totals": {
-      "debit": 0,
-      "credit": 12619.1
+      "debit": 23000,
+      "credit": 23080.31
     },
     "closingBalance": {
-      "debit": 663.76,
+      "debit": 583.45,
       "credit": 0
     },
     "transactions": []
@@ -2608,50 +2535,29 @@
     "account": "المنار للاستيراد و التصدير و التخليص الجمركى",
     "accountCode": "17142075",
     "openingBalance": {
-      "debit": 87554,
+      "debit": 148054,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 0
+      "credit": 35684.08
     },
     "closingBalance": {
-      "debit": 87554,
+      "debit": 112369.92,
       "credit": 0
     },
-    "transactions": [
-      {
-        "type": "deduction",
-        "amount": 26000,
-        "date": "2026-05-20T15:01:41.984Z"
-      },
-      {
-        "type": "addition",
-        "amount": 60500,
-        "date": "2026-05-20T15:52:31.765Z"
-      },
-      {
-        "type": "deduction",
-        "amount": 11000,
-        "date": "2026-05-20T15:55:29.235Z"
-      },
-      {
-        "type": "deduction",
-        "amount": 10000,
-        "date": "2026-05-20T18:58:27.457Z"
-      }
-    ]
+    "transactions": []
   },
   {
     "account": "شركة الاتربى للنقل و التخليص الجمركى",
     "accountCode": "17142076",
     "openingBalance": {
-      "debit": 49537.76,
+      "debit": 13439.16,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 36098.6
+      "credit": 0
     },
     "closingBalance": {
       "debit": 13439.16,
@@ -2663,34 +2569,18 @@
     "account": "شركة الوردة لأعمال النقل (تحت التسوية)",
     "accountCode": "17142077",
     "openingBalance": {
-      "debit": 13044.28,
+      "debit": 40544.28,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 0
+      "credit": 40151.79
     },
     "closingBalance": {
-      "debit": 13044.28,
+      "debit": 392.49,
       "credit": 0
     },
-    "transactions": [
-      {
-        "type": "addition",
-        "amount": 20000,
-        "date": "2026-05-20T16:32:22.078Z"
-      },
-      {
-        "type": "deduction",
-        "amount": 40155,
-        "date": "2026-05-20T16:32:48.093Z"
-      },
-      {
-        "type": "addition",
-        "amount": 7500,
-        "date": "2026-05-20T16:37:50.127Z"
-      }
-    ]
+    "transactions": []
   },
   {
     "account": "سى سكانر لوجستيكس",
@@ -2832,27 +2722,27 @@
     "account": "الواصل للتخليص الجمركى ( تحت التسوية)",
     "accountCode": "17142090",
     "openingBalance": {
-      "debit": 5764.07,
+      "debit": 31364.07,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 0
+      "credit": 30569.93
     },
     "closingBalance": {
-      "debit": 5764.07,
+      "debit": 794.14,
       "credit": 0
     },
     "transactions": [
       {
         "type": "addition",
-        "amount": 25600,
-        "date": "2026-05-20T15:24:27.986Z"
+        "amount": 11,
+        "date": "2026-05-21T17:27:15.323Z"
       },
       {
         "type": "deduction",
-        "amount": 30600,
-        "date": "2026-05-20T15:24:38.154Z"
+        "amount": 1,
+        "date": "2026-05-21T17:27:15.323Z"
       }
     ]
   },
@@ -2928,12 +2818,12 @@
     "account": "المصطفى للنقل و المقاولات ( تحت التسوية)",
     "accountCode": "17142095",
     "openingBalance": {
-      "debit": 2446.11,
+      "debit": 136.61,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 2309.5
+      "credit": 0
     },
     "closingBalance": {
       "debit": 136.61,
@@ -3013,15 +2903,15 @@
     "account": "زين ترانس لاعمال النقل",
     "accountCode": "17142100",
     "openingBalance": {
-      "debit": 7396.71,
+      "debit": 43584.66,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 6312.05
+      "credit": 41566.6
     },
     "closingBalance": {
-      "debit": 1084.66,
+      "debit": 2018.06,
       "credit": 0
     },
     "transactions": []
@@ -3115,27 +3005,27 @@
     "account": "شركة الهلال لاعمال النقل ( تحت التسوية )",
     "accountCode": "17142108",
     "openingBalance": {
-      "debit": 42010.18,
+      "debit": 76981.62,
       "credit": 0
     },
     "totals": {
-      "debit": 48000,
-      "credit": 61028.56
+      "debit": 0,
+      "credit": 63388.71
     },
     "closingBalance": {
-      "debit": 28981.62,
+      "debit": 13592.91,
       "credit": 0
     },
     "transactions": [
       {
-        "type": "deduction",
-        "amount": 17600,
-        "date": "2026-05-20T12:08:35.697Z"
+        "type": "addition",
+        "amount": 114000,
+        "date": "2026-05-21T13:59:35.392Z"
       },
       {
-        "type": "addition",
-        "amount": 48000,
-        "date": "2026-05-20T14:29:39.737Z"
+        "type": "deduction",
+        "amount": 93430,
+        "date": "2026-05-21T14:07:15.621Z"
       }
     ]
   },
@@ -3194,34 +3084,18 @@
     "account": "سبع للتخليص الجمركى و النقل ( تحت التسوية )",
     "accountCode": "17142114",
     "openingBalance": {
-      "debit": 15309.82,
+      "debit": 134907.44,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 5402.38
+      "credit": 128278.53
     },
     "closingBalance": {
-      "debit": 9907.44,
+      "debit": 6628.91,
       "credit": 0
     },
-    "transactions": [
-      {
-        "type": "deduction",
-        "amount": 1530,
-        "date": "2026-05-20T14:07:04.013Z"
-      },
-      {
-        "type": "addition",
-        "amount": 125000,
-        "date": "2026-05-20T14:10:22.295Z"
-      },
-      {
-        "type": "deduction",
-        "amount": 124300,
-        "date": "2026-05-20T14:14:06.365Z"
-      }
-    ]
+    "transactions": []
   },
   {
     "account": "شركة مرسى للخدمات الملاحية",
@@ -3266,10 +3140,10 @@
     },
     "totals": {
       "debit": 0,
-      "credit": 0
+      "credit": 29852.19
     },
     "closingBalance": {
-      "debit": 35073.21,
+      "debit": 5221.02,
       "credit": 0
     },
     "transactions": []
@@ -3295,11 +3169,11 @@
     "account": "ايجيبت تريد ماريتايم سرفيس ( تحت التسوية )",
     "accountCode": "17142119",
     "openingBalance": {
-      "debit": 0,
-      "credit": 20.4
+      "debit": 90079.6,
+      "credit": 0
     },
     "totals": {
-      "debit": 90100,
+      "debit": 0,
       "credit": 0
     },
     "closingBalance": {
@@ -3329,22 +3203,27 @@
     "account": "مكتب منتصر للتخليص الجمركى ( تحت التسوية )",
     "accountCode": "17142121",
     "openingBalance": {
-      "debit": 19728.1,
+      "debit": 42562.02,
       "credit": 0
     },
     "totals": {
-      "debit": 30000,
-      "credit": 7166.08
+      "debit": 0,
+      "credit": 26764.32
     },
     "closingBalance": {
-      "debit": 42562.02,
+      "debit": 15797.7,
       "credit": 0
     },
     "transactions": [
       {
+        "type": "addition",
+        "amount": 30000,
+        "date": "2026-05-21T14:45:19.760Z"
+      },
+      {
         "type": "deduction",
-        "amount": 25000,
-        "date": "2026-05-20T16:03:26.250Z"
+        "amount": 38200,
+        "date": "2026-05-21T14:45:29.574Z"
       }
     ]
   },
@@ -3352,24 +3231,35 @@
     "account": "عملاء تستيف صادر (سيسكو) تحت التسوية",
     "accountCode": "17142122",
     "openingBalance": {
-      "debit": 4679.87,
+      "debit": 3781.43,
       "credit": 0
     },
     "totals": {
-      "debit": 57000,
-      "credit": 57898.44
+      "debit": 0,
+      "credit": 0
     },
     "closingBalance": {
       "debit": 3781.43,
       "credit": 0
     },
-    "transactions": []
+    "transactions": [
+      {
+        "type": "addition",
+        "amount": 60000,
+        "date": "2026-05-21T13:15:40.569Z"
+      },
+      {
+        "type": "deduction",
+        "amount": 61100,
+        "date": "2026-05-21T13:15:40.569Z"
+      }
+    ]
   },
   {
     "account": "شركة راشدين العالمية للتجارة مصر (تحت التسوية)",
     "accountCode": "17142123",
     "openingBalance": {
-      "debit": 41503.34,
+      "debit": 39982.22,
       "credit": 0
     },
     "totals": {
@@ -3377,7 +3267,7 @@
       "credit": 1521.12
     },
     "closingBalance": {
-      "debit": 39982.22,
+      "debit": 38461.1,
       "credit": 0
     },
     "transactions": []
@@ -3420,12 +3310,12 @@
     "account": "الهلال للإستيراد و التصدير و النقل ( تحت التسوية )",
     "accountCode": "17142126",
     "openingBalance": {
-      "debit": 8785.7,
+      "debit": 11.6,
       "credit": 0
     },
     "totals": {
-      "debit": 3850,
-      "credit": 12624.1
+      "debit": 0,
+      "credit": 0
     },
     "closingBalance": {
       "debit": 11.6,
@@ -3437,12 +3327,12 @@
     "account": "الإخلاص لأعمال النقل ( تحت التسوية )",
     "accountCode": "17142127",
     "openingBalance": {
-      "debit": 11802.47,
+      "debit": 11153.07,
       "credit": 0
     },
     "totals": {
-      "debit": 36000,
-      "credit": 36649.4
+      "debit": 0,
+      "credit": 0
     },
     "closingBalance": {
       "debit": 11153.07,
@@ -3454,18 +3344,29 @@
     "account": "المجد للاستيراد و التصدير ( تحت التسوية )",
     "accountCode": "17142128",
     "openingBalance": {
-      "debit": 10992.81,
+      "debit": 61.76,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 10931.05
+      "credit": 0
     },
     "closingBalance": {
       "debit": 61.76,
       "credit": 0
     },
-    "transactions": []
+    "transactions": [
+      {
+        "type": "addition",
+        "amount": 2300,
+        "date": "2026-05-21T13:58:25.080Z"
+      },
+      {
+        "type": "deduction",
+        "amount": 2300,
+        "date": "2026-05-21T13:58:25.080Z"
+      }
+    ]
   },
   {
     "account": "شركة شينكر ايجيبت",
@@ -3505,49 +3406,33 @@
     "account": "هوت لاين جروب للشحن و النقل و التخليص (تحت التسوية)",
     "accountCode": "17142131",
     "openingBalance": {
-      "debit": 0,
-      "credit": 66.12
-    },
-    "totals": {
-      "debit": 0,
+      "debit": 46933.88,
       "credit": 0
     },
-    "closingBalance": {
-      "debit": 0,
-      "credit": 66.12
+    "totals": {
+      "debit": 40000,
+      "credit": 85120.36
     },
-    "transactions": [
-      {
-        "type": "addition",
-        "amount": 47000,
-        "date": "2026-05-20T16:24:56.447Z"
-      },
-      {
-        "type": "deduction",
-        "amount": 85125,
-        "date": "2026-05-20T16:25:10.758Z"
-      },
-      {
-        "type": "addition",
-        "amount": 40000,
-        "date": "2026-05-20T16:38:01.105Z"
-      }
-    ]
+    "closingBalance": {
+      "debit": 1813.52,
+      "credit": 0
+    },
+    "transactions": []
   },
   {
     "account": "أوشن نتورك اكسبريس(مصر) للملاحة (تحت التسوية)",
     "accountCode": "17142132",
     "openingBalance": {
       "debit": 0,
-      "credit": 1967685.07
+      "credit": 2468977.15
     },
     "totals": {
       "debit": 0,
-      "credit": 501292.08
+      "credit": 596332.37
     },
     "closingBalance": {
       "debit": 0,
-      "credit": 2468977.15
+      "credit": 3065309.52
     },
     "transactions": []
   },
@@ -3627,12 +3512,12 @@
       "credit": 21970.62
     },
     "totals": {
-      "debit": 0,
+      "debit": 23509.28,
       "credit": 0
     },
     "closingBalance": {
-      "debit": 0,
-      "credit": 21970.62
+      "debit": 1538.66,
+      "credit": 0
     },
     "transactions": []
   },
@@ -3674,12 +3559,12 @@
     "account": "شركة مارين لاين محمد عبد الوهاب (تحت التسوية)",
     "accountCode": "17142143",
     "openingBalance": {
-      "debit": 9776.82,
+      "debit": 3707.35,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 6069.47
+      "credit": 0
     },
     "closingBalance": {
       "debit": 3707.35,
@@ -3691,12 +3576,12 @@
     "account": "مهند لأعمال النقل ( تحت التسوية )",
     "accountCode": "17142144",
     "openingBalance": {
-      "debit": 23458.92,
+      "debit": 403.94,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 23054.98
+      "credit": 0
     },
     "closingBalance": {
       "debit": 403.94,
@@ -3725,15 +3610,15 @@
     "account": "ميدترينيان شيبنج مصر ( تحت التسوية )",
     "accountCode": "17142146",
     "openingBalance": {
-      "debit": 5300725.6,
+      "debit": 4886685.25,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 414040.35
+      "credit": 289698.74
     },
     "closingBalance": {
-      "debit": 4886685.25,
+      "debit": 4596986.51,
       "credit": 0
     },
     "transactions": []
@@ -3810,18 +3695,24 @@
     "account": "ايه جى إكسبريس لوجستيكس النجيرى ( تحت التسوية )",
     "accountCode": "17142152",
     "openingBalance": {
-      "debit": 11778.16,
-      "credit": 0
-    },
-    "totals": {
-      "debit": 0,
-      "credit": 11406.2
-    },
-    "closingBalance": {
       "debit": 371.96,
       "credit": 0
     },
-    "transactions": []
+    "totals": {
+      "debit": 11400,
+      "credit": 0
+    },
+    "closingBalance": {
+      "debit": 11771.96,
+      "credit": 0
+    },
+    "transactions": [
+      {
+        "type": "deduction",
+        "amount": 11370,
+        "date": "2026-05-21T13:12:22.060Z"
+      }
+    ]
   },
   {
     "account": "شركة ايجيبت مار للتوكيلات الملاحية",
@@ -3844,12 +3735,12 @@
     "account": "اليامن لأعمال النقل ( تحت التسوية )",
     "accountCode": "17142154",
     "openingBalance": {
-      "debit": 2803.59,
+      "debit": 433.45,
       "credit": 0
     },
     "totals": {
       "debit": 0,
-      "credit": 2370.14
+      "credit": 0
     },
     "closingBalance": {
       "debit": 433.45,
@@ -4059,7 +3950,18 @@
       "debit": 1007.23,
       "credit": 0
     },
-    "transactions": []
+    "transactions": [
+      {
+        "type": "deduction",
+        "amount": 13300,
+        "date": "2026-05-21T20:15:50.168Z"
+      },
+      {
+        "type": "addition",
+        "amount": 13000,
+        "date": "2026-05-21T20:15:57.613Z"
+      }
+    ]
   },
   {
     "account": "نيو مارين عبدالرحمن سليم العوا",
