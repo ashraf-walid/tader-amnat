@@ -27,7 +27,12 @@ export const STORAGE_CONFIG = {
       FORKLIFT: { name: 'كلارك', rate: 30, unit: 'per_container' }
     },
     SHIFTING: {
-      YARD_TO_YARD: { name: 'نقل بين الساحات', rate: 88, unit: 'per_container' }
+      YARD_TO_YARD: { 
+        name: 'نقل بين الساحات', 
+        rate20: 44, 
+        rate40: 88, 
+        unit: 'per_container' 
+      }
     },
     DANGER_YARD: {
       // تخزين في ساحة الخطر — يُحسب بالشرائح لكل حاوية
@@ -186,6 +191,6 @@ export const STORAGE_CONFIG = {
 export const SERVICES_LIST = [
   { id: "crane3", name: "ونش 3 طن", rate: 13 },
   { id: "crane5", name: "ونش 5 طن", rate: 15 },
-  { id: "clark",  name: "كلارك",    rate: 10 },
-  { id: "yard",   name: "نقل بين الساحات", rate: 88 },
+  { id: "crane25",  name: "ونش 25 طن",    rate: 85 },
+  { id: "yard",   name: "نقل بين الساحات", rate: 0, isVariable: true },
 ];

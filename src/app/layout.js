@@ -1,14 +1,17 @@
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Alexandria, Outfit } from 'next/font/google';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const outfit = Outfit({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-sans',
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+
+const alexandria = Alexandria({
+  subsets: ['arabic', 'latin'],
+  variable: '--font-sans',
+  display: 'swap',
 });
 
 export const metadata = {
@@ -20,7 +23,7 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${alexandria.variable} ${outfit.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

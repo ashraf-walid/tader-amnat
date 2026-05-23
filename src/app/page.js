@@ -4,15 +4,13 @@ import React, { useState, useMemo } from 'react';
 import { 
   Upload, 
   Search, 
-  FileText, 
-  ArrowUpRight, 
-  ArrowDownLeft, 
-  Wallet, 
   TrendingUp,
   X,
   Check,
   Filter,
-  History
+  History,
+  Download,
+  Trash2
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -49,10 +47,10 @@ export default function AccountsDashboard() {
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
-  // Load data on start and poll every 10 seconds
+  // Load data on start and poll every 60 seconds
   React.useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 10000);
+    const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -126,6 +124,31 @@ export default function AccountsDashboard() {
   const processFile = async (file) => {
     setLoading(true);
     try {
+      const fileName = file.name.toLowerCase();
+      
+      // إذا كان الملف نسخة احتياطية (JSON)
+      if (fileName.endsWith('.json')) {
+        const text = await file.text();
+        let backup;
+        try {
+          backup = JSON.parse(text);
+        } catch (e) {
+          throw new Error('فشل في قراءة محتوى الملف بصيغة JSON. قد يكون الملف تالفاً.');
+        }
+        
+        // التحقق من وجود مصفوفة البيانات (سواء كانت في backup.data أو كانت هي الملف نفسه)
+        const dataToRestore = Array.isArray(backup) ? backup : backup.data;
+
+        if (Array.isArray(dataToRestore)) {
+          setData(dataToRestore);
+          await saveDataToServer(dataToRestore);
+          return;
+        } else {
+          throw new Error('هيكل ملف النسخة الاحتياطية غير صحيح. لم يتم العثور على مصفوفة بيانات.');
+        }
+      }
+
+      // إذا كان ملف HTML من النظام المحاسبي
       const results = await parseAccountingHTML(file);
       
       // Preserve existing transactions when uploading a new file
@@ -140,7 +163,7 @@ export default function AccountsDashboard() {
       setData(mergedResults);
       await saveDataToServer(mergedResults); // Global sync
     } catch (err) {
-      alert('حدث خطأ أثناء معالجة الملف. يرجى التأكد من أنه ملف حسابات صحيح.');
+      alert(err.message || 'حدث خطأ أثناء معالجة الملف. يرجى التأكد من أنه ملف صحيح.');
     } finally {
       setLoading(false);
     }
@@ -193,6 +216,24 @@ export default function AccountsDashboard() {
     }
   };
 
+  const downloadData = () => {
+    if (!window.confirm('هل تريد حفظ نسخة احتياطية من البيانات الحالية على جهازك؟')) return;
+    
+    const backupData = {
+      timestamp: new Date().toISOString(),
+      data: data
+    };
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `amanat_backup_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const onDragOver = (e) => {
     e.preventDefault();
     setIsDragging(true);
@@ -214,11 +255,11 @@ export default function AccountsDashboard() {
         {/* Header Section */}
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in">
           <div>
-            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
+            <h1 className="text-xl sm:text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
               أمانات | تحليل حسابات العملاء
             </h1>
             <div className="flex flex-wrap items-center gap-4 mt-2">
-               <div className="flex items-center gap-2">
+               <div className="flex items-center gap-2 max-sm:hidden">
                  <div className={cn("w-2 h-2 rounded-full animate-pulse", errorStatus ? "bg-red-500" : "bg-green-500")}></div>
                  <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
                    {errorStatus ? `خطأ في الاتصال: ${errorStatus}` : "مزامنة مباشرة عبر الشبكة"}
@@ -226,7 +267,7 @@ export default function AccountsDashboard() {
                </div>
                
                {lastUpdated && (
-                 <span className="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-md text-slate-500">
+                 <span className="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-md text-slate-500 max-sm:hidden">
                    آخر تحديث: {lastUpdated}
                  </span>
                )}
@@ -240,13 +281,29 @@ export default function AccountsDashboard() {
           </div>
           
           {data.length > 0 && (
-            <button 
-              onClick={clearData}
-              className="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-full transition-colors flex items-center gap-2"
-            >
-              <X size={16} />
-              مسح البيانات من الجميع
-            </button>
+            <div className="flex flex-wrap items-center gap-2 md:gap-3">
+              <button 
+                onClick={downloadData}
+                className="flex-1 md:flex-none px-3 py-2 text-xs md:text-sm font-bold text-slate-600 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
+              >
+                <Download size={14} className="text-blue-500" />
+                نسخة احتياطية
+              </button>
+              
+              <label className="flex-1 md:flex-none cursor-pointer px-3 py-2 text-xs md:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2">
+                <Upload size={14} />
+                استبدال
+                <input type="file" className="hidden" accept=".html,.htm,.json" onChange={handleFileUpload} />
+              </label>
+
+              <button 
+                onClick={clearData}
+                className="p-2 md:p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all border border-transparent hover:border-red-100 dark:hover:border-red-900/30"
+                title="مسح كافة البيانات"
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
           )}
         </header>
 
@@ -254,22 +311,22 @@ export default function AccountsDashboard() {
           /* Empty State / Upload Zone */
           <div 
             className={cn(
-              "relative group h-[400px] border-2 border-dashed rounded-3xl flex flex-col items-center justify-center transition-all animate-in duration-700",
+              "relative group h-[300px] md:h-[400px] border-2 border-dashed rounded-3xl flex flex-col items-center justify-center transition-all animate-in duration-700 mx-4 md:mx-0",
               isDragging ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/10 scale-[0.99]" : "border-slate-200 dark:border-slate-800 hover:border-blue-400"
             )}
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
             onDrop={onDrop}
           >
-            <div className="p-6 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 mb-6 group-hover:scale-110 transition-transform">
-              <Upload size={48} strokeWidth={1.5} />
+            <div className="p-4 md:p-6 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 mb-4 md:mb-6 group-hover:scale-110 transition-transform">
+              <Upload strokeWidth={1.5} className="w-8 h-8 md:w-12 md:h-12" />
             </div>
-            <h2 className="text-xl font-semibold mb-2">اسحب وأفلت الملف هنا</h2>
-            <p className="text-slate-500 mb-8">يدعم ملفات HTML المستخرجة من نظام المحاسبة</p>
+            <h2 className="text-lg md:text-xl font-semibold mb-2">اسحب وأفلت الملف هنا</h2>
+            <p className="text-xs md:text-base text-slate-500 mb-6 md:mb-8 text-center px-4">يدعم ملفات HTML المستخرجة من برنامج الحسابات</p>
             
-            <label className="cursor-pointer px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-lg shadow-blue-500/25 transition-all active:scale-95">
+            <label className="cursor-pointer px-6 md:px-8 py-2 md:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-lg shadow-blue-500/25 transition-all active:scale-95">
               اختيار الملف من الجهاز
-              <input type="file" className="hidden" accept=".html,.htm" onChange={handleFileUpload} />
+              <input type="file" className="hidden" accept=".html,.htm,.json" onChange={handleFileUpload} />
             </label>
           </div>
         ) : (
@@ -299,50 +356,51 @@ export default function AccountsDashboard() {
 
             {/* List & Search */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-              <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
+              <div className="p-4 md:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col gap-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex flex-col">
-                    <h3 className="font-semibold text-lg whitespace-nowrap">تفاصيل حسابات العملاء</h3>
-                    <span className="text-xs text-slate-500 font-medium">
+                    <h3 className="font-semibold text-lg whitespace-nowrap text-center md:text-right">تفاصيل حسابات العملاء</h3>
+                    <span className="text-xs text-slate-500 font-medium text-center md:text-right">
                       إجمالي المعروض: {filteredData.length} من {data.length}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center justify-center md:justify-end gap-2">
                     <button 
                       onClick={() => setIsPriorityActive(!isPriorityActive)}
                       className={cn(
-                        "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all",
+                        "flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold transition-all",
                         isPriorityActive 
                           ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30" 
                           : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200"
                       )}
                     >
-                      <Filter size={14} />
-                      {isPriorityActive ? "المكاتب التي تتعامل معنا بشكل مستمر" : "جميع العملاء"}
+                      <Filter size={12} />
+                      {isPriorityActive ? "العملاء الدائمين" : "جميع العملاء"}
                     </button>
 
                     <button 
                       onClick={() => setIsTransactionsOnlyActive(!isTransactionsOnlyActive)}
                       className={cn(
-                        "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all",
+                        "flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold transition-all",
                         isTransactionsOnlyActive 
                           ? "bg-orange-600 text-white shadow-lg shadow-orange-500/30" 
                           : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200"
                       )}
                     >
-                      <History size={14} />
-                      {isTransactionsOnlyActive ? "المعاملات فقط" : "كل العملاء"}
+                      <History size={12} />
+                      المعاملات
                     </button>
                   </div>
                 </div>
-                <div className="relative w-full md:w-96">
+                
+                <div className="relative w-full">
                   <Search size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input 
                     type="text"
                     placeholder="ابحث باسم العميل أو الكود..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pr-10 pl-10 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                    className="w-full pr-10 pl-10 py-3 md:py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-sm"
                   />
                   {search && (
                     <button 
@@ -355,13 +413,14 @@ export default function AccountsDashboard() {
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-sm">
                       <th className="px-6 py-4 text-right font-medium">العميل / الحساب</th>
-                      <th className="px-6 py-4 text-center font-medium">الرصيد الافتتاحي</th>
-                      <th className="px-6 py-4 text-center font-medium">المجاميع</th>
+                      {/* <th className="px-6 py-4 text-center font-medium">الرصيد الافتتاحي</th>
+                      <th className="px-6 py-4 text-center font-medium">المجاميع</th> */}
                       <th className="px-6 py-4 text-center font-medium text-blue-600">إضافة مبلغ (+)</th>
                       <th className="px-6 py-4 text-center font-medium text-red-600">تخصيم مبلغ (-)</th>
                       <th className="px-6 py-4 text-center w-4"></th>
@@ -371,19 +430,14 @@ export default function AccountsDashboard() {
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {filteredData.map((item, idx) => {
                       const pending = pendingChanges[item.accountCode] || {};
-                      
-                      // Calculate from history
                       const historyAddition = (item.transactions || [])
                         .filter(t => t.type === 'addition')
                         .reduce((sum, t) => sum + t.amount, 0);
-                      
                       const historyDeduction = (item.transactions || [])
                         .filter(t => t.type === 'deduction')
                         .reduce((sum, t) => sum + t.amount, 0);
-
                       const addition = pending.manualAddition || 0;
                       const deduction = pending.manualDeduction || 0;
-                      
                       const baseBalance = item.closingBalance.debit - item.closingBalance.credit;
                       const finalBalance = baseBalance + historyAddition + addition - (historyDeduction + deduction);
                       const hasChanges = addition > 0 || deduction > 0;
@@ -400,9 +454,7 @@ export default function AccountsDashboard() {
                           }}>
                             <div className="flex flex-col gap-1 overflow-hidden">
                               <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2 group-hover/cell:text-blue-600 transition-colors">
-                                <span className="truncate whitespace-nowrap" title={item.account}>
-                                  {item.account}
-                                </span>
+                                <span className="truncate whitespace-nowrap" title={item.account}>{item.account}</span>
                                 {transactionCount > 0 && (
                                   <span className="shrink-0 text-[10px] px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 rounded text-blue-600 flex items-center gap-1">
                                     <History size={10} />
@@ -410,73 +462,46 @@ export default function AccountsDashboard() {
                                   </span>
                                 )}
                               </div>
-                              <div className="flex items-center gap-2">
-                                <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 rounded uppercase tracking-wider">
-                                  {item.accountCode || '---'}
-                                </span>
+                              <span className="px-2 py-0.5 w-fit text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 rounded uppercase tracking-wider">
+                                {item.accountCode || '---'}
+                              </span>
                               </div>
-                            </div>
                           </td>
+                          {/* 
                           <td className="px-6 py-4 text-center text-sm font-mono whitespace-nowrap">
                             <div className="flex flex-col">
                               <span className="text-green-600">{item.openingBalance.debit.toLocaleString()}</span>
                               <span className="text-red-500">{item.openingBalance.credit.toLocaleString()}</span>
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-center text-sm font-mono whitespace-nowrap">
-                            <div className="flex flex-col text-xs">
-                               <div className="flex justify-between gap-4 text-slate-500">
-                                 <span>الأساسي:</span>
-                                 <span>{(item.closingBalance.debit - item.closingBalance.credit).toLocaleString()}</span>
-                               </div>
-                               {(historyAddition > 0 || historyDeduction > 0) && (
-                                 <div className="flex justify-between gap-4 text-orange-500 font-medium">
-                                   <span>تسويات:</span>
-                                   <span>{(historyAddition - historyDeduction).toLocaleString()}</span>
-                                 </div>
-                               )}
-                            </div>
-                          </td>
+                          */}
                           <td className="px-6 py-4 text-center">
-                            <div className="flex items-center justify-center gap-1 group">
-                              <input 
-                                type="number"
-                                placeholder="0.00"
-                                value={pending.manualAddition || ''}
-                                onChange={(e) => updateManualValue(item.accountCode, 'manualAddition', e.target.value)}
-                                className="w-24 px-2 py-1 text-center text-sm font-mono text-blue-600 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 no-spinner focus:placeholder:text-transparent"
-                              />
-                            </div>
-                          </td>
+                            <input 
+                              type="number"
+                              placeholder="0"
+                              value={pending.manualAddition || ''}
+                              onChange={(e) => updateManualValue(item.accountCode, 'manualAddition', e.target.value)}
+                              className="w-24 px-2 py-1 text-center text-sm font-mono text-blue-600 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 no-spinner"
+                            />
+                          </td> 
                           <td className="px-6 py-4 text-center">
-                            <div className="flex items-center justify-center gap-1 group">
-                              <input 
-                                type="number"
-                                placeholder="0.00"
-                                value={pending.manualDeduction || ''}
-                                onChange={(e) => updateManualValue(item.accountCode, 'manualDeduction', e.target.value)}
-                                className="w-24 px-2 py-1 text-center text-sm font-mono text-red-600 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 no-spinner focus:placeholder:text-transparent"
-                              />
-                            </div>
+                            <input 
+                              type="number"
+                              placeholder="0"
+                              value={pending.manualDeduction || ''}
+                              onChange={(e) => updateManualValue(item.accountCode, 'manualDeduction', e.target.value)}
+                              className="w-24 px-2 py-1 text-center text-sm font-mono text-red-600 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 no-spinner"
+                            />
                           </td>
-                          <td className="w-28">
-                            <div className="h-8 flex items-center justify-center">
-                              {hasChanges && (
-                                <button 
-                                  onClick={() => commitChanges(item.accountCode)}
-                                  className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-sm transition-all active:scale-95 animate-in flex items-center gap-1 whitespace-nowrap"
-                                >
-                                  <Check size={12} />
-                                  <span className="text-sm font-bold">حفظ</span>
-                                </button>
-                              )}
-                            </div>
+                          <td className="w-28 text-center">
+                            {hasChanges && (
+                              <button onClick={() => commitChanges(item.accountCode)} className="px-2 py-1 bg-green-600 text-white rounded-lg shadow-sm flex items-center gap-1 mx-auto text-xs">
+                                <Check size={12} /> حفظ
+                              </button>
+                            )}
                           </td>
-                          <td className="px-6 py-4 text-left text-sm font-bold font-mono whitespace-nowrap">
-                            <div className={cn(
-                              "inline-block px-3 py-1 rounded-lg text-lg",
-                              finalBalance > 0 ? "bg-green-600 text-white" : "bg-red-600 text-white shadow-lg"
-                            )}>
+                          <td className="px-6 py-4 text-left font-bold font-mono whitespace-nowrap">
+                            <div className={cn("inline-block px-3 py-1 rounded-lg text-lg", finalBalance > 0 ? "bg-green-600 text-white" : "bg-red-600 text-white shadow-lg")}>
                               {finalBalance.toLocaleString()}
                             </div>
                           </td>
@@ -485,6 +510,74 @@ export default function AccountsDashboard() {
                     })}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+                {filteredData.map((item, idx) => {
+                  const pending = pendingChanges[item.accountCode] || {};
+                  const historyAddition = (item.transactions || [])
+                    .filter(t => t.type === 'addition')
+                    .reduce((sum, t) => sum + t.amount, 0);
+                  const historyDeduction = (item.transactions || [])
+                    .filter(t => t.type === 'deduction')
+                    .reduce((sum, t) => sum + t.amount, 0);
+                  const addition = pending.manualAddition || 0;
+                  const deduction = pending.manualDeduction || 0;
+                  const baseBalance = item.closingBalance.debit - item.closingBalance.credit;
+                  const finalBalance = baseBalance + historyAddition + addition - (historyDeduction + deduction);
+                  const hasChanges = addition > 0 || deduction > 0;
+                  const transactionCount = (item.transactions || []).length;
+
+                  return (
+                    <div key={idx} className={cn("p-4 space-y-4", hasChanges && "bg-blue-50/20 dark:bg-blue-900/5")}>
+                      <div className="flex justify-between items-start" onClick={() => { setSelectedAccount(item); setIsHistoryOpen(true); }}>
+                        <div className="space-y-1">
+                          <h4 className="font-bold text-slate-900 dark:text-white leading-tight">{item.account}</h4>
+                          <span className="text-[10px] px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded font-bold uppercase">{item.accountCode}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                           {transactionCount > 0 && <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1"><History size={10} />{transactionCount}</span>}
+                           <div className={cn("px-3 py-1 rounded text-sm font-bold font-mono", finalBalance > 0 ? "text-green-600" : "text-red-500")}>
+                             {finalBalance.toLocaleString()}
+                           </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 items-end">
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-bold text-blue-600 uppercase">إضافة (+)</span>
+                          <input 
+                            type="number"
+                            placeholder="0"
+                            value={pending.manualAddition || ''}
+                            onChange={(e) => updateManualValue(item.accountCode, 'manualAddition', e.target.value)}
+                            className="w-full p-2 text-center text-sm font-mono text-blue-600 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-xl focus:outline-none"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-bold text-red-600 uppercase">خصم (-)</span>
+                          <input 
+                            type="number"
+                            placeholder="0"
+                            value={pending.manualDeduction || ''}
+                            onChange={(e) => updateManualValue(item.accountCode, 'manualDeduction', e.target.value)}
+                            className="w-full p-2 text-center text-sm font-mono text-red-600 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-xl focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      {hasChanges && (
+                        <button 
+                          onClick={() => commitChanges(item.accountCode)}
+                          className="w-full py-2.5 bg-green-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-green-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                        >
+                          <Check size={16} /> حفظ التعديلات
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -561,7 +654,7 @@ export default function AccountsDashboard() {
       )}
 
       <footer className="mt-12 text-center text-slate-400 text-sm">
-        نظام أمانات لتحليل البيانات الحسابية &copy; 2026
+        نظام أمانات لعرض حسابات العملاء &copy; 2026
       </footer>
     </div>
   );
