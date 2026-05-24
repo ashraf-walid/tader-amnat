@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
+import { connectToDatabase } from '@/lib/mongodb';
+import AccountData from '@/models/AccountData';
 
 export const dynamic = 'force-dynamic';
 
-const DATA_FILE = path.join(process.cwd(), 'data_storage.json');
-
 export async function GET() {
   try {
-    const content = await fs.readFile(DATA_FILE, 'utf-8');
-    const data = JSON.parse(content);
+    await connectToDatabase();
+    const data = await AccountData.find({}).sort({ accountCode: 1 });
+    
     return NextResponse.json({
       data: data,
       timestamp: Date.now()
@@ -21,7 +20,7 @@ export async function GET() {
       }
     });
   } catch (error) {
-    console.log('GET /api/data: No file found or error, returning empty');
+    console.error('GET /api/data Error:', error);
     return NextResponse.json({ data: [], timestamp: Date.now() });
   }
 }
@@ -29,8 +28,16 @@ export async function GET() {
 export async function POST(request) {
   try {
     const data = await request.json();
-    await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2));
-    console.log('POST /api/data: Saved', data.length, 'items');
+    await connectToDatabase();
+    
+    // Replace all data with the new uploaded data
+    // This matches the original logic of overwriting the JSON file
+    await AccountData.deleteMany({});
+    if (data && data.length > 0) {
+      await AccountData.insertMany(data);
+    }
+    
+    console.log('POST /api/data: Saved', data.length, 'items to MongoDB');
     return NextResponse.json({ success: true, timestamp: Date.now() });
   } catch (error) {
     console.error('POST /api/data Error:', error);
