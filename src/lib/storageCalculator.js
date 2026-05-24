@@ -167,7 +167,7 @@ export function calculateServiceFee(config, options = {}) {
   } = options;
 
   const FIXED_SERVICE_FEE = config?.FIXED_SERVICE_FEE || 0;
-  const serviceMultiplier = isDangerous ? 2 : 1;
+  const serviceMultiplier = isDangerous ? 1.5 : 1;
   
   let totalUSD = 0;
   const totalFixedFeesUSD = FIXED_SERVICE_FEE * containerCount;

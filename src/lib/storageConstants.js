@@ -6,26 +6,21 @@
 export const STORAGE_CONFIG = {
   // Global Settings
   GLOBAL: {
-    VAT_RATE: 0.14, // 14% ضريبة القيمة المضافة
-    DEFAULT_EXCHANGE_RATE: Number(process.env.NEXT_PUBLIC_DEFAULT_EXCHANGE_RATE) || 53.1971, // سعر صرف افتراضي (يمكن تحديثه)
-    MARTYR_STAMP_FEE: 5, // طابع شهيد (5 جنيهات ثابتة على الفاتورة)
+    VAT_RATE: 0.14, // 14% Value Added Tax
+    DEFAULT_EXCHANGE_RATE: Number(process.env.NEXT_PUBLIC_DEFAULT_EXCHANGE_RATE),
+    MARTYR_STAMP_FEE: 5, // Martyr Stamp Fee (5 EGP fixed on the invoice)
     BASE_CURRENCY: 'EGP',
     STORAGE_CURRENCY: 'USD'
   },
 
-  // Billing Types (أنواع الفواتير)
+  // Billing Types
   BILLING_TYPES: {
-    INITIAL: 'INITIAL', // فاتورة أول مرة (تشمل فترة سماح)
-    RENEWAL: 'RENEWAL'  // فاتورة تجديد (لا تشمل فترة سماح فى حالة التجديد بعد وقت الوصول بخمس ايام)
+    INITIAL: 'INITIAL', // First invoice (includes grace period)
+    RENEWAL: 'RENEWAL'  // Renewal invoice (does not include grace period in case of renewal after arrival time by five days)
   },
 
-  // Additional Services (خدمات إضافية)
+  // Additional Services
   SERVICES: {
-    EQUIPMENT: {
-      CRANE_3T: { name: 'ونش 3 طن', rate: 13, unit: 'per_container' },
-      CRANE_5T: { name: 'ونش 5 طن', rate: 15, unit: 'per_container' },
-      FORKLIFT: { name: 'كلارك', rate: 30, unit: 'per_container' }
-    },
     SHIFTING: {
       YARD_TO_YARD: { 
         name: 'نقل بين الساحات', 
@@ -35,7 +30,7 @@ export const STORAGE_CONFIG = {
       }
     },
     DANGER_YARD: {
-      // تخزين في ساحة الخطر — يُحسب بالشرائح لكل حاوية
+      // Storage in the danger yard — calculated in tiers per container
       GRACE_PERIOD_DAYS: 0,
       TIERS: [
         { name: 'الشريحة 1 (خطر)', minDay: 1, maxDay: 3,        rate: 33 },
@@ -44,9 +39,9 @@ export const STORAGE_CONFIG = {
     }
   },
 
-  // Import Containers (الوارد)
+  // Import Containers
   IMPORT: {
-    // 20ft Container (حاوية 20 قدم)
+    // 20ft Container
     TWENTY_FT: {
       CARGO_SERVICE_FEE: 60, // تفريغ أو شحن المشمول
       FULL: {
@@ -58,13 +53,13 @@ export const STORAGE_CONFIG = {
             name: 'Tier 1',
             minDay: 6,
             maxDay: 20,
-            rate: 8 // 8 دولار لكل يوم
+            rate: 8
           },
           {
             name: 'Tier 2',
             minDay: 21,
             maxDay: Infinity,
-            rate: 12 // 12 دولار لكل يوم لما زاد عن 20 يوم
+            rate: 12
           }
         ]
       },
@@ -83,7 +78,8 @@ export const STORAGE_CONFIG = {
         FIXED_SERVICE_FEE: 25,
         CURRENCY: 'USD',
         TIERS: [
-          { name: 'شريحة موحدة', minDay: 1, maxDay: Infinity, rate: 12 }
+          { name: 'شريحة 1', minDay: 1, maxDay: 20, rate: 12 },
+          { name: 'شريحة 2', minDay: 21, maxDay: Infinity, rate: 18 }
         ]
       },
       // Non-Standard Containers (غير منتظم)
@@ -150,7 +146,8 @@ export const STORAGE_CONFIG = {
         FIXED_SERVICE_FEE: 25,
         CURRENCY: 'USD',
         TIERS: [
-          { name: 'شريحة موحدة', minDay: 1, maxDay: Infinity, rate: 21 }
+          { name: 'شريحة 1', minDay: 1, maxDay: 20, rate: 21 },
+          { name: 'شريحة 2', minDay: 21, maxDay: Infinity, rate: 31.5 }
         ]
       },
       // Non-Standard Containers (غير منتظم)
