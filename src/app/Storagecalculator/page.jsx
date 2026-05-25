@@ -11,8 +11,10 @@ import {
   ClockIcon, 
   OptionsIcon, 
   CheckIcon, 
-  SummaryIcon 
+  SummaryIcon,
+  InfoIcon
 } from "./Icons";
+import Link from "next/link";
 
 // ─────────────────────────────────────────────
 // سعر الصرف اليومي — يأتي من الـ admin (prop أو context)
@@ -55,6 +57,7 @@ export default function StorageCalculator({
       .catch(err => console.error("Failed to fetch exchange rate", err));
   }, [isRateOverridden]);
 
+
   // ── Advanced / secondary state ──
   const [advOpen, setAdvOpen] = useState(false);
   const [prevDays, setPrevDays] = useState(0);
@@ -72,6 +75,13 @@ export default function StorageCalculator({
   // ── Result ──
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+
+  // منع تحديد ساحة الطوارئ للحالات غير المنتظمة
+  useEffect(() => {
+    if (cargoType === "NON_STANDARD" && hasDangerYard) {
+      setHasDangerYard(false);
+    }
+  }, [cargoType, hasDangerYard]);
 
   function toggleService(id) {
     setServices(prev => {
@@ -119,21 +129,21 @@ export default function StorageCalculator({
       if (twentyCount > 0) {
         const baseConfig = STORAGE_CONFIG.IMPORT.TWENTY_FT;
         let surchargeConfig = null;
-        if (cargoType === "REEFER") surchargeConfig = baseConfig.REEFER;
-        else if (cargoType === "NON_STANDARD") {
-          const nsCfg = baseConfig.NON_STANDARD[nonStdType];
-          surchargeConfig = {
-            ...baseConfig.FULL,
-            TIERS: baseConfig.FULL.TIERS.map(t => ({ ...t, rate: t.rate * (nsCfg.RATE_MULTIPLIER - 1) }))
-          };
+        let rateMultiplier = 1;
+
+        if (cargoType === "REEFER") {
+          surchargeConfig = baseConfig.REEFER;
+        } else if (cargoType === "NON_STANDARD") {
+          rateMultiplier = baseConfig.NON_STANDARD[nonStdType].RATE_MULTIPLIER;
         }
 
         containerGroups.push({
           sizeLabel: "٢٠ قدم",
           count: twentyCount,
-          config: { ...baseConfig.FULL, CARGO_SERVICE_FEE: baseConfig.CARGO_SERVICE_FEE },
-          dangerousConfig: { ...baseConfig.DANGEROUS, CARGO_SERVICE_FEE: baseConfig.CARGO_SERVICE_FEE },
+          config: { ...baseConfig.FULL, CARGO_SERVICE_FEE: baseConfig.CARGO_SERVICE_FEE * nsMultiplier },
+          dangerousConfig: { ...baseConfig.DANGEROUS, CARGO_SERVICE_FEE: baseConfig.CARGO_SERVICE_FEE * nsMultiplier },
           surchargeConfig,
+          rateMultiplier,
           isDangerous: isDangerousCargo,
           hasCargoService: hasCargoStripping && stripping20 > 0,
           cargoServiceCount: stripping20,
@@ -145,21 +155,21 @@ export default function StorageCalculator({
       if (fortyCount > 0) {
         const baseConfig = STORAGE_CONFIG.IMPORT.FORTY_FT;
         let surchargeConfig = null;
-        if (cargoType === "REEFER") surchargeConfig = baseConfig.REEFER;
-        else if (cargoType === "NON_STANDARD") {
-          const nsCfg = baseConfig.NON_STANDARD[nonStdType];
-          surchargeConfig = {
-            ...baseConfig.FULL,
-            TIERS: baseConfig.FULL.TIERS.map(t => ({ ...t, rate: t.rate * (nsCfg.RATE_MULTIPLIER - 1) }))
-          };
+        let rateMultiplier = 1;
+
+        if (cargoType === "REEFER") {
+          surchargeConfig = baseConfig.REEFER;
+        } else if (cargoType === "NON_STANDARD") {
+          rateMultiplier = baseConfig.NON_STANDARD[nonStdType].RATE_MULTIPLIER;
         }
 
         containerGroups.push({
           sizeLabel: "٤٠ قدم",
           count: fortyCount,
-          config: { ...baseConfig.FULL, CARGO_SERVICE_FEE: baseConfig.CARGO_SERVICE_FEE },
-          dangerousConfig: { ...baseConfig.DANGEROUS, CARGO_SERVICE_FEE: baseConfig.CARGO_SERVICE_FEE },
+          config: { ...baseConfig.FULL, CARGO_SERVICE_FEE: baseConfig.CARGO_SERVICE_FEE * nsMultiplier },
+          dangerousConfig: { ...baseConfig.DANGEROUS, CARGO_SERVICE_FEE: baseConfig.CARGO_SERVICE_FEE * nsMultiplier },
           surchargeConfig,
+          rateMultiplier,
           isDangerous: isDangerousCargo,
           hasCargoService: hasCargoStripping && stripping40 > 0,
           cargoServiceCount: stripping40,
@@ -169,17 +179,17 @@ export default function StorageCalculator({
 
       // تطبيق القواعد الخاصة على الخدمات إذا تم اختيار يوم عطلة
       const selectedServices = SERVICES_LIST.filter(s => services[s.id]).map(s => {
-        let finalRate = s.rate;
+        let finalRate = s.rate * nsMultiplier;
         
         // حساب سعر النقل المتغير بناءً على الحجم
         if (s.id === 'yard') {
           const shiftCfg = STORAGE_CONFIG.SERVICES.SHIFTING.YARD_TO_YARD;
           const totalC = twentyCount + fortyCount;
           if (totalC > 0) {
-            // السعر المرجح (Weighted Average) بناءً على توزيع الأحجام في البوليصة
-            finalRate = (shiftCfg.rate20 * twentyCount + shiftCfg.rate40 * fortyCount) / totalC;
+            // السعر المرجح (Weighted Average) بناءً على توزيع الأحجام في البوليصة مع تطبيق معامل غير المنتظم
+            finalRate = ((shiftCfg.rate20 * twentyCount + shiftCfg.rate40 * fortyCount) / totalC) * nsMultiplier;
           } else {
-            finalRate = shiftCfg.rate40; // افتراضي 
+            finalRate = shiftCfg.rate40 * nsMultiplier; // افتراضي 
           }
           
           if (isHolidayRelease) {
@@ -205,7 +215,7 @@ export default function StorageCalculator({
         });
       }
 
-      // حساب تخزين ساحة الخطر (بالشرائح) إذا تم تفعيله
+      // حساب تخزين ساحة الطوارئ (بالشرائح) إذا تم تفعيله
       let dangerYardUSD = 0;
       let dangerYardBreakdown = [];
       if (hasDangerYard) {
@@ -232,8 +242,14 @@ export default function StorageCalculator({
       if (isHolidayRelease && hasCargoStripping) {
         // Find existing cargo stripping costs and add 50%
         invoice.usd.cargoServiceFee = invoice.usd.cargoServiceFee * 1.5;
-        // Also update subtotal
-        invoice.usd.subtotal = invoice.usd.storageFee + invoice.usd.fixedFees + invoice.usd.additionalServices + invoice.usd.cargoServiceFee;
+        // Also update subtotal correctly to include all components
+        invoice.usd.subtotal = 
+          (invoice.usd.storageFee || 0) + 
+          (invoice.usd.surchargeFee || 0) + 
+          (invoice.usd.cargoStorageFee || 0) + 
+          (invoice.usd.fixedFees || 0) + 
+          (invoice.usd.additionalServices || 0) + 
+          (invoice.usd.cargoServiceFee || 0);
         
         // Recalculate EGP
         const newEgpSubtotal = invoice.usd.subtotal * exchangeRate;
@@ -246,10 +262,9 @@ export default function StorageCalculator({
         invoice.egp.total = Math.ceil(newEgpSubtotal + vatAmount + martyrStamp);
       }
 
-      // دمج تكلفة ساحة الخطر في الفاتورة النهائية
+      // دمج تكلفة ساحة الطوارئ في الفاتورة النهائية
       if (hasDangerYard && dangerYardUSD > 0) {
-        // إضافة 50% إذا كان يوم عطلة
-        const dyFee = isHolidayRelease ? dangerYardUSD * 1.5 : dangerYardUSD;
+        const dyFee = dangerYardUSD; 
         invoice.usd.dangerYardFee = dyFee;
         invoice.usd.subtotal += dyFee;
         if (dangerYardBreakdown.length) {
@@ -273,6 +288,9 @@ export default function StorageCalculator({
   }
 
   const days = liveDays();
+  const nsMultiplier = cargoType === "NON_STANDARD" 
+    ? (STORAGE_CONFIG.IMPORT.TWENTY_FT.NON_STANDARD[nonStdType]?.RATE_MULTIPLIER || 1)
+    : 1;
   const hasAdvanced = billingType === "RENEWAL" || cargoType !== "FULL" || isDangerous || Object.values(services).some(Boolean);
 
   return (
@@ -280,12 +298,33 @@ export default function StorageCalculator({
       <div className="sc2-page">
 
         {/* ── Header ── */}
-        <div className="sc2-header">
-          <div className="sc2-logo">⚓</div>
-          <div className="sc2-header-text">
-            <h1>تقدير فواتير الوارد</h1>
-            <p>حاويات ميناء دمياط / ٢٠ قدم & ٤٠ قدم</p>
+        <div className="sc2-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="sc2-logo">⚓</div>
+            <div className="sc2-header-text">
+              <h1>تقدير فواتير الوارد</h1>
+              <p>ميناء دمياط / ٢٠ قدم & ٤٠ قدم</p>
+            </div>
           </div>
+          <Link 
+            href="/Storagecalculator/rates" 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px', 
+              backgroundColor: 'rgba(59, 130, 246, 0.1)', 
+              color: '#60a5fa', 
+              fontSize: '12px', 
+              fontWeight: '700', 
+              padding: '8px 14px', 
+              borderRadius: '12px', 
+              border: '1px solid rgba(59, 130, 246, 0.2)',
+              textDecoration: 'none',
+              transition: 'all 0.2s'
+            }}>
+            <InfoIcon />
+            التعريفات
+          </Link>
         </div>
 
         {/* ══════════════════════════════════════════
@@ -454,9 +493,8 @@ export default function StorageCalculator({
                 <div className="sc2-sec-lbl">تصنيف الحاوية غير المنتظمة</div>
                 <div className="sc2-field" style={{ marginBottom: '1rem' }}>
                   <select className="sc2-select" value={nonStdType} onChange={e => setNonStdType(e.target.value)}>
-                    <option value="OOG">غير منتظم (OOG) — السعر × ٢</option>
-                    <option value="FLAT_RACK">هيكل (Flat Rack) — السعر × ٣</option>
-                    <option value="LASHING">تصبين (Lashing) — السعر × ٤</option>
+                    <option value="OOG">غير منتظم (الاسبريدر العادى) (OOG) — السعر × ٢</option>
+                    <option value="LASHING">تصبين (بالويرات) (Lashing) — السعر × ٤</option>
                   </select>
                 </div>
               </>
@@ -521,14 +559,22 @@ export default function StorageCalculator({
                 )}
               </div>
 
-              {/* تخزين ساحة الخطر */}
-              <div style={{ display: 'flex', gap: 6, alignItems: 'stretch' }}>
-                <label className={`sc2-svc${hasDangerYard ? " on" : ""}`} style={{ flex: 1, margin: 0 }}>
-                  <input type="checkbox" checked={hasDangerYard} onChange={() => setHasDangerYard(!hasDangerYard)} />
+              {/* تخزين ساحة الطوارئ */}
+              <div style={{ display: 'flex', gap: 6, alignItems: 'stretch', opacity: cargoType === "NON_STANDARD" ? 0.5 : 1 }}>
+                <label className={`sc2-svc${hasDangerYard ? " on" : ""}`} style={{ flex: 1, margin: 0, cursor: cargoType === "NON_STANDARD" ? 'not-allowed' : 'pointer' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={hasDangerYard} 
+                    onChange={() => setHasDangerYard(!hasDangerYard)} 
+                    disabled={cargoType === "NON_STANDARD"}
+                  />
                   <span className="sc2-chk">
                     <CheckIcon />
                   </span>
-                  <span className="sc2-svc-name">تخزين ساحة الخطر</span>
+                  <span className="sc2-svc-name">
+                    تخزين ساحة الطوارئ 
+                    {cargoType === "NON_STANDARD" && <span style={{ fontSize: '10px', display: 'block', color: 'var(--txt3)' }}>غير متاح للحاويات غير المنتظمة</span>}
+                  </span>
                 </label>
                 {hasDangerYard && (
                   <div className="sc2-counter" style={{ width: '90px', borderRadius: 'var(--r)', border: '1.5px solid var(--acc)' }}>
@@ -562,8 +608,8 @@ export default function StorageCalculator({
                       <span className="sc2-svc-name">{svc.name}</span>
                       <span className="sc2-svc-price">
                         ${svc.id === 'yard' 
-                          ? ((STORAGE_CONFIG.SERVICES.SHIFTING.YARD_TO_YARD.rate20 * twentyCount + STORAGE_CONFIG.SERVICES.SHIFTING.YARD_TO_YARD.rate40 * fortyCount) / Math.max(1, (twentyCount + fortyCount)) * (isHolidayRelease ? 1.5 : 1)).toFixed(1)
-                          : svc.rate
+                          ? (((STORAGE_CONFIG.SERVICES.SHIFTING.YARD_TO_YARD.rate20 * twentyCount + STORAGE_CONFIG.SERVICES.SHIFTING.YARD_TO_YARD.rate40 * fortyCount) / Math.max(1, (twentyCount + fortyCount))) * nsMultiplier * (isHolidayRelease ? 1.5 : 1)).toFixed(1)
+                          : (svc.rate * nsMultiplier).toFixed(1)
                         }
                       </span>
                     </label>
@@ -627,7 +673,13 @@ export default function StorageCalculator({
 
               {/* Rows */}
               {[
-                ["رسوم التخزين",             `$${fmt(result.usd.storageFee)}`,       false],
+                [
+                  cargoType === "NON_STANDARD" 
+                    ? `رسوم التخزين (${nonStdType === "OOG" ? "سعر مضاعف ×٢" : "سعر مضاعف ×٤"})`
+                    : "رسوم التخزين",
+                  `$${fmt(result.usd.storageFee + (result.usd.surchargeFee || 0))}`, 
+                  false
+                ],
                 ["رسوم الخدمات الثابتة",     `$${fmt(result.usd.fixedFees)}`,         false],
                 ...(result.usd.additionalServices > 0
                   ? [["الخدمات الإضافية",    `$${fmt(result.usd.additionalServices)}`, false]]
@@ -635,8 +687,11 @@ export default function StorageCalculator({
                 ...(result.usd.cargoServiceFee > 0
                   ? [["تفريغ مشمول",          `$${fmt(result.usd.cargoServiceFee)}`,   false]]
                   : []),
+                ...(result.usd.cargoStorageFee > 0
+                  ? [["أرضيات المشمول",      `$${fmt(result.usd.cargoStorageFee)}`,   false]]
+                  : []),
                 ...(result.usd.dangerYardFee > 0
-                  ? [["تخزين ساحة الخطر",    `$${fmt(result.usd.dangerYardFee)}`,     false]]
+                  ? [["تخزين ساحة الطوارئ",    `$${fmt(result.usd.dangerYardFee)}`,     false]]
                   : []),
                 ["الإجمالي بالدولار",        `$${fmt(result.usd.subtotal)}`,           true],
                 ["الإجمالي بالجنيه",         `${fmt(result.egp.subtotal, 0)} ج.م`,    false],
@@ -668,7 +723,7 @@ export default function StorageCalculator({
 
               {result.details.dangerYardBreakdown?.length > 0 && (
                 <div className="sc2-brk">
-                  <div className="sc2-brk-title">تفصيل شرائح ساحة الخطر</div>
+                  <div className="sc2-brk-title">تفصيل شرائح ساحة الطوارئ</div>
                   {result.details.dangerYardBreakdown.map((b, i) => (
                     <div key={i} className="sc2-brk-row">
                       <span>{b.tierName} — {b.days} يوم (من {b.fromDay} إلى {b.toDay})</span>

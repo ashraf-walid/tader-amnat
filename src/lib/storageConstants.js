@@ -85,19 +85,13 @@ export const STORAGE_CONFIG = {
       // Non-Standard Containers (غير منتظم)
       NON_STANDARD: {
         OOG: {
-          name: 'غير منتظم',
+          name: 'غير منتظم (الاسبريدر العادى)',
           GRACE_PERIOD_DAYS: 5,
           FIXED_SERVICE_FEE: 25,
           RATE_MULTIPLIER: 2 // السعر * 2
         },
-        FLAT_RACK: {
-          name: 'هيكل',
-          GRACE_PERIOD_DAYS: 5,
-          FIXED_SERVICE_FEE: 25,
-          RATE_MULTIPLIER: 3 // السعر * 3
-        },
         LASHING: {
-          name: 'تصبين',
+          name: 'تصبين (بالويرات)',
           GRACE_PERIOD_DAYS: 5,
           FIXED_SERVICE_FEE: 25,
           RATE_MULTIPLIER: 4 // السعر * 4

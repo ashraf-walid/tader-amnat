@@ -10,7 +10,8 @@ import {
   Filter,
   History,
   Download,
-  Trash2
+  Trash2,
+  RefreshCw
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -47,11 +48,9 @@ export default function AccountsDashboard() {
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
-  // Load data on start and poll every 60 seconds
+  // Load data on start
   React.useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 60000);
-    return () => clearInterval(interval);
   }, []);
 
   const fetchData = async () => {
@@ -282,6 +281,20 @@ export default function AccountsDashboard() {
           
           {data.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 md:gap-3">
+              <button 
+                onClick={fetchData}
+                disabled={loading}
+                className={cn(
+                  "flex-1 md:flex-none px-3 py-2 text-xs md:text-sm font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border",
+                  loading 
+                    ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed" 
+                    : "bg-white dark:bg-slate-900 text-blue-600 border-blue-100 dark:border-blue-900/30 hover:bg-blue-50"
+                )}
+              >
+                <RefreshCw size={14} className={cn(loading && "animate-spin")} />
+                تحديث
+              </button>
+
               <button 
                 onClick={downloadData}
                 className="flex-1 md:flex-none px-3 py-2 text-xs md:text-sm font-bold text-slate-600 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
