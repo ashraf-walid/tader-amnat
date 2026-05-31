@@ -152,12 +152,6 @@ export const STORAGE_CONFIG = {
           FIXED_SERVICE_FEE: 25,
           RATE_MULTIPLIER: 2 // السعر * 2
         },
-        FLAT_RACK: {
-          name: 'هيكل',
-          GRACE_PERIOD_DAYS: 5,
-          FIXED_SERVICE_FEE: 25,
-          RATE_MULTIPLIER: 3 // السعر * 3
-        },
         LASHING: {
           name: 'تصبين',
           GRACE_PERIOD_DAYS: 5,

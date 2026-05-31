@@ -11,7 +11,9 @@ import {
   AlertTriangle,
   Zap,
   Clock,
-  ExternalLink
+  ExternalLink,
+  Snowflake,
+  ShieldAlert
 } from "lucide-react";
 import Link from "next/link";
 
@@ -45,9 +47,9 @@ export default function RatesPage() {
               </p>
             </div>
           </div>
-          <div className="hidden md:flex flex-col items-end">
+          <div className="hidden md:flex flex-col items-end" dir="ltr">
             <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">نسخة النظام</span>
-            <span className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-full text-xs font-bold border border-blue-500/20">v2.0.26 — التحصيل الوارد</span>
+            <span className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-full text-xs font-bold border border-blue-500/20">v2.0.26 — تحصيل الوارد</span>
           </div>
         </div>
 
@@ -102,7 +104,7 @@ export default function RatesPage() {
                 <div className="mt-6 p-4 bg-slate-900/80 rounded-2xl border border-slate-800 flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-1" />
                   <p className="text-xs text-slate-400 leading-relaxed italic">
-                    ملاحظة: يتم تطبيق معامل الضرب (×٢ أو ×٤) على رسوم التخزين اليومية، رسوم النقل، رسوم الأوناش، وكذلك رسوم تفريغ المشمول.
+                    ملاحظة: يتم تطبيق معامل الضرب (×٢ أو ×٤) على رسوم التخزين اليومية بعد تطبيق فترة السماح، رسوم النقل، رسوم الأوناش، وكذلك رسوم تفريغ المشمول.
                   </p>
                 </div>
               </div>
@@ -177,6 +179,144 @@ export default function RatesPage() {
                         <td className="py-3 text-center text-slate-400">٢١ +</td>
                         <td className="py-3 text-left text-blue-400 font-bold">$ {fmt(t40.FULL.TIERS[1].rate)}</td>
                       </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION: REEFER STORAGE (مبرّد) */}
+          <section className="bg-slate-900/40 border border-slate-800 rounded-4xl overflow-hidden shadow-2xl shadow-cyan-500/5">
+            <div className="p-6 md:p-8">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="p-4 bg-cyan-500/20 text-cyan-400 rounded-3xl">
+                  <Snowflake className="w-8 h-8" />
+                </div>
+                <div>
+                  <h2 className="text-xl md:text-2xl font-bold text-cyan-400">تخزين الوارد (مبرّد ❄️)</h2>
+                  <p className="text-sm text-slate-400 font-medium">Reefer Storage Rates</p>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                {/* 20ft Reefer */}
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-3 px-2">
+                    <span className="font-bold text-slate-50">حاوية ٢٠ قدم مبرد</span>
+                    <span className="text-xs px-2 py-1 bg-cyan-500/10 text-cyan-400 rounded-lg">لا توجد فترة سماح</span>
+                  </div>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-slate-500 text-right">
+                        <th className="pb-2 pr-2 font-medium">الشريحة</th>
+                        <th className="pb-2 text-center font-medium">الأيام</th>
+                        <th className="pb-2 text-left font-medium">السعر اليومي</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800">
+                      {t20.REEFER.TIERS.map((tier, idx) => (
+                        <tr key={idx}>
+                          <td className="py-3 pr-2 text-slate-300 font-medium">{tier.name}</td>
+                          <td className="py-3 text-center text-slate-400">{tier.minDay} — {tier.maxDay === Infinity ? 'ما فوق' : tier.maxDay}</td>
+                          <td className="py-3 text-left text-cyan-400 font-bold">$ {fmt(tier.rate)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* 40ft Reefer */}
+                <div className="relative mt-8 pt-6 border-t border-slate-800">
+                  <div className="flex items-center justify-between mb-3 px-2">
+                    <span className="font-bold text-slate-50">حاوية ٤٠ قدم مبرد</span>
+                    <span className="text-xs px-2 py-1 bg-cyan-500/10 text-cyan-400 rounded-lg">لا توجد فترة سماح</span>
+                  </div>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-slate-500 text-right">
+                        <th className="pb-2 pr-2 font-medium">الشريحة</th>
+                        <th className="pb-2 text-center font-medium">الأيام</th>
+                        <th className="pb-2 text-left font-medium">السعر اليومي</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800">
+                      {t40.REEFER.TIERS.map((tier, idx) => (
+                        <tr key={idx}>
+                          <td className="py-3 pr-2 text-slate-300 font-medium">{tier.name}</td>
+                          <td className="py-3 text-center text-slate-400">{tier.minDay} — {tier.maxDay === Infinity ? 'ما فوق' : tier.maxDay}</td>
+                          <td className="py-3 text-left text-cyan-400 font-bold">$ {fmt(tier.rate)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION: DANGEROUS STORAGE (خطر) */}
+          <section className="bg-slate-900/40 border border-slate-800 rounded-4xl overflow-hidden shadow-2xl shadow-red-500/5">
+            <div className="p-6 md:p-8">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="p-4 bg-red-500/20 text-red-400 rounded-3xl">
+                  <ShieldAlert className="w-8 h-8" />
+                </div>
+                <div>
+                  <h2 className="text-xl md:text-2xl font-bold text-red-400">تخزين بضائع خطرة (⚠️)</h2>
+                  <p className="text-sm text-slate-400 font-medium">Dangerous Goods Storage</p>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                {/* 20ft Dangerous */}
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-3 px-2">
+                    <span className="font-bold text-slate-50">حاوية ٢٠ قدم خطرة</span>
+                    <span className="text-xs px-2 py-1 bg-red-500/10 text-red-400 rounded-lg">لا توجد فترة سماح</span>
+                  </div>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-slate-500 text-right">
+                        <th className="pb-2 pr-2 font-medium">الشريحة</th>
+                        <th className="pb-2 text-center font-medium">الأيام</th>
+                        <th className="pb-2 text-left font-medium">السعر اليومي</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800">
+                      {t20.DANGEROUS.TIERS.map((tier, idx) => (
+                        <tr key={idx}>
+                          <td className="py-3 pr-2 text-slate-300 font-medium">{tier.name}</td>
+                          <td className="py-3 text-center text-slate-400">{tier.minDay} — {tier.maxDay === Infinity ? 'ما فوق' : tier.maxDay}</td>
+                          <td className="py-3 text-left text-red-400 font-bold">$ {fmt(tier.rate)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* 40ft Dangerous */}
+                <div className="relative mt-8 pt-6 border-t border-slate-800">
+                  <div className="flex items-center justify-between mb-3 px-2">
+                    <span className="font-bold text-slate-50">حاوية ٤٠ قدم خطرة</span>
+                    <span className="text-xs px-2 py-1 bg-red-500/10 text-red-400 rounded-lg">لا توجد فترة سماح</span>
+                  </div>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-slate-500 text-right">
+                        <th className="pb-2 pr-2 font-medium">الشريحة</th>
+                        <th className="pb-2 text-center font-medium">الأيام</th>
+                        <th className="pb-2 text-left font-medium">السعر اليومي</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800">
+                      {t40.DANGEROUS.TIERS.map((tier, idx) => (
+                        <tr key={idx}>
+                          <td className="py-3 pr-2 text-slate-300 font-medium">{tier.name}</td>
+                          <td className="py-3 text-center text-slate-400">{tier.minDay} — {tier.maxDay === Infinity ? 'ما فوق' : tier.maxDay}</td>
+                          <td className="py-3 text-left text-red-400 font-bold">$ {fmt(tier.rate)}</td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
@@ -297,6 +437,76 @@ export default function RatesPage() {
                   </ul>
                 </div>
 
+                {/* Taxes & Gov Fees */}
+                <div className="bg-slate-950/50 p-6 rounded-3xl border border-slate-800/50 hover:border-indigo-500/30 transition-colors flex flex-col justify-center">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Info className="w-5 h-5 text-indigo-400" />
+                    <h3 className="font-bold text-slate-100 font-sans">الضرائب والرسوم السيادية</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm py-2 border-b border-white/5">
+                      <span className="text-slate-400">ضريبة القيمة المضافة</span>
+                      <span className="font-bold text-indigo-400">14 %</span>
+                    </div>
+                    <div className="flex justify-between text-sm py-2">
+                      <span className="text-slate-400">رسم دمغة الشهيد</span>
+                      <span className="font-bold text-indigo-400">{fmt(STORAGE_CONFIG.GLOBAL.MARTYR_STAMP_FEE)} ج.م (ثابت)</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION: SPECIAL RULES */}
+          <section className="bg-slate-900/40 border border-slate-800 rounded-4xl overflow-hidden md:col-span-2">
+            <div className="p-6 md:p-8">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="p-4 bg-indigo-500/20 text-indigo-400 rounded-3xl">
+                  <Info className="w-8 h-8" />
+                </div>
+                <div>
+                  <h2 className="text-xl md:text-2xl font-bold text-indigo-400">قواعد حساب الحالات الخاصة</h2>
+                  <p className="text-sm text-slate-400 font-medium">Special Invoice Calculation Rules</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                {/* External Storage */}
+                <div className="bg-slate-950/50 p-6 rounded-3xl border border-slate-800/50 hover:border-indigo-500/30 transition-colors">
+                  <div className="flex items-center gap-3 mb-4">
+                    <ExternalLink className="w-5 h-5 text-indigo-400" />
+                    <h3 className="font-bold text-slate-100">التخزين الخارجي</h3>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    خروج الحاوية لساحة خارجية يلغي فترة السماح (0 أيام)، ويبدأ حساب التخزين فوراً من اليوم الأول بالتعريفة الأساسية.
+                  </p>
+                </div>
+
+                {/* Cargo Storage */}
+                <div className="bg-slate-950/50 p-6 rounded-3xl border border-slate-800/50 hover:border-indigo-500/30 transition-colors">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Package className="w-5 h-5 text-indigo-400" />
+                    <h3 className="font-bold text-slate-100">أرضيات المشمول</h3>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    عند تفريغ البضائع بالميناء، يُمنح المشمول فترة سماح (يوم واحد فقط)، ويتم احتساب الأيام التالية بضعف التعريفة العادية للمشحون (×٢).
+                  </p>
+                </div>
+
+                {/* Renewal Billing */}
+                <div className="bg-slate-950/50 p-6 rounded-3xl border border-slate-800/50 hover:border-indigo-500/30 transition-colors">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Clock className="w-5 h-5 text-indigo-400" />
+                    <h3 className="font-bold text-slate-100">تجديد الفاتورة (تجديد التاريخ)</h3>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    عند تأخر الصرف عن تاريخ الفاتورة، يُجدد تاريخها لحساب الأيام الإضافية: تُستكمل فترة السماح طبيعياً (مجاناً حتى اليوم الخامس)، وتُلغى الرسوم الثابتة ($25) فلا تُدفع مجدداً.
+                  </p>
+                </div>
+
               </div>
             </div>
           </section>
@@ -307,7 +517,7 @@ export default function RatesPage() {
         <div className="mt-12 text-center pb-8">
            <p className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-medium flex items-center justify-center gap-2">
              <Clock className="w-3 h-3" />
-             آخر تحديث للبيانات: ٢٥ مايو ٢٠٢٦ — المصدر: وحدة المحاسبة
+             آخر تحديث للبيانات: ٢٥ مايو ٢٠٢٦ — المصدر: وحدة المحاسبة م. أشرف
            </p>
         </div>
 

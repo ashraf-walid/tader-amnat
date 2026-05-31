@@ -17,8 +17,8 @@ import {
 import Link from "next/link";
 
 // ─────────────────────────────────────────────
-// سعر الصرف اليومي — يأتي من الـ admin (prop أو context)
-// هنا قيمة افتراضية للعرض
+// Daily exchange rate — comes from admin (prop or context)
+// This is a default display value
 const DAILY_RATE_FROM_ADMIN = STORAGE_CONFIG.GLOBAL.DEFAULT_EXCHANGE_RATE;
 // ─────────────────────────────────────────────
 
@@ -76,13 +76,6 @@ export default function StorageCalculator({
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
 
-  // منع تحديد ساحة الطوارئ للحالات غير المنتظمة
-  useEffect(() => {
-    if (cargoType === "NON_STANDARD" && hasDangerYard) {
-      setHasDangerYard(false);
-    }
-  }, [cargoType, hasDangerYard]);
-
   function toggleService(id) {
     setServices(prev => {
       const isNowOn = !prev[id];
@@ -106,6 +99,12 @@ export default function StorageCalculator({
     if (!arrDate || !relDate) { setError("الرجاء إدخال تاريخ الوصول والصرف."); return; }
     if (twentyCount <= 0 && fortyCount <= 0) { setError("الرجاء إدخال عدد الحاويات (20 أو 40 قدم)."); return; }
 
+    const maxDays = liveDays() || 0;
+    if (billingType === "RENEWAL" && prevDays > maxDays) {
+      setError(`الأيام المسددة سابقاً (${prevDays} يوم) لا يمكن أن تتجاوز إجمالي مدة التخزين (${maxDays} يوم).`);
+      return;
+    }
+
     try {
       const arrStr = format(arrDate, 'yyyy-MM-dd');
       const relStr = format(relDate, 'yyyy-MM-dd');
@@ -125,7 +124,7 @@ export default function StorageCalculator({
       remStripped -= stripping40;
       const stripping20 = twentyCount > 0 ? Math.min(remStripped, twentyCount) + Math.max(0, remStripped - twentyCount) : remStripped;
 
-      // تجهيز بيانات حاويات 20 قدم
+      // Prepare 20-foot container data
       if (twentyCount > 0) {
         const baseConfig = STORAGE_CONFIG.IMPORT.TWENTY_FT;
         let surchargeConfig = null;
@@ -151,7 +150,7 @@ export default function StorageCalculator({
         });
       }
 
-      // تجهيز بيانات حاويات 40 قدم
+      // Prepare 40-foot container data
       if (fortyCount > 0) {
         const baseConfig = STORAGE_CONFIG.IMPORT.FORTY_FT;
         let surchargeConfig = null;
@@ -177,19 +176,19 @@ export default function StorageCalculator({
         });
       }
 
-      // تطبيق القواعد الخاصة على الخدمات إذا تم اختيار يوم عطلة
+      // Apply special service rules if holiday release is selected
       const selectedServices = SERVICES_LIST.filter(s => services[s.id]).map(s => {
         let finalRate = s.rate * nsMultiplier;
         
-        // حساب سعر النقل المتغير بناءً على الحجم
+        // Calculate variable transport rate based on size
         if (s.id === 'yard') {
           const shiftCfg = STORAGE_CONFIG.SERVICES.SHIFTING.YARD_TO_YARD;
           const totalC = twentyCount + fortyCount;
           if (totalC > 0) {
-            // السعر المرجح (Weighted Average) بناءً على توزيع الأحجام في البوليصة مع تطبيق معامل غير المنتظم
+            // Weighted rate based on policy size distribution with non-standard multiplier applied
             finalRate = ((shiftCfg.rate20 * twentyCount + shiftCfg.rate40 * fortyCount) / totalC) * nsMultiplier;
           } else {
-            finalRate = shiftCfg.rate40 * nsMultiplier; // افتراضي 
+            finalRate = shiftCfg.rate40 * nsMultiplier; // default 
           }
           
           if (isHolidayRelease) {
@@ -206,18 +205,18 @@ export default function StorageCalculator({
         };
       });
 
-      // إضافة خدمة يوم العطلة إذا تم تفعيلها
+      // Add holiday release service if enabled
       if (isHolidayRelease) {
         selectedServices.push({
-           name: "صرف يوم العطلة",
-           rate: 10,
-           quantity: holidayQty
+          name: "صرف يوم العطلة",
+          rate: 10,
+          quantity: holidayQty
         });
       }
 
-      // حساب تخزين ساحة الطوارئ (بالشرائح) إذا تم تفعيله
+      // Calculate danger yard storage (tiered) if enabled
       let dangerYardUSD = 0;
-      let dangerYardBreakdown = [];
+      let dangerYardBreakdown = []; 
       if (hasDangerYard) {
         const dyConfig = STORAGE_CONFIG.SERVICES.DANGER_YARD;
         const dyRes = calculateStorageFee(days, dyConfig, {});
@@ -262,7 +261,7 @@ export default function StorageCalculator({
         invoice.egp.total = Math.ceil(newEgpSubtotal + vatAmount + martyrStamp);
       }
 
-      // دمج تكلفة ساحة الطوارئ في الفاتورة النهائية
+      // Merge danger yard cost into final invoice
       if (hasDangerYard && dangerYardUSD > 0) {
         const dyFee = dangerYardUSD; 
         invoice.usd.dangerYardFee = dyFee;
@@ -270,7 +269,7 @@ export default function StorageCalculator({
         if (dangerYardBreakdown.length) {
           invoice.details.dangerYardBreakdown = dangerYardBreakdown;
         }
-        // إعادة حساب الإجماليات
+        // Recalculate totals
         const newEgpSubtotal2 = invoice.usd.subtotal * exchangeRate;
         const vatRate2 = STORAGE_CONFIG.GLOBAL.VAT_RATE || 0.14;
         const martyrStamp2 = STORAGE_CONFIG.GLOBAL.MARTYR_STAMP_FEE || 5;
@@ -328,7 +327,7 @@ export default function StorageCalculator({
         </div>
 
         {/* ══════════════════════════════════════════
-            سعر الصرف — يومي من الأدمن
+            Exchange rate — daily from admin
         ══════════════════════════════════════════ */}
         <div className="sc2-rate-banner">
           <div className="sc2-rate-left">
@@ -384,11 +383,11 @@ export default function StorageCalculator({
         </div>
 
         {/* ══════════════════════════════════════════
-            PRIMARY — الأكثر استخداماً
+            PRIMARY — most used
         ══════════════════════════════════════════ */}
         <div className="sc2-primary">
 
-          {/* التواريخ */}
+          {/* Dates */}
           <div className="sc2-sec-lbl">تواريخ الوصول والصرف</div>
           <div className="g2">
             <ArabicDatePicker
@@ -413,7 +412,7 @@ export default function StorageCalculator({
 
           <div className="sc2-divider" />
 
-          {/* نوع الصرف */}
+          {/* Release type */}
           <div className="sc2-sec-lbl" style={{ marginBottom: '.6rem' }}>نوع الصرف</div>
           <div className="sc2-tabs" style={{ marginBottom: '1.2rem' }}>
             {[["INITIAL", "صرف أول مرة"], ["RENEWAL", "تجديد"]].map(([v, l]) => (
@@ -421,7 +420,29 @@ export default function StorageCalculator({
             ))}
           </div>
 
-          {/* أعداد الحاويات */}
+          {/* Previous days — shown only for renewal */}
+            {billingType === "RENEWAL" && (
+              <>
+                <div className="sc2-sec-lbl">الأيام المسددة سابقاً (في الفاتورة الأولى)</div>
+                <div className="sc2-field" style={{ marginBottom: '1rem' }}>
+                  <input 
+                    type="number" 
+                    className="sc2-input" 
+                    value={prevDays} 
+                    min={0}
+                    max={days || undefined}
+                    onChange={e => {
+                      const val = Number(e.target.value);
+                      const maxDays = days || 0;
+                      setPrevDays(val > maxDays ? maxDays : (val < 0 ? 0 : val));
+                    }} 
+                    placeholder="0" 
+                  />
+                </div>
+              </>
+          )}
+
+          {/* Container counts */}
           <div className="sc2-sec-lbl" style={{ marginBottom: '.8rem' }}>أعداد الحاويات في البوليصة</div>
           <div className="gm" style={{ marginBottom: '1.2rem' }}>
             <div className="sc2-field">
@@ -446,7 +467,7 @@ export default function StorageCalculator({
             </div>
           </div>
 
-          {/* نوع البضاعة */}
+          {/* Cargo type */}
           <div className="sc2-sec-lbl" style={{ marginBottom: '.6rem' }}>نوع البضاعة</div>
           <div className="sc2-cargo-chips" style={{ marginBottom: '0.5rem' }}>
             {[
@@ -455,14 +476,25 @@ export default function StorageCalculator({
               ["DANGEROUS", "خطرة ⚠️"],
               ["NON_STANDARD", "غير منتظمة"],
             ].map(([v, l]) => (
-              <button key={v} className={`sc2-chip${cargoType === v ? " on" : ""}`} onClick={() => setCargoType(v)}>{l}</button>
+              <button
+                key={v}
+                className={`sc2-chip${cargoType === v ? " on" : ""}`}
+                onClick={() => {
+                  setCargoType(v);
+                  if (v === "NON_STANDARD") {
+                    setHasDangerYard(false);
+                  }
+                }}
+              >
+                {l}
+              </button>
             ))}
           </div>
 
         </div>
 
         {/* ══════════════════════════════════════════
-            SECONDARY — خيارات متقدمة (accordion)
+            SECONDARY — advanced options (accordion)
         ══════════════════════════════════════════ */}
         <button className={`sc2-adv-trigger${advOpen ? " open" : ""}`} onClick={() => setAdvOpen(o => !o)}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -476,18 +508,7 @@ export default function StorageCalculator({
         {advOpen && (
           <div className="sc2-adv-body">
 
-            {/* الأيام السابقة — تظهر فقط عند التجديد */}
-            {billingType === "RENEWAL" && (
-              <>
-                <div className="sc2-sec-lbl">الأيام السابقة (عند التجديد)</div>
-                <div className="sc2-field" style={{ marginBottom: '1rem' }}>
-                  <input type="number" className="sc2-input" value={prevDays} min={0}
-                    onChange={e => setPrevDays(Number(e.target.value))} placeholder="0" />
-                </div>
-              </>
-            )}
-
-            {/* نوع غير المنتظمة */}
+            {/* Non-standard type */}
             {cargoType === "NON_STANDARD" && (
               <>
                 <div className="sc2-sec-lbl">تصنيف الحاوية غير المنتظمة</div>
@@ -500,11 +521,11 @@ export default function StorageCalculator({
               </>
             )}
 
-            {/* الخدمات الإضافية */}
+            {/* Additional services */}
             <div className="sc2-sec-lbl" style={{ marginBottom: '.6rem' }}>خدمات إضافية</div>
             <div className="sc2-svcs">
               
-              {/* خيارات جديدة: تفريغ مشمول وصرف يوم عطلة */}
+              {/* New options: included stripping and holiday release */}
               <div style={{ display: 'flex', gap: 6, alignItems: 'stretch' }}>
                 <label className={`sc2-svc${hasCargoStripping ? " on" : ""}`} style={{ flex: 1, margin: 0 }}>
                   <input type="checkbox" checked={hasCargoStripping} onChange={() => setHasCargoStripping(!hasCargoStripping)} />
@@ -559,7 +580,7 @@ export default function StorageCalculator({
                 )}
               </div>
 
-              {/* تخزين ساحة الطوارئ */}
+              {/* Danger yard storage */}
               <div style={{ display: 'flex', gap: 6, alignItems: 'stretch', opacity: cargoType === "NON_STANDARD" ? 0.5 : 1 }}>
                 <label className={`sc2-svc${hasDangerYard ? " on" : ""}`} style={{ flex: 1, margin: 0, cursor: cargoType === "NON_STANDARD" ? 'not-allowed' : 'pointer' }}>
                   <input 
@@ -737,7 +758,7 @@ export default function StorageCalculator({
         )}
 
         {result && (
-          <button className="sc2-btn" onClick={() => { setResult(null); setArrDate(null); setRelDate(new Date()); setTwentyCount(1); setFortyCount(0); setCargoType("FULL"); }} style={{ marginTop: '1.25rem', background: 'none', border: '1px solid var(--brd2)', color: 'var(--txt2)', boxShadow: 'none' }}>
+          <button className="sc2-btn" onClick={() => { setResult(null); setArrDate(null); setRelDate(new Date()); setTwentyCount(1); setFortyCount(0); setCargoType("FULL"); setPrevDays(0); }} style={{ marginTop: '1.25rem', background: 'none', border: '1px solid var(--brd2)', color: 'var(--txt2)', boxShadow: 'none' }}>
             {billingType === "RENEWAL" && result.usd.storageFee === 0 ? "بدء حساب بوليصة جديدة" : "إبدأ حساب بوليصه اخرى"}
           </button>
         )}
