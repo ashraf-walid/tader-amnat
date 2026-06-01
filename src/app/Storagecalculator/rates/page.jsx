@@ -194,7 +194,7 @@ export default function RatesPage() {
                   <Snowflake className="w-8 h-8" />
                 </div>
                 <div>
-                  <h2 className="text-xl md:text-2xl font-bold text-cyan-400">تخزين الوارد (مبرّد ❄️)</h2>
+                  <h2 className="text-xl md:text-2xl font-bold text-cyan-400">تخزين الوارد (ثلاجة ❄️)</h2>
                   <p className="text-sm text-slate-400 font-medium">Reefer Storage Rates</p>
                 </div>
               </div>
@@ -203,7 +203,7 @@ export default function RatesPage() {
                 {/* 20ft Reefer */}
                 <div className="relative">
                   <div className="flex items-center justify-between mb-3 px-2">
-                    <span className="font-bold text-slate-50">حاوية ٢٠ قدم مبرد</span>
+                    <span className="font-bold text-slate-50">حاوية ٢٠ قدم ثلاجة</span>
                     <span className="text-xs px-2 py-1 bg-cyan-500/10 text-cyan-400 rounded-lg">لا توجد فترة سماح</span>
                   </div>
                   <table className="w-full text-sm">
@@ -229,7 +229,7 @@ export default function RatesPage() {
                 {/* 40ft Reefer */}
                 <div className="relative mt-8 pt-6 border-t border-slate-800">
                   <div className="flex items-center justify-between mb-3 px-2">
-                    <span className="font-bold text-slate-50">حاوية ٤٠ قدم مبرد</span>
+                    <span className="font-bold text-slate-50">حاوية ٤٠ قدم ثلاجة </span>
                     <span className="text-xs px-2 py-1 bg-cyan-500/10 text-cyan-400 rounded-lg">لا توجد فترة سماح</span>
                   </div>
                   <table className="w-full text-sm">
@@ -492,8 +492,8 @@ export default function RatesPage() {
                     <h3 className="font-bold text-slate-100">أرضيات المشمول</h3>
                   </div>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    عند تفريغ البضائع بالميناء، يُمنح المشمول فترة سماح (يوم واحد فقط)، ويتم احتساب الأيام التالية بضعف التعريفة العادية للمشحون (×٢).
-                  </p>
+                    في حالة خروج مشمول الحاوية الوارد خارج الحاوية في الساحة لأي سبب من الأسباب وعدم دخوله
+                    مرة أخري إلي الحاوية يتم احتساب أرضيات عن المشمول بعدد (٢) حاوية من نفس مقاس الحاوية (بعد فترة سماح يوم وحد للمشمول) بالإضافة لأرضيات الحاوية الأصلية.                  </p>
                 </div>
 
                 {/* Renewal Billing */}

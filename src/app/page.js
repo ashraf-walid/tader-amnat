@@ -285,7 +285,7 @@ export default function AccountsDashboard() {
                 onClick={fetchData}
                 disabled={loading}
                 className={cn(
-                  "flex-1 md:flex-none px-3 py-2 text-xs md:text-sm font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border",
+                  "max-sm:hidden flex-1 md:flex-none px-3 py-2 text-xs md:text-sm font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border",
                   loading 
                     ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed" 
                     : "bg-white dark:bg-slate-900 text-blue-600 border-blue-100 dark:border-blue-900/30 hover:bg-blue-50"
@@ -547,11 +547,11 @@ export default function AccountsDashboard() {
                       <div className="flex justify-between items-start" onClick={() => { setSelectedAccount(item); setIsHistoryOpen(true); }}>
                         <div className="space-y-1">
                           <h4 className="font-bold text-slate-900 dark:text-white leading-tight">{item.account}</h4>
-                          <span className="text-[10px] px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded font-bold uppercase">{item.accountCode}</span>
+                          {/* <span className="text-[10px] px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded font-bold uppercase">{item.accountCode}</span> */}
                         </div>
                         <div className="flex items-center gap-2">
                            {transactionCount > 0 && <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1"><History size={10} />{transactionCount}</span>}
-                           <div className={cn("px-3 py-1 rounded text-sm font-bold font-mono", finalBalance > 0 ? "text-green-600" : "text-red-500")}>
+                           <div className={cn("px-3 py-1 rounded text-lg font-bold font-mono", finalBalance > 0 ? "text-green-600" : "text-red-500")}>
                              {finalBalance.toLocaleString()}
                            </div>
                         </div>

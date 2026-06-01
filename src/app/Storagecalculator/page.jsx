@@ -68,6 +68,8 @@ export default function StorageCalculator({
   const [isHolidayRelease, setIsHolidayRelease] = useState(false);
   const [hasCargoStripping, setHasCargoStripping] = useState(false);
   const [hasDangerYard, setHasDangerYard] = useState(false);
+  const [hasCargoStorage, setHasCargoStorage] = useState(false);
+  const [isExternalStorage, setIsExternalStorage] = useState(false);
 
   const [services, setServices] = useState({});
   const [serviceQuantities, setServiceQuantities] = useState({});
@@ -117,12 +119,19 @@ export default function StorageCalculator({
       const strippedQty = serviceQuantities['stripping'] !== undefined ? Number(serviceQuantities['stripping']) : totalConts;
       const holidayQty  = serviceQuantities['holiday']  !== undefined ? Number(serviceQuantities['holiday'])  : totalConts;
       const dangerYardQty = serviceQuantities['dangeryard'] !== undefined ? Number(serviceQuantities['dangeryard']) : totalConts;
+      const cargoStorageQty = serviceQuantities['cargostorage'] !== undefined ? Number(serviceQuantities['cargostorage']) : totalConts;
 
       // Distribute stripping qty (prioritize 40ft as standard, then 20ft)
       let remStripped = strippedQty;
       const stripping40 = fortyCount > 0 ? Math.min(remStripped, fortyCount) : 0;
       remStripped -= stripping40;
       const stripping20 = twentyCount > 0 ? Math.min(remStripped, twentyCount) + Math.max(0, remStripped - twentyCount) : remStripped;
+
+      // Distribute cargo storage qty
+      let remCargoStorage = cargoStorageQty;
+      const cargoStorage40 = fortyCount > 0 ? Math.min(remCargoStorage, fortyCount) : 0;
+      remCargoStorage -= cargoStorage40;
+      const cargoStorage20 = twentyCount > 0 ? Math.min(remCargoStorage, twentyCount) + Math.max(0, remCargoStorage - twentyCount) : remCargoStorage;
 
       // Prepare 20-foot container data
       if (twentyCount > 0) {
@@ -146,7 +155,8 @@ export default function StorageCalculator({
           isDangerous: isDangerousCargo,
           hasCargoService: hasCargoStripping && stripping20 > 0,
           cargoServiceCount: stripping20,
-          hasCargoStorage: false
+          hasCargoStorage: hasCargoStorage && cargoStorage20 > 0,
+          cargoStorageCount: cargoStorage20
         });
       }
 
@@ -172,7 +182,8 @@ export default function StorageCalculator({
           isDangerous: isDangerousCargo,
           hasCargoService: hasCargoStripping && stripping40 > 0,
           cargoServiceCount: stripping40,
-          hasCargoStorage: false
+          hasCargoStorage: hasCargoStorage && cargoStorage40 > 0,
+          cargoStorageCount: cargoStorage40
         });
       }
 
@@ -230,7 +241,7 @@ export default function StorageCalculator({
           exchangeRate,
           billingType,
           previousDays: prevDays,
-          isExternalStorage: false, // can be added to UI
+          isExternalStorage,
           additionalServices: selectedServices,
           isDangerous: isDangerousCargo,
           isHolidayRelease // Pass this if needed down the line, but cargo stripping is handled via config in storageCalculator override
@@ -290,7 +301,16 @@ export default function StorageCalculator({
   const nsMultiplier = cargoType === "NON_STANDARD" 
     ? (STORAGE_CONFIG.IMPORT.TWENTY_FT.NON_STANDARD[nonStdType]?.RATE_MULTIPLIER || 1)
     : 1;
-  const hasAdvanced = billingType === "RENEWAL" || cargoType !== "FULL" || isDangerous || Object.values(services).some(Boolean);
+  const hasAdvanced = 
+    billingType === "RENEWAL" || 
+    cargoType !== "FULL" || 
+    isDangerous || 
+    hasCargoStripping || 
+    hasCargoStorage || 
+    hasDangerYard || 
+    isHolidayRelease || 
+    isExternalStorage || 
+    Object.values(services).some(Boolean);
 
   return (
     <div className="sc2">
@@ -553,6 +573,45 @@ export default function StorageCalculator({
                 )}
               </div>
 
+              {/* أرضيات المشمول */}
+              <div style={{ display: 'flex', gap: 6, alignItems: 'stretch' }}>
+                <label className={`sc2-svc${hasCargoStorage ? " on" : ""}`} style={{ flex: 1, margin: 0 }}>
+                  <input type="checkbox" checked={hasCargoStorage} onChange={() => setHasCargoStorage(!hasCargoStorage)} />
+                  <span className="sc2-chk">
+                    <CheckIcon />
+                  </span>
+                  <span className="sc2-svc-name">أرضيات المشمول (تفريغ بالساحة)</span>
+                </label>
+                {hasCargoStorage && (
+                  <div className="sc2-counter" style={{ width: '90px', borderRadius: 'var(--r)',  border: '1.5px solid var(--acc)' }}>
+                    <button 
+                      className="sc2-counter-btn" 
+                      style={{ width: '30px', height: '100%', fontSize: '18px' }}
+                      onClick={() => setServiceQuantities(p => ({...p, cargostorage: Math.max(1, Number(serviceQuantities['cargostorage'] !== undefined ? serviceQuantities['cargostorage'] : (twentyCount + fortyCount)) - 1)}))}
+                    >−</button>
+                    <div className="sc2-counter-val" style={{ fontSize: '14px' }}>
+                      {serviceQuantities['cargostorage'] !== undefined ? serviceQuantities['cargostorage'] : (twentyCount + fortyCount)}
+                    </div>
+                    <button 
+                      className="sc2-counter-btn" 
+                      style={{ width: '30px', height: '100%', fontSize: '18px' }}
+                      onClick={() => setServiceQuantities(p => ({...p, cargostorage: Number(serviceQuantities['cargostorage'] !== undefined ? serviceQuantities['cargostorage'] : (twentyCount + fortyCount)) + 1}))}
+                    >+</button>
+                  </div>
+                )}
+              </div>
+
+              {/* صرف للتخزين الخارجي */}
+              <div style={{ display: 'flex', gap: 6, alignItems: 'stretch' }}>
+                <label className={`sc2-svc${isExternalStorage ? " on" : ""}`} style={{ flex: 1, margin: 0 }}>
+                  <input type="checkbox" checked={isExternalStorage} onChange={() => setIsExternalStorage(!isExternalStorage)} />
+                  <span className="sc2-chk">
+                    <CheckIcon />
+                  </span>
+                  <span className="sc2-svc-name">صرف للتخزين الخارجي (يلغي السماح)</span>
+                </label>
+              </div>
+
               <div style={{ display: 'flex', gap: 6, alignItems: 'stretch' }}>
                 <label className={`sc2-svc${isHolidayRelease ? " on" : ""}`} style={{ flex: 1, margin: 0 }}>
                   <input type="checkbox" checked={isHolidayRelease} onChange={() => setIsHolidayRelease(!isHolidayRelease)} />
@@ -734,6 +793,18 @@ export default function StorageCalculator({
                 <div className="sc2-brk">
                   <div className="sc2-brk-title">تفصيل شرائح التخزين</div>
                   {result.details.storageBreakdown.map((b, i) => (
+                    <div key={i} className="sc2-brk-row">
+                      <span>{b.tierName} — {b.days} يوم (من {b.fromDay} إلى {b.toDay})</span>
+                      <span className="bv">${fmt(b.subtotal)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {result.details.cargoBreakdown?.length > 0 && (
+                <div className="sc2-brk">
+                  <div className="sc2-brk-title">تفصيل شرائح أرضيات المشمول</div>
+                  {result.details.cargoBreakdown.map((b, i) => (
                     <div key={i} className="sc2-brk-row">
                       <span>{b.tierName} — {b.days} يوم (من {b.fromDay} إلى {b.toDay})</span>
                       <span className="bv">${fmt(b.subtotal)}</span>
