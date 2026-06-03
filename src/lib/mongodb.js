@@ -2,7 +2,10 @@ import mongoose from "mongoose";
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
-// Fallback to directly reading the .local.env file content string since NextJS might not load .local.env by default depending on version
+if (!MONGODB_URI) {
+  throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
+}
+
 const uri = MONGODB_URI;
 
 let cached = global.mongoose;
@@ -20,8 +23,13 @@ export async function connectToDatabase() {
     const opts = {
       bufferCommands: false,
     };
+    
     cached.promise = mongoose.connect(uri, opts).then((mongoose) => {
+      console.log('✅ MongoDB connected successfully');
       return mongoose;
+    }).catch((error) => {
+      console.error('❌ MongoDB connection error:', error.message);
+      throw error;
     });
   }
 
@@ -29,6 +37,7 @@ export async function connectToDatabase() {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
+    console.error('❌ Failed to establish MongoDB connection:', e);
     throw e;
   }
 
