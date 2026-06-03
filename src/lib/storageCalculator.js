@@ -303,10 +303,17 @@ export function calculateMultiContainerInvoice(arrivalDate, releaseDate, contain
     }
 
     // C. Cargo Storage
-    if (hasCargoStorage) {
-      const cargoConfig = { ...adjustedConfig, GRACE_PERIOD_DAYS: 1 };
-      const cargoRes = calculateStorageFee(days, cargoConfig, { rateMultiplier: rateMultiplier * 2 });
-      const groupCargoStorageUSD = cargoRes.storageFeeUSD * count;
+    if (hasCargoStorage && group.cargoStorageCount > 0) {
+      const cargoConfig = { 
+        ...adjustedConfig, 
+        GRACE_PERIOD_DAYS: 1,
+        TIERS: adjustedConfig.TIERS.map((tier, i) => i === 0 ? { ...tier, minDay: 2 } : tier)
+      };
+      // استخدام cargoStorageDays المحسوبة من (cargoExitDate -> releaseDate)
+      const cargoDays = options.cargoStorageDays || days;
+      const cargoRes = calculateStorageFee(cargoDays, cargoConfig, { rateMultiplier: rateMultiplier * 2 });
+      const activeCargoCount = group.cargoStorageCount;
+      const groupCargoStorageUSD = cargoRes.storageFeeUSD * activeCargoCount;
       totalCargoStorageUSD += groupCargoStorageUSD;
       allDetails.cargoBreakdown.push(...cargoRes.breakdown.map(b => ({ ...b, tierName: `${sizeLabel} - مشمول ${b.tierName}` })));
     }
@@ -436,9 +443,11 @@ export function calculateFinalInvoice(arrivalDate, releaseDate, config, globalCo
     // المشمول: سماح يوم واحد + ضعف سعر الشريحة
     const cargoConfig = {
       ...adjustedConfig,
-      GRACE_PERIOD_DAYS: 1
+      GRACE_PERIOD_DAYS: 1,
+      TIERS: adjustedConfig.TIERS.map((tier, i) => i === 0 ? { ...tier, minDay: 2 } : tier)
     };
-    const cargoRes = calculateStorageFee(days, cargoConfig, {
+    const cargoDays = options.cargoStorageDays || days;
+    const cargoRes = calculateStorageFee(cargoDays, cargoConfig, {
       ...options,
       rateMultiplier: (options.rateMultiplier || 1) * 2
     });

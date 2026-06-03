@@ -57,7 +57,6 @@ export default function StorageCalculator({
       .catch(err => console.error("Failed to fetch exchange rate", err));
   }, [isRateOverridden]);
 
-
   // ── Advanced / secondary state ──
   const [advOpen, setAdvOpen] = useState(false);
   const [prevDays, setPrevDays] = useState(0);
@@ -69,10 +68,18 @@ export default function StorageCalculator({
   const [hasCargoStripping, setHasCargoStripping] = useState(false);
   const [hasDangerYard, setHasDangerYard] = useState(false);
   const [hasCargoStorage, setHasCargoStorage] = useState(false);
+  const [cargoExitDate, setCargoExitDate] = useState(null);
   const [isExternalStorage, setIsExternalStorage] = useState(false);
 
   const [services, setServices] = useState({});
   const [serviceQuantities, setServiceQuantities] = useState({});
+
+  // الربط التلقائي: عند تفعيل تفريغ بالساحة، يتم تلقائياً تفعيل تفريغ مشمول
+  useEffect(() => {
+    if (hasCargoStorage && !hasCargoStripping) {
+      setHasCargoStripping(true);
+    }
+  }, [hasCargoStorage]);
 
   // ── Result ──
   const [result, setResult] = useState(null);
@@ -100,6 +107,12 @@ export default function StorageCalculator({
     setError(""); setResult(null);
     if (!arrDate || !relDate) { setError("الرجاء إدخال تاريخ الوصول والصرف."); return; }
     if (twentyCount <= 0 && fortyCount <= 0) { setError("الرجاء إدخال عدد الحاويات (20 أو 40 قدم)."); return; }
+    
+    // التحقق من تاريخ خروج المشمول
+    if (hasCargoStorage && !cargoExitDate) {
+      setError("الرجاء تحديد تاريخ خروج المشمول من الحاوية.");
+      return;
+    }
 
     const maxDays = liveDays() || 0;
     if (billingType === "RENEWAL" && prevDays > maxDays) {
@@ -110,6 +123,20 @@ export default function StorageCalculator({
     try {
       const arrStr = format(arrDate, 'yyyy-MM-dd');
       const relStr = format(relDate, 'yyyy-MM-dd');
+
+      // حساب أيام تخزين الحاوية (من arrivalDate إلى releaseDate)
+      const days = maxDays;
+      
+      // حساب أيام تخزين المشمول (من cargoExitDate إلى releaseDate)
+      let cargoDays = 0;
+      if (hasCargoStorage && cargoExitDate) {
+        const cargoExit = new Date(cargoExitDate);
+        cargoExit.setHours(0, 0, 0, 0);
+        const release = new Date(relDate);
+        release.setHours(0, 0, 0, 0);
+        cargoDays = Math.ceil((release - cargoExit) / 86400000) + 1;
+        cargoDays = cargoDays > 0 ? cargoDays : 0;
+      }
 
       const containerGroups = [];
       const isDangerousCargo = cargoType === "DANGEROUS";
@@ -244,7 +271,8 @@ export default function StorageCalculator({
           isExternalStorage,
           additionalServices: selectedServices,
           isDangerous: isDangerousCargo,
-          isHolidayRelease // Pass this if needed down the line, but cargo stripping is handled via config in storageCalculator override
+          isHolidayRelease, // Pass this if needed down the line, but cargo stripping is handled via config in storageCalculator override
+          cargoStorageDays: cargoDays // تمرير عدد أيام تخزين المشمول المحسوبة من تاريخ منفصل
         }
       );
       
@@ -601,6 +629,25 @@ export default function StorageCalculator({
                 )}
               </div>
 
+              {/* حقل تاريخ خروج المشمول - يظهر فقط عند تفعيل تفريغ بالساحة */}
+              {hasCargoStorage && (
+                <div style={{ marginTop: '0.75rem', padding: '1rem', backgroundColor: 'rgba(59, 130, 246, 0.05)', borderRadius: 'var(--r)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '14px', fontWeight: '600', color: 'var(--txt1)' }}>
+                    تاريخ خروج المشمول من الحاوية
+                  </label>
+                  <ArabicDatePicker
+                    selected={cargoExitDate}
+                    onChange={(date) => setCargoExitDate(date)}
+                    placeholderText="اختر تاريخ خروج المشمول"
+                    minDate={arrDate}
+                    maxDate={relDate}
+                  />
+                  <div style={{ fontSize: '12px', color: 'var(--txt3)', marginTop: '0.5rem' }}>
+                    💡 يتم حساب أرضيات المشمول من هذا التاريخ حتى تاريخ الصرف بفترة سماح يوم واحد
+                  </div>
+                </div>
+              )}
+
               {/* صرف للتخزين الخارجي */}
               <div style={{ display: 'flex', gap: 6, alignItems: 'stretch' }}>
                 <label className={`sc2-svc${isExternalStorage ? " on" : ""}`} style={{ flex: 1, margin: 0 }}>
@@ -829,7 +876,7 @@ export default function StorageCalculator({
         )}
 
         {result && (
-          <button className="sc2-btn" onClick={() => { setResult(null); setArrDate(null); setRelDate(new Date()); setTwentyCount(1); setFortyCount(0); setCargoType("FULL"); setPrevDays(0); }} style={{ marginTop: '1.25rem', background: 'none', border: '1px solid var(--brd2)', color: 'var(--txt2)', boxShadow: 'none' }}>
+          <button className="sc2-btn" onClick={() => { setResult(null); setArrDate(null); setRelDate(new Date()); setTwentyCount(1); setFortyCount(0); setCargoType("FULL"); setPrevDays(0); setCargoExitDate(null); }} style={{ marginTop: '1.25rem', background: 'none', border: '1px solid var(--brd2)', color: 'var(--txt2)', boxShadow: 'none' }}>
             {billingType === "RENEWAL" && result.usd.storageFee === 0 ? "بدء حساب بوليصة جديدة" : "إبدأ حساب بوليصه اخرى"}
           </button>
         )}
