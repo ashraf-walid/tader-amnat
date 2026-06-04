@@ -605,7 +605,14 @@ export default function StorageCalculator({
                 {l}
               </button>
             ))}
+            
           </div>
+          {cargoType === "DANGEROUS" && (
+            <p className="text-[11px] text-amber-400/80 mt-1 mb-1 flex items-center gap-1.5">
+              <span>⚠️</span>
+              الحساب مبني على درجات الخطورة 3، 4، 5، 8، 9
+            </p>
+          )}
 
         </div>
 
@@ -652,259 +659,207 @@ export default function StorageCalculator({
               </>
             )}
 
-            {/* Additional services */}
-            <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-[#4a5568] mb-2">
-              <span className="w-0.5 h-3.5 bg-[#f0b429] rounded-sm" />
-              خدمات إضافية
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-
-              {/* تفريغ مشمول */}
-              <div className="flex gap-1.5 items-stretch">
-                <label className={`flex items-center gap-2.5 py-3 px-3 rounded-xl border-[1.5px] cursor-pointer select-none transition-all flex-1 ${hasCargoStripping
-                  ? 'border-[#f0b429] bg-[rgba(240,180,41,0.12)]'
-                  : 'border-white/[0.07] bg-[#1a2035] hover:border-white/[0.12]'
-                  }`}>
-                  <input type="checkbox" checked={hasCargoStripping} onChange={() => setHasCargoStripping(!hasCargoStripping)} className="hidden" />
-                  <span className={`w-[19px] h-[19px] shrink-0 rounded-md border-[1.5px] flex items-center justify-center transition-all ${hasCargoStripping
-                    ? 'bg-[#f0b429] border-[#f0b429]'
-                    : 'bg-[#0b1120] border-white/[0.12]'
-                    }`}>
-                    {hasCargoStripping && <CheckIcon />}
-                  </span>
-                  <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium">تفريغ مشمول</span>
-                </label>
-                {hasCargoStripping && (
-                  <div className="flex items-center gap-0 w-[90px] rounded-xl border-[1.5px] border-[#f0b429] overflow-hidden">
-                    <button
-                      className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
-                      onClick={() => setServiceQuantities(p => ({ ...p, stripping: Math.max(1, Number(serviceQuantities['stripping'] !== undefined ? serviceQuantities['stripping'] : (twentyCount + fortyCount)) - 1) }))}>
-                      −
-                    </button>
-                    <div className="flex-1 text-center text-sm font-extrabold text-[#f0f2f8] select-none">
-                      {serviceQuantities['stripping'] !== undefined ? serviceQuantities['stripping'] : (twentyCount + fortyCount)}
-                    </div>
-                    <button
-                      className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
-                      onClick={() => setServiceQuantities(p => ({ ...p, stripping: Number(serviceQuantities['stripping'] !== undefined ? serviceQuantities['stripping'] : (twentyCount + fortyCount)) + 1 }))}>
-                      +
-                    </button>
-                  </div>
-                )}
+            {/* ── Group 1: خدمات المشمول ── */}
+            <div className="mb-4">
+              <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-[#4a5568] mb-2">
+                <span className="w-0.5 h-3.5 bg-[#f0b429] rounded-sm" />
+                خدمات المشمول
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
 
-              {/* أرضيات المشمول */}
-              <div className="flex gap-1.5 items-stretch">
-                <label className={`flex items-center gap-2.5 py-3 px-3 rounded-xl border-[1.5px] cursor-pointer select-none transition-all flex-1 ${hasCargoStorage
-                  ? 'border-[#f0b429] bg-[rgba(240,180,41,0.12)]'
-                  : 'border-white/[0.07] bg-[#1a2035] hover:border-white/[0.12]'
-                  }`}>
-                  <input type="checkbox" checked={hasCargoStorage} onChange={() => setHasCargoStorage(!hasCargoStorage)} className="hidden" />
-                  <span className={`w-[19px] h-[19px] shrink-0 rounded-md border-[1.5px] flex items-center justify-center transition-all ${hasCargoStorage
-                    ? 'bg-[#f0b429] border-[#f0b429]'
-                    : 'bg-[#0b1120] border-white/[0.12]'
-                    }`}>
-                    {hasCargoStorage && <CheckIcon />}
-                  </span>
-                  <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium">أرضيات المشمول (تفريغ بالساحة)</span>
-                </label>
-                {hasCargoStorage && (
-                  <div className="flex items-center gap-0 w-[90px] rounded-xl border-[1.5px] border-[#f0b429] overflow-hidden">
-                    <button
-                      className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
-                      onClick={() => setServiceQuantities(p => ({ ...p, cargostorage: Math.max(1, Number(serviceQuantities['cargostorage'] !== undefined ? serviceQuantities['cargostorage'] : (twentyCount + fortyCount)) - 1) }))}>
-                      −
-                    </button>
-                    <div className="flex-1 text-center text-sm font-extrabold text-[#f0f2f8] select-none">
-                      {serviceQuantities['cargostorage'] !== undefined ? serviceQuantities['cargostorage'] : (twentyCount + fortyCount)}
-                    </div>
-                    <button
-                      className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
-                      onClick={() => setServiceQuantities(p => ({ ...p, cargostorage: Number(serviceQuantities['cargostorage'] !== undefined ? serviceQuantities['cargostorage'] : (twentyCount + fortyCount)) + 1 }))}>
-                      +
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* حقل تاريخ خروج المشمول */}
-              {hasCargoStorage && (
-                <div className="mt-3 p-4 bg-blue-500/5 rounded-xl border border-blue-500/15 md:col-span-2">
-                  <label className="block mb-2 text-sm font-semibold text-[#f0f2f8]">
-                    تاريخ خروج المشمول من الحاوية
+                {/* تفريغ مشمول */}
+                <div className="flex gap-1.5 items-stretch">
+                  <label className={`flex items-center gap-2.5 py-3 px-3 rounded-xl border-[1.5px] cursor-pointer select-none transition-all flex-1 ${hasCargoStripping ? 'border-[#f0b429] bg-[rgba(240,180,41,0.12)]' : 'border-white/[0.07] bg-[#1a2035] hover:border-white/[0.12]'}`}>
+                    <input type="checkbox" checked={hasCargoStripping} onChange={() => setHasCargoStripping(!hasCargoStripping)} className="hidden" />
+                    <span className={`w-[19px] h-[19px] shrink-0 rounded-md border-[1.5px] flex items-center justify-center transition-all ${hasCargoStripping ? 'bg-[#f0b429] border-[#f0b429]' : 'bg-[#0b1120] border-white/[0.12]'}`}>
+                      {hasCargoStripping && <CheckIcon />}
+                    </span>
+                    <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium">تفريغ مشمول</span>
                   </label>
-                  <ArabicDatePicker
-                    selected={cargoExitDate}
-                    onChange={(date) => setCargoExitDate(date)}
-                    placeholderText="اختر تاريخ خروج المشمول"
-                    minDate={arrDate}
-                    maxDate={relDate}
-                  />
-                  <div className="text-xs text-[#4a5568] mt-2">
-                    💡 يتم حساب أرضيات المشمول من هذا التاريخ حتى تاريخ الصرف بفترة سماح يوم واحد
-                  </div>
-                </div>
-              )}
-
-              {/* صرف للتخزين الخارجي */}
-              <div className="flex gap-1.5 items-stretch">
-                <label className={`flex items-center gap-2.5 py-3 px-3 rounded-xl border-[1.5px] cursor-pointer select-none transition-all flex-1 ${isExternalStorage
-                  ? 'border-[#f0b429] bg-[rgba(240,180,41,0.12)]'
-                  : 'border-white/[0.07] bg-[#1a2035] hover:border-white/[0.12]'
-                  }`}>
-                  <input type="checkbox" checked={isExternalStorage} onChange={() => setIsExternalStorage(!isExternalStorage)} className="hidden" />
-                  <span className={`w-[19px] h-[19px] shrink-0 rounded-md border-[1.5px] flex items-center justify-center transition-all ${isExternalStorage
-                    ? 'bg-[#f0b429] border-[#f0b429]'
-                    : 'bg-[#0b1120] border-white/[0.12]'
-                    }`}>
-                    {isExternalStorage && <CheckIcon />}
-                  </span>
-                  <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium">صرف للتخزين الخارجي (يلغي السماح)</span>
-                </label>
-              </div>
-
-              {/* التخزين بالمخزن المشترك LCL */}
-              <div className="flex gap-1.5 items-stretch">
-                <label className={`flex items-center gap-2.5 py-3 px-3 rounded-xl border-[1.5px] cursor-pointer select-none transition-all flex-1 ${isLCLStorage
-                  ? 'border-[#f0b429] bg-[rgba(240,180,41,0.12)]'
-                  : 'border-white/[0.07] bg-[#1a2035] hover:border-white/[0.12]'
-                  }`}>
-                  <input type="checkbox" checked={isLCLStorage} onChange={() => setIsLCLStorage(!isLCLStorage)} className="hidden" />
-                  <span className={`w-[19px] h-[19px] shrink-0 rounded-md border-[1.5px] flex items-center justify-center transition-all ${isLCLStorage
-                    ? 'bg-[#f0b429] border-[#f0b429]'
-                    : 'bg-[#0b1120] border-white/[0.12]'
-                    }`}>
-                    {isLCLStorage && <CheckIcon />}
-                  </span>
-                  <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium">
-                    التخزين بالمخزن المشترك (LCL)
-                    <span className="text-[10px] block text-[#4a5568] mt-0.5">سماح 3 أيام + تفريغ مشمول بنصف السعر + نقل</span>
-                  </span>
-                </label>
-              </div>
-
-              {/* صرف يوم عطلة */}
-              <div className="flex gap-1.5 items-stretch">
-                <label className={`flex items-center gap-2.5 py-3 px-3 rounded-xl border-[1.5px] cursor-pointer select-none transition-all flex-1 ${isHolidayRelease
-                  ? 'border-[#f0b429] bg-[rgba(240,180,41,0.12)]'
-                  : 'border-white/[0.07] bg-[#1a2035] hover:border-white/[0.12]'
-                  }`}>
-                  <input type="checkbox" checked={isHolidayRelease} onChange={() => setIsHolidayRelease(!isHolidayRelease)} className="hidden" />
-                  <span className={`w-[19px] h-[19px] shrink-0 rounded-md border-[1.5px] flex items-center justify-center transition-all ${isHolidayRelease
-                    ? 'bg-[#f0b429] border-[#f0b429]'
-                    : 'bg-[#0b1120] border-white/[0.12]'
-                    }`}>
-                    {isHolidayRelease && <CheckIcon />}
-                  </span>
-                  <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium">صرف يوم عطلة</span>
-                </label>
-                {isHolidayRelease && (
-                  <div className="flex items-center gap-0 w-[90px] rounded-xl border-[1.5px] border-[#f0b429] overflow-hidden">
-                    <button
-                      className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
-                      onClick={() => setServiceQuantities(p => ({ ...p, holiday: Math.max(1, Number(serviceQuantities['holiday'] !== undefined ? serviceQuantities['holiday'] : (twentyCount + fortyCount)) - 1) }))}>
-                      −
-                    </button>
-                    <div className="flex-1 text-center text-sm font-extrabold text-[#f0f2f8] select-none">
-                      {serviceQuantities['holiday'] !== undefined ? serviceQuantities['holiday'] : (twentyCount + fortyCount)}
-                    </div>
-                    <button
-                      className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
-                      onClick={() => setServiceQuantities(p => ({ ...p, holiday: Number(serviceQuantities['holiday'] !== undefined ? serviceQuantities['holiday'] : (twentyCount + fortyCount)) + 1 }))}>
-                      +
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* تخزين ساحة الطوارئ */}
-              <div className="flex gap-1.5 items-stretch" style={{ opacity: cargoType === "NON_STANDARD" ? 0.5 : 1 }}>
-                <label className={`flex items-center gap-2.5 py-3 px-3 rounded-xl border-[1.5px] cursor-pointer select-none transition-all flex-1 ${hasDangerYard
-                  ? 'border-[#f0b429] bg-[rgba(240,180,41,0.12)]'
-                  : 'border-white/[0.07] bg-[#1a2035] hover:border-white/[0.12]'
-                  }`} style={{ cursor: cargoType === "NON_STANDARD" ? 'not-allowed' : 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={hasDangerYard}
-                    onChange={() => setHasDangerYard(!hasDangerYard)}
-                    disabled={cargoType === "NON_STANDARD"}
-                    className="hidden"
-                  />
-                  <span className={`w-[19px] h-[19px] shrink-0 rounded-md border-[1.5px] flex items-center justify-center transition-all ${hasDangerYard
-                    ? 'bg-[#f0b429] border-[#f0b429]'
-                    : 'bg-[#0b1120] border-white/[0.12]'
-                    }`}>
-                    {hasDangerYard && <CheckIcon />}
-                  </span>
-                  <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium">
-                    تخزين ساحة الطوارئ
-                    {cargoType === "NON_STANDARD" && <span className="text-[10px] block text-[#4a5568]">غير متاح للحاويات غير المنتظمة</span>}
-                  </span>
-                </label>
-                {hasDangerYard && (
-                  <div className="flex items-center gap-0 w-[90px] rounded-xl border-[1.5px] border-[#f0b429] overflow-hidden">
-                    <button
-                      className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
-                      onClick={() => setServiceQuantities(p => ({ ...p, dangeryard: Math.max(1, Number(serviceQuantities['dangeryard'] !== undefined ? serviceQuantities['dangeryard'] : (twentyCount + fortyCount)) - 1) }))}>
-                      −
-                    </button>
-                    <div className="flex-1 text-center text-sm font-extrabold text-[#f0f2f8] select-none">
-                      {serviceQuantities['dangeryard'] !== undefined ? serviceQuantities['dangeryard'] : (twentyCount + fortyCount)}
-                    </div>
-                    <button
-                      className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
-                      onClick={() => setServiceQuantities(p => ({ ...p, dangeryard: Number(serviceQuantities['dangeryard'] !== undefined ? serviceQuantities['dangeryard'] : (twentyCount + fortyCount)) + 1 }))}>
-                      +
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* SERVICES_LIST mapping */}
-              {SERVICES_LIST.map(svc => {
-                const on = !!services[svc.id];
-                const qty = serviceQuantities[svc.id] !== undefined ? serviceQuantities[svc.id] : (twentyCount + fortyCount);
-                return (
-                  <div key={svc.id} className="flex gap-1.5 items-stretch">
-                    <label className={`flex items-center gap-2.5 py-3 px-3 rounded-xl border-[1.5px] cursor-pointer select-none transition-all flex-1 ${on
-                      ? 'border-[#f0b429] bg-[rgba(240,180,41,0.12)]'
-                      : 'border-white/[0.07] bg-[#1a2035] hover:border-white/[0.12]'
-                      }`}>
-                      <input type="checkbox" checked={on} onChange={() => toggleService(svc.id)} className="hidden" />
-                      <span className={`w-[19px] h-[19px] shrink-0 rounded-md border-[1.5px] flex items-center justify-center transition-all ${on
-                        ? 'bg-[#f0b429] border-[#f0b429]'
-                        : 'bg-[#0b1120] border-white/[0.12]'
-                        }`}>
-                        {on && <CheckIcon />}
-                      </span>
-                      <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium">{svc.name}</span>
-                      <span className="text-[11px] text-[#4a5568] font-bold">
-                        ${svc.id === 'yard'
-                          ? (((STORAGE_CONFIG.SERVICES.SHIFTING.YARD_TO_YARD.rate20 * twentyCount + STORAGE_CONFIG.SERVICES.SHIFTING.YARD_TO_YARD.rate40 * fortyCount) / Math.max(1, (twentyCount + fortyCount))) * nsMultiplier * (isHolidayRelease ? 1.5 : 1)).toFixed(1)
-                          : (svc.rate * nsMultiplier).toFixed(1)
-                        }
-                      </span>
-                    </label>
-                    {on && (
-                      <div className="flex items-center gap-0 w-[90px] rounded-xl border-[1.5px] border-[#f0b429] overflow-hidden">
-                        <button
-                          className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
-                          onClick={() => setServiceQuantities(p => ({ ...p, [svc.id]: Math.max(1, Number(qty) - 1) }))}>
-                          −
-                        </button>
-                        <div className="flex-1 text-center text-sm font-extrabold text-[#f0f2f8] select-none">
-                          {qty}
-                        </div>
-                        <button
-                          className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
-                          onClick={() => setServiceQuantities(p => ({ ...p, [svc.id]: Number(qty) + 1 }))}>
-                          +
-                        </button>
+                  {hasCargoStripping && (
+                    <div className="flex items-center gap-0 w-[90px] rounded-xl border-[1.5px] border-[#f0b429] overflow-hidden">
+                      <button className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
+                        onClick={() => setServiceQuantities(p => ({ ...p, stripping: Math.max(1, Number(serviceQuantities['stripping'] !== undefined ? serviceQuantities['stripping'] : (twentyCount + fortyCount)) - 1) }))}>−</button>
+                      <div className="flex-1 text-center text-sm font-extrabold text-[#f0f2f8] select-none">
+                        {serviceQuantities['stripping'] !== undefined ? serviceQuantities['stripping'] : (twentyCount + fortyCount)}
                       </div>
-                    )}
+                      <button className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
+                        onClick={() => setServiceQuantities(p => ({ ...p, stripping: Number(serviceQuantities['stripping'] !== undefined ? serviceQuantities['stripping'] : (twentyCount + fortyCount)) + 1 }))}>+</button>
+                    </div>
+                  )}
+                </div>
+
+                {/* أرضيات المشمول */}
+                <div className="flex gap-1.5 items-stretch">
+                  <label className={`flex items-center gap-2.5 py-3 px-3 rounded-xl border-[1.5px] cursor-pointer select-none transition-all flex-1 ${hasCargoStorage ? 'border-[#f0b429] bg-[rgba(240,180,41,0.12)]' : 'border-white/[0.07] bg-[#1a2035] hover:border-white/[0.12]'}`}>
+                    <input type="checkbox" checked={hasCargoStorage} onChange={() => setHasCargoStorage(!hasCargoStorage)} className="hidden" />
+                    <span className={`w-[19px] h-[19px] shrink-0 rounded-md border-[1.5px] flex items-center justify-center transition-all ${hasCargoStorage ? 'bg-[#f0b429] border-[#f0b429]' : 'bg-[#0b1120] border-white/[0.12]'}`}>
+                      {hasCargoStorage && <CheckIcon />}
+                    </span>
+                    <span className="text-[12px] text-[#f0f2f8] flex-1 font-medium truncate">أرضيات المشمول (تفريغ بالساحة)</span>
+                  </label>
+                  {hasCargoStorage && (
+                    <div className="flex items-center gap-0 w-[90px] rounded-xl border-[1.5px] border-[#f0b429] overflow-hidden">
+                      <button className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
+                        onClick={() => setServiceQuantities(p => ({ ...p, cargostorage: Math.max(1, Number(serviceQuantities['cargostorage'] !== undefined ? serviceQuantities['cargostorage'] : (twentyCount + fortyCount)) - 1) }))}>−</button>
+                      <div className="flex-1 text-center text-sm font-extrabold text-[#f0f2f8] select-none">
+                        {serviceQuantities['cargostorage'] !== undefined ? serviceQuantities['cargostorage'] : (twentyCount + fortyCount)}
+                      </div>
+                      <button className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
+                        onClick={() => setServiceQuantities(p => ({ ...p, cargostorage: Number(serviceQuantities['cargostorage'] !== undefined ? serviceQuantities['cargostorage'] : (twentyCount + fortyCount)) + 1 }))}>+</button>
+                    </div>
+                  )}
+                </div>
+
+                {/* تاريخ خروج المشمول */}
+                {hasCargoStorage && (
+                  <div className="mt-1 p-4 bg-blue-500/5 rounded-xl border border-blue-500/15 md:col-span-2">
+                    <label className="block mb-2 text-sm font-semibold text-[#f0f2f8]">تاريخ خروج المشمول من الحاوية</label>
+                    <ArabicDatePicker
+                      selected={cargoExitDate}
+                      onChange={(date) => setCargoExitDate(date)}
+                      placeholderText="اختر تاريخ خروج المشمول"
+                      minDate={arrDate}
+                      maxDate={relDate}
+                    />
+                    <div className="text-xs text-[#4a5568] mt-2">
+                      💡 يتم حساب أرضيات المشمول من هذا التاريخ حتى تاريخ الصرف بفترة سماح يوم واحد
+                    </div>
                   </div>
-                );
-              })}
+                )}
+              </div>
+            </div>
+
+            {/* ── Group 2: نوع الصرف ── */}
+            <div className="h-px bg-white/[0.05] my-3" />
+            <div className="mb-4">
+              <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-[#4a5568] mb-2">
+                <span className="w-0.5 h-3.5 bg-[#f0b429] rounded-sm" />
+                نوع الصرف
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+
+                {/* صرف للتخزين الخارجي */}
+                <div className="flex gap-1.5 items-stretch">
+                  <label className={`flex items-center gap-2.5 py-3 px-3 rounded-xl border-[1.5px] cursor-pointer select-none transition-all flex-1 ${isExternalStorage ? 'border-[#f0b429] bg-[rgba(240,180,41,0.12)]' : 'border-white/[0.07] bg-[#1a2035] hover:border-white/[0.12]'}`}>
+                    <input type="checkbox" checked={isExternalStorage} onChange={() => setIsExternalStorage(!isExternalStorage)} className="hidden" />
+                    <span className={`w-[19px] h-[19px] shrink-0 rounded-md border-[1.5px] flex items-center justify-center transition-all ${isExternalStorage ? 'bg-[#f0b429] border-[#f0b429]' : 'bg-[#0b1120] border-white/[0.12]'}`}>
+                      {isExternalStorage && <CheckIcon />}
+                    </span>
+                    <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium">صرف للتخزين الخارجي
+                      <span className="text-[10px] block text-[#4a5568] mt-0.5">يلغي فترة السماح</span>
+                    </span>
+                  </label>
+                </div>
+
+                {/* التخزين بالمخزن المشترك LCL */}
+                <div className="flex gap-1.5 items-stretch">
+                  <label className={`flex items-center gap-2.5 py-3 px-3 rounded-xl border-[1.5px] cursor-pointer select-none transition-all flex-1 ${isLCLStorage ? 'border-[#f0b429] bg-[rgba(240,180,41,0.12)]' : 'border-white/[0.07] bg-[#1a2035] hover:border-white/[0.12]'}`}>
+                    <input type="checkbox" checked={isLCLStorage} onChange={() => setIsLCLStorage(!isLCLStorage)} className="hidden" />
+                    <span className={`w-[19px] h-[19px] shrink-0 rounded-md border-[1.5px] flex items-center justify-center transition-all ${isLCLStorage ? 'bg-[#f0b429] border-[#f0b429]' : 'bg-[#0b1120] border-white/[0.12]'}`}>
+                      {isLCLStorage && <CheckIcon />}
+                    </span>
+                    <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium">مخزن مشترك (LCL)
+                      <span className="text-[10px] block text-[#4a5568] mt-0.5">سماح 3 أيام + تفريغ بنصف السعر + نقل</span>
+                    </span>
+                  </label>
+                </div>
+
+                {/* صرف يوم عطلة */}
+                <div className="flex gap-1.5 items-stretch">
+                  <label className={`flex items-center gap-2.5 py-3 px-3 rounded-xl border-[1.5px] cursor-pointer select-none transition-all flex-1 ${isHolidayRelease ? 'border-[#f0b429] bg-[rgba(240,180,41,0.12)]' : 'border-white/[0.07] bg-[#1a2035] hover:border-white/[0.12]'}`}>
+                    <input type="checkbox" checked={isHolidayRelease} onChange={() => setIsHolidayRelease(!isHolidayRelease)} className="hidden" />
+                    <span className={`w-[19px] h-[19px] shrink-0 rounded-md border-[1.5px] flex items-center justify-center transition-all ${isHolidayRelease ? 'bg-[#f0b429] border-[#f0b429]' : 'bg-[#0b1120] border-white/[0.12]'}`}>
+                      {isHolidayRelease && <CheckIcon />}
+                    </span>
+                    <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium">صرف يوم عطلة
+                      <span className="text-[10px] block text-[#4a5568] mt-0.5">رسوم إضافية ٥٠٪ على الخدمات</span>
+                    </span>
+                  </label>
+                  {isHolidayRelease && (
+                    <div className="flex items-center gap-0 w-[90px] rounded-xl border-[1.5px] border-[#f0b429] overflow-hidden">
+                      <button className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
+                        onClick={() => setServiceQuantities(p => ({ ...p, holiday: Math.max(1, Number(serviceQuantities['holiday'] !== undefined ? serviceQuantities['holiday'] : (twentyCount + fortyCount)) - 1) }))}>−</button>
+                      <div className="flex-1 text-center text-sm font-extrabold text-[#f0f2f8] select-none">
+                        {serviceQuantities['holiday'] !== undefined ? serviceQuantities['holiday'] : (twentyCount + fortyCount)}
+                      </div>
+                      <button className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
+                        onClick={() => setServiceQuantities(p => ({ ...p, holiday: Number(serviceQuantities['holiday'] !== undefined ? serviceQuantities['holiday'] : (twentyCount + fortyCount)) + 1 }))}>+</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* ── Group 3: خدمات الساحة ── */}
+            <div className="h-px bg-white/[0.05] my-3" />
+            <div>
+              <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-[#4a5568] mb-2">
+                <span className="w-0.5 h-3.5 bg-[#f0b429] rounded-sm" />
+                خدمات الساحة
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+
+                {/* تخزين ساحة الطوارئ */}
+                <div className="flex gap-1.5 items-stretch" style={{ opacity: cargoType === "NON_STANDARD" ? 0.5 : 1 }}>
+                  <label className={`flex items-center gap-2.5 py-3 px-3 rounded-xl border-[1.5px] cursor-pointer select-none transition-all flex-1 ${hasDangerYard ? 'border-[#f0b429] bg-[rgba(240,180,41,0.12)]' : 'border-white/[0.07] bg-[#1a2035] hover:border-white/[0.12]'}`}
+                    style={{ cursor: cargoType === "NON_STANDARD" ? 'not-allowed' : 'pointer' }}>
+                    <input type="checkbox" checked={hasDangerYard} onChange={() => setHasDangerYard(!hasDangerYard)} disabled={cargoType === "NON_STANDARD"} className="hidden" />
+                    <span className={`w-[19px] h-[19px] shrink-0 rounded-md border-[1.5px] flex items-center justify-center transition-all ${hasDangerYard ? 'bg-[#f0b429] border-[#f0b429]' : 'bg-[#0b1120] border-white/[0.12]'}`}>
+                      {hasDangerYard && <CheckIcon />}
+                    </span>
+                    <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium">ساحة الطوارئ
+                      {/* {cargoType === "NON_STANDARD"
+                        ? <span className="text-[10px] block text-[#4a5568]">غير متاح للحاويات غير المنتظمة</span>
+                        : <span className="text-[10px] block text-[#4a5568] mt-0.5">تخزين بتعريفة مستقلة</span>
+                      } */}
+                    </span>
+                  </label>
+                  {hasDangerYard && (
+                    <div className="flex items-center gap-0 w-[90px] rounded-xl border-[1.5px] border-[#f0b429] overflow-hidden">
+                      <button className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
+                        onClick={() => setServiceQuantities(p => ({ ...p, dangeryard: Math.max(1, Number(serviceQuantities['dangeryard'] !== undefined ? serviceQuantities['dangeryard'] : (twentyCount + fortyCount)) - 1) }))}>−</button>
+                      <div className="flex-1 text-center text-sm font-extrabold text-[#f0f2f8] select-none">
+                        {serviceQuantities['dangeryard'] !== undefined ? serviceQuantities['dangeryard'] : (twentyCount + fortyCount)}
+                      </div>
+                      <button className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
+                        onClick={() => setServiceQuantities(p => ({ ...p, dangeryard: Number(serviceQuantities['dangeryard'] !== undefined ? serviceQuantities['dangeryard'] : (twentyCount + fortyCount)) + 1 }))}>+</button>
+                    </div>
+                  )}
+                </div>
+
+                {/* SERVICES_LIST mapping */}
+                {SERVICES_LIST.map(svc => {
+                  const on = !!services[svc.id];
+                  const qty = serviceQuantities[svc.id] !== undefined ? serviceQuantities[svc.id] : (twentyCount + fortyCount);
+                  return (
+                    <div key={svc.id} className="flex gap-1.5 items-stretch">
+                      <label className={`flex items-center gap-2.5 py-3 px-3 rounded-xl border-[1.5px] cursor-pointer select-none transition-all flex-1 ${on ? 'border-[#f0b429] bg-[rgba(240,180,41,0.12)]' : 'border-white/[0.07] bg-[#1a2035] hover:border-white/[0.12]'}`}>
+                        <input type="checkbox" checked={on} onChange={() => toggleService(svc.id)} className="hidden" />
+                        <span className={`w-[19px] h-[19px] shrink-0 rounded-md border-[1.5px] flex items-center justify-center transition-all ${on ? 'bg-[#f0b429] border-[#f0b429]' : 'bg-[#0b1120] border-white/[0.12]'}`}>
+                          {on && <CheckIcon />}
+                        </span>
+                        <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium">{svc.name}</span>
+                        <span className="text-[11px] text-[#4a5568] font-bold">
+                          ${svc.id === 'yard'
+                            ? (((STORAGE_CONFIG.SERVICES.SHIFTING.YARD_TO_YARD.rate20 * twentyCount + STORAGE_CONFIG.SERVICES.SHIFTING.YARD_TO_YARD.rate40 * fortyCount) / Math.max(1, (twentyCount + fortyCount))) * nsMultiplier * (isHolidayRelease ? 1.5 : 1)).toFixed(1)
+                            : (svc.rate * nsMultiplier).toFixed(1)
+                          }
+                        </span>
+                      </label>
+                      {on && (
+                        <div className="flex items-center gap-0 w-[90px] rounded-xl border-[1.5px] border-[#f0b429] overflow-hidden">
+                          <button className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
+                            onClick={() => setServiceQuantities(p => ({ ...p, [svc.id]: Math.max(1, Number(qty) - 1) }))}>−</button>
+                          <div className="flex-1 text-center text-sm font-extrabold text-[#f0f2f8] select-none">{qty}</div>
+                          <button className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
+                            onClick={() => setServiceQuantities(p => ({ ...p, [svc.id]: Number(qty) + 1 }))}>+</button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
@@ -1040,6 +995,14 @@ export default function StorageCalculator({
               setPrevDays(0);
               setCargoExitDate(null);
               setIsLCLStorage(false);
+              setHasCargoStripping(false);
+              setHasCargoStorage(false);
+              setIsExternalStorage(false);
+              setIsHolidayRelease(false);
+              setHasDangerYard(false);
+              setNonStdType("OOG");
+              setServices({});
+              setServiceQuantities({});
             }}>
             {billingType === "RENEWAL" && result.usd.storageFee === 0 ? "بدء حساب بوليصة جديدة" : "إبدأ حساب بوليصه اخرى"}
           </button>

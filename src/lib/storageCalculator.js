@@ -339,7 +339,11 @@ export function calculateMultiContainerInvoice(arrivalDate, releaseDate, contain
     if (hasCargoService && adjustedConfig.CARGO_SERVICE_FEE) {
       const activeCount = group.cargoServiceCount !== undefined ? group.cargoServiceCount : count;
       // LCL: نصف السعر لتفريغ المشمول
-      const cargoServiceRate = isLCLStorage ? adjustedConfig.CARGO_SERVICE_FEE * 0.5 : adjustedConfig.CARGO_SERVICE_FEE;
+      const cargoServiceRate = isLCLStorage
+        ? adjustedConfig.CARGO_SERVICE_FEE * 0.5
+        : isActuallyDangerous
+          ? adjustedConfig.CARGO_SERVICE_FEE * 1
+          : adjustedConfig.CARGO_SERVICE_FEE;
       totalCargoServiceFeeUSD += cargoServiceRate * activeCount;
     }
   });
@@ -476,7 +480,8 @@ export function calculateFinalInvoice(arrivalDate, releaseDate, config, globalCo
   // إضافة رسوم خدمة المشمول الثابتة (60$ أو 120$)
   let cargoServiceFeeUSD = 0;
   if (hasCargoService && adjustedConfig.CARGO_SERVICE_FEE) {
-    cargoServiceFeeUSD = adjustedConfig.CARGO_SERVICE_FEE * containerCount;
+    const cargoServiceMultiplier = options.isDangerous ? 1.5 : 1;
+    cargoServiceFeeUSD = adjustedConfig.CARGO_SERVICE_FEE * containerCount * cargoServiceMultiplier;
   }
 
   const totalUSD = totalStorageUSD + surchargeUSD + cargoStorageUSD + fixedFeesUSD + serviceResult.additionalServicesUSD + cargoServiceFeeUSD;

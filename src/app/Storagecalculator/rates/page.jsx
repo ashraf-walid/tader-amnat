@@ -316,6 +316,22 @@ export default function RatesPage() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Hazard Class Notes */}
+                <div className="mt-4 pt-4 border-t border-slate-800 space-y-2">
+                  <div className="flex items-start gap-2 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">
+                    <span className="text-red-400 mt-0.5">⚠️</span>
+                    <p className="text-slate-300 text-xs">
+                      الأسعار أعلاه تنطبق على درجات الخطورة: <span className="text-red-400 font-bold">3، 4، 5، 8، 9</span>
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-2 text-sm bg-orange-500/10 border border-orange-500/20 rounded-xl px-3 py-2">
+                    <span className="text-orange-400 mt-0.5">🚨</span>
+                    <p className="text-slate-300 text-xs">
+                      درجات الخطورة <span className="text-orange-400 font-bold">1، 2، 6، 7</span> تخضع لزيادة <span className="text-orange-400 font-bold">100%</span> على أسعار التداول والتخزين
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
