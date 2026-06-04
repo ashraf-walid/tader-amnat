@@ -43,10 +43,10 @@ export const STORAGE_CONFIG = {
   IMPORT: {
     // 20ft Container
     TWENTY_FT: {
-      CARGO_SERVICE_FEE: 60, // تفريغ أو شحن المشمول
+      CARGO_SERVICE_FEE: 60, 
       FULL: {
-        GRACE_PERIOD_DAYS: 5, // فترة السماح (أيام)
-        FIXED_SERVICE_FEE: 25, // رسوم خدمات إضافية ثابتة (دولار)
+        GRACE_PERIOD_DAYS: 5, 
+        FIXED_SERVICE_FEE: 25, 
         CURRENCY: 'USD',
         TIERS: [
           {
@@ -64,7 +64,7 @@ export const STORAGE_CONFIG = {
         ]
       },
       REEFER: {
-        GRACE_PERIOD_DAYS: 0, // الحاويات المبردة عادة لا يوجد لها سماح أو يختلف
+        GRACE_PERIOD_DAYS: 0, 
         FIXED_SERVICE_FEE: 25,
         CURRENCY: 'USD',
         TIERS: [
@@ -74,7 +74,7 @@ export const STORAGE_CONFIG = {
         ]
       },
       DANGEROUS: {
-        GRACE_PERIOD_DAYS: 0, // الحاويات الخطرة لا يوجد لها فترة سماح
+        GRACE_PERIOD_DAYS: 0, 
         FIXED_SERVICE_FEE: 25,
         CURRENCY: 'USD',
         TIERS: [
@@ -82,19 +82,19 @@ export const STORAGE_CONFIG = {
           { name: 'شريحة 2', minDay: 21, maxDay: Infinity, rate: 18 }
         ]
       },
-      // Non-Standard Containers (غير منتظم)
+      // Non-Standard Containers 
       NON_STANDARD: {
         OOG: {
           name: 'غير منتظم (الاسبريدر العادى)',
           GRACE_PERIOD_DAYS: 5,
           FIXED_SERVICE_FEE: 25,
-          RATE_MULTIPLIER: 2 // السعر * 2
+          RATE_MULTIPLIER: 2 
         },
         LASHING: {
           name: 'تصبين (بالويرات)',
           GRACE_PERIOD_DAYS: 5,
           FIXED_SERVICE_FEE: 25,
-          RATE_MULTIPLIER: 4 // السعر * 4
+          RATE_MULTIPLIER: 4 
         }
       },
       EMPTY: {
@@ -103,9 +103,9 @@ export const STORAGE_CONFIG = {
         TIERS: []
       }
     },
-    // 40ft Container (حاوية 40 قدم)
+    // 40ft Container 
     FORTY_FT: {
-      CARGO_SERVICE_FEE: 120, // تفريغ أو شحن المشمول
+      CARGO_SERVICE_FEE: 120, 
       FULL: {
         GRACE_PERIOD_DAYS: 5,
         FIXED_SERVICE_FEE: 25,
@@ -115,13 +115,13 @@ export const STORAGE_CONFIG = {
             name: 'Tier 1',
             minDay: 6,
             maxDay: 20,
-            rate: 14 // 14 دولار لكل يوم
+            rate: 14 
           },
           {
             name: 'Tier 2',
             minDay: 21,
             maxDay: Infinity,
-            rate: 21 // 21 دولار لكل يوم لما زاد عن 20 يوم
+            rate: 21 
           }
         ]
       },
@@ -144,19 +144,19 @@ export const STORAGE_CONFIG = {
           { name: 'شريحة 2', minDay: 21, maxDay: Infinity, rate: 31.5 }
         ]
       },
-      // Non-Standard Containers (غير منتظم)
+      // Non-Standard Containers 
       NON_STANDARD: {
         OOG: {
           name: 'غير منتظم',
           GRACE_PERIOD_DAYS: 5,
           FIXED_SERVICE_FEE: 25,
-          RATE_MULTIPLIER: 2 // السعر * 2
+          RATE_MULTIPLIER: 2
         },
         LASHING: {
           name: 'تصبين',
           GRACE_PERIOD_DAYS: 5,
           FIXED_SERVICE_FEE: 25,
-          RATE_MULTIPLIER: 4 // السعر * 4
+          RATE_MULTIPLIER: 4 
         }
       }
     }

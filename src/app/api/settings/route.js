@@ -6,7 +6,7 @@ export async function GET(req) {
   try {
     await connectToDatabase();
     // Default to the original hardcoded rate if it hasn't been saved yet
-    const defaultRate = 53.1971;
+    const defaultRate = 53;
 
     const rateSetting = await Settings.findOne({ key: "exchangeRate" });
     

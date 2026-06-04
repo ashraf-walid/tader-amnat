@@ -16,14 +16,14 @@ export function calculateDaysBetweenDates(arrivalDate, releaseDate) {
 
   const arrival = parseDate(arrivalDate);
   const release = parseDate(releaseDate);
-  
+
   // Reset hours to ensure clean day calculation
   arrival.setHours(0, 0, 0, 0);
   release.setHours(0, 0, 0, 0);
-  
+
   const diffTime = release.getTime() - arrival.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 لتشمل يوم الوصول ويوم الصرف
-  
+
   return diffDays > 0 ? diffDays : 0;
 }
 
@@ -38,7 +38,7 @@ export function validateInputs(days, config, options = {}) {
   if (typeof days !== 'number' || days < 0) {
     errors.push('عدد الأيام يجب أن يكون رقماً موجباً.');
   }
-  
+
   if (options.exchangeRate <= 0) {
     errors.push('سعر الصرف يجب أن يكون أكبر من الصفر.');
   }
@@ -52,12 +52,12 @@ export function validateInputs(days, config, options = {}) {
     errors.push('إعدادات الشرائح (TIERS) غير موجودة أو فارغة.');
   } else {
     let lastMaxDay = config.GRACE_PERIOD_DAYS || 0;
-    
+
     config.TIERS.forEach((tier, index) => {
       if (tier.minDay > tier.maxDay) {
         errors.push(`خطأ في الشريحة ${index + 1}: بداية الشريحة (${tier.minDay}) أكبر من نهايتها (${tier.maxDay}).`);
       }
-      
+
       // Check for Gaps or Overlaps
       if (tier.minDay !== lastMaxDay + 1) {
         const type = tier.minDay < lastMaxDay + 1 ? 'تداخل (Overlap)' : 'فجوة (Gap)';
@@ -70,7 +70,7 @@ export function validateInputs(days, config, options = {}) {
   if (errors.length > 0) {
     throw new Error(errors.join('\n'));
   }
-  
+
   return true;
 }
 
@@ -78,8 +78,8 @@ export function validateInputs(days, config, options = {}) {
  * Storage Fee Calculator Module (USD)
  */
 export function calculateStorageFee(days, config, options = {}) {
-  const { 
-    billingType = 'INITIAL', 
+  const {
+    billingType = 'INITIAL',
     previousDays = 0,
     rateMultiplier = 1
   } = options;
@@ -98,7 +98,7 @@ export function calculateStorageFee(days, config, options = {}) {
 
   if (daysToCalculate > 0) {
     let daysToDistribute = daysToCalculate;
-    
+
     // 1. التعامل مع فترة السماح إذا كان الحساب يقع ضمنها
     if (calculationStartDay <= GRACE_PERIOD_DAYS) {
       const daysInGrace = Math.min(daysToDistribute, GRACE_PERIOD_DAYS - calculationStartDay + 1);
@@ -121,10 +121,10 @@ export function calculateStorageFee(days, config, options = {}) {
     // 2. توزيع الأيام المتبقية على الشرائح
     for (const tier of TIERS) {
       if (daysToDistribute <= 0) break;
-      
+
       const tierMax = tier.maxDay;
       const tierMin = tier.minDay;
-      
+
       if (calculationStartDay <= tierMax) {
         const actualStartInTier = Math.max(tierMin, calculationStartDay);
         if (actualStartInTier <= tierMax) {
@@ -135,10 +135,10 @@ export function calculateStorageFee(days, config, options = {}) {
             const finalTierRate = tier.rate * rateMultiplier;
             const subtotal = daysInThisTier * finalTierRate;
             totalUSD += subtotal;
-            breakdown.push({ 
-              tierName: tier.name, 
-              days: daysInThisTier, 
-              rate: finalTierRate, 
+            breakdown.push({
+              tierName: tier.name,
+              days: daysInThisTier,
+              rate: finalTierRate,
               originalRate: tier.rate,
               multiplier: rateMultiplier,
               subtotal,
@@ -160,7 +160,7 @@ export function calculateStorageFee(days, config, options = {}) {
  * Service Fee Calculator Module (USD)
  */
 export function calculateServiceFee(config, options = {}) {
-  const { 
+  const {
     containerCount = 1,
     isDangerous = false,
     additionalServices = [] // e.g., [{ name: 'ونش 3 طن', rate: 13 }]
@@ -168,16 +168,16 @@ export function calculateServiceFee(config, options = {}) {
 
   const FIXED_SERVICE_FEE = config?.FIXED_SERVICE_FEE || 0;
   const serviceMultiplier = isDangerous ? 1.5 : 1;
-  
+
   let totalUSD = 0;
   const totalFixedFeesUSD = FIXED_SERVICE_FEE * containerCount;
-  
+
   const servicesBreakdown = additionalServices.map(service => {
     const finalRate = service.rate * serviceMultiplier;
     // إذا تم توفير كمية (quantity) للخدمة نستخدمها، وإلا نستخدم عدد الحاويات كافتراضي
     const serviceQty = typeof service.quantity === 'number' ? service.quantity : containerCount;
     const subtotal = finalRate * serviceQty;
-    
+
     totalUSD += subtotal;
     return {
       name: service.name,
@@ -189,10 +189,10 @@ export function calculateServiceFee(config, options = {}) {
     };
   });
 
-  return { 
-    fixedFeesUSD: totalFixedFeesUSD, 
-    additionalServicesUSD: totalUSD, 
-    servicesBreakdown 
+  return {
+    fixedFeesUSD: totalFixedFeesUSD,
+    additionalServicesUSD: totalUSD,
+    servicesBreakdown
   };
 }
 
@@ -209,10 +209,10 @@ export function convertToEGP(amountUSD, exchangeRate) {
 export function calculateTaxAndStamps(amountEGP, globalConfig) {
   const vatRate = globalConfig?.VAT_RATE || 0.14;
   const martyrStamp = globalConfig?.MARTYR_STAMP_FEE || 5;
-  
+
   const vatAmount = amountEGP * vatRate;
   const totalWithTax = amountEGP + vatAmount;
-  
+
   // التقريب للأعلى دائماً كما طلب المستخدم (500.01 تصبح 501)
   const finalTotal = Math.ceil(totalWithTax + martyrStamp);
 
@@ -228,9 +228,10 @@ export function calculateTaxAndStamps(amountEGP, globalConfig) {
  * Handles invoices with different container sizes/types.
  */
 export function calculateMultiContainerInvoice(arrivalDate, releaseDate, containerGroups, globalConfig, options = {}) {
-  const { 
+  const {
     exchangeRate = 48.50,
     isExternalStorage = false,
+    isLCLStorage = false,
     additionalServices = [] // Services for the whole invoice or specific ones? 
   } = options;
 
@@ -252,10 +253,10 @@ export function calculateMultiContainerInvoice(arrivalDate, releaseDate, contain
 
   // 1. Process each container group
   containerGroups.forEach((group, index) => {
-    const { 
-      config, 
-      surchargeConfig, 
-      count, 
+    const {
+      config,
+      surchargeConfig,
+      count,
       sizeLabel,
       isDangerous = false,
       hasCargoService = false,
@@ -263,23 +264,28 @@ export function calculateMultiContainerInvoice(arrivalDate, releaseDate, contain
       rateMultiplier = 1
     } = group;
 
-    // Adjust config for External Storage
+    // Adjust config for External Storage or LCL Storage
     let adjustedConfig = config;
     if (isExternalStorage) {
-      adjustedConfig = { 
-        ...config, 
+      adjustedConfig = {
+        ...config,
         GRACE_PERIOD_DAYS: 0,
         TIERS: config.TIERS.map((tier, i) => i === 0 ? { ...tier, minDay: 1 } : tier)
+      };
+    } else if (isLCLStorage) {
+      // LCL: فترة سماح 3 أيام بدلاً من 5
+      adjustedConfig = {
+        ...config,
+        GRACE_PERIOD_DAYS: 3,
+        TIERS: config.TIERS.map((tier, i) => i === 0 ? { ...tier, minDay: 4, maxDay: 20 } : tier)
       };
     }
 
     // A. Main Storage
-    // إذا كانت الحاوية خطر، نستخدم إعدادات الخطر مباشرة كتخزين واحد (بدون سماح وبأعلى فئة)
-    // أما إذا لم تكن خطر، نستخدم الإعدادات العادية (أو المعدلة للتخزين الخارجي)
     const isActuallyDangerous = isDangerous || options.isDangerous;
     const baseStorageConfig = isActuallyDangerous ? group.dangerousConfig : adjustedConfig;
-    
-    const storageRes = calculateStorageFee(days, baseStorageConfig, { 
+
+    const storageRes = calculateStorageFee(days, baseStorageConfig, {
       rateMultiplier,
       billingType: options.billingType,
       previousDays: options.previousDays
@@ -288,13 +294,19 @@ export function calculateMultiContainerInvoice(arrivalDate, releaseDate, contain
     totalStorageUSD += groupStorageUSD;
     allDetails.storageBreakdown.push(...storageRes.breakdown.map(b => ({ ...b, tierName: `${sizeLabel} - ${b.tierName}` })));
 
-    // B. Surcharge (فقط للحاويات غير الخطرة، لأن الخطر تم حسابه كتخزين واحد)
+    // B. Surcharge
     if (surchargeConfig && !isActuallyDangerous) {
-      const surchargeGrace = isExternalStorage ? 0 : (surchargeConfig.GRACE_PERIOD_DAYS || 0);
-      const adjustedSurchargeConfig = { 
-        ...surchargeConfig, 
+      const surchargeGrace = isExternalStorage ? 0 : (isLCLStorage ? 3 : (surchargeConfig.GRACE_PERIOD_DAYS || 0));
+      const adjustedSurchargeConfig = {
+        ...surchargeConfig,
         GRACE_PERIOD_DAYS: surchargeGrace,
-        TIERS: surchargeConfig.TIERS?.map((tier, i) => (i === 0 && surchargeGrace === 0) ? { ...tier, minDay: 1 } : tier)
+        TIERS: surchargeConfig.TIERS?.map((tier, i) => {
+          if (i === 0) {
+            if (surchargeGrace === 0) return { ...tier, minDay: 1 };
+            if (surchargeGrace === 3) return { ...tier, minDay: 4 };
+          }
+          return tier;
+        })
       };
       const surRes = calculateStorageFee(days, adjustedSurchargeConfig, { rateMultiplier });
       const groupSurchargeUSD = surRes.storageFeeUSD * count;
@@ -304,12 +316,11 @@ export function calculateMultiContainerInvoice(arrivalDate, releaseDate, contain
 
     // C. Cargo Storage
     if (hasCargoStorage && group.cargoStorageCount > 0) {
-      const cargoConfig = { 
-        ...adjustedConfig, 
+      const cargoConfig = {
+        ...adjustedConfig,
         GRACE_PERIOD_DAYS: 1,
         TIERS: adjustedConfig.TIERS.map((tier, i) => i === 0 ? { ...tier, minDay: 2 } : tier)
       };
-      // استخدام cargoStorageDays المحسوبة من (cargoExitDate -> releaseDate)
       const cargoDays = options.cargoStorageDays || days;
       const cargoRes = calculateStorageFee(cargoDays, cargoConfig, { rateMultiplier: rateMultiplier * 2 });
       const activeCargoCount = group.cargoStorageCount;
@@ -319,7 +330,6 @@ export function calculateMultiContainerInvoice(arrivalDate, releaseDate, contain
     }
 
     // D. Fixed Services
-    // ملاحظة: الرسوم الثابتة ($25) لا تفرض في حالة التجديد
     if (options.billingType !== 'RENEWAL') {
       const serviceRes = calculateServiceFee(adjustedConfig, { containerCount: count, isDangerous: isActuallyDangerous });
       totalFixedFeesUSD += serviceRes.fixedFeesUSD;
@@ -328,15 +338,17 @@ export function calculateMultiContainerInvoice(arrivalDate, releaseDate, contain
     // E. Cargo Service Fee
     if (hasCargoService && adjustedConfig.CARGO_SERVICE_FEE) {
       const activeCount = group.cargoServiceCount !== undefined ? group.cargoServiceCount : count;
-      totalCargoServiceFeeUSD += adjustedConfig.CARGO_SERVICE_FEE * activeCount;
+      // LCL: نصف السعر لتفريغ المشمول
+      const cargoServiceRate = isLCLStorage ? adjustedConfig.CARGO_SERVICE_FEE * 0.5 : adjustedConfig.CARGO_SERVICE_FEE;
+      totalCargoServiceFeeUSD += cargoServiceRate * activeCount;
     }
   });
 
   // 2. Process Shared Additional Services
-  const sharedServiceRes = calculateServiceFee(null, { 
-    containerCount: 1, // Quantity is already handled inside individual services
-    isDangerous: options.isDangerous || false, // Default multiplier for shared services
-    additionalServices 
+  const sharedServiceRes = calculateServiceFee(null, {
+    containerCount: 1,
+    isDangerous: options.isDangerous || false,
+    additionalServices
   });
   totalAdditionalServicesUSD = sharedServiceRes.additionalServicesUSD;
   allDetails.servicesBreakdown.push(...sharedServiceRes.servicesBreakdown);
@@ -377,8 +389,8 @@ export function calculateMultiContainerInvoice(arrivalDate, releaseDate, contain
  * Main Orchestrator Function (Legacy Support)
  */
 export function calculateFinalInvoice(arrivalDate, releaseDate, config, globalConfig, options = {}) {
-  const { 
-    containerCount = 1, 
+  const {
+    containerCount = 1,
     exchangeRate = 48.50,
     hasCargoService = false, // تفريغ/شحن المشمول
     hasCargoStorage = false, // أرضيات المشمول (ضعف الحاوية)
@@ -392,11 +404,11 @@ export function calculateFinalInvoice(arrivalDate, releaseDate, config, globalCo
   // 2. Adjust config for External Storage
   let adjustedConfig = config;
   if (isExternalStorage) {
-    adjustedConfig = { 
-      ...config, 
+    adjustedConfig = {
+      ...config,
       GRACE_PERIOD_DAYS: 0,
       // تعديل الشريحة الأولى لتبدأ من اليوم 1 بدلاً من اليوم 6
-      TIERS: config.TIERS.map((tier, index) => 
+      TIERS: config.TIERS.map((tier, index) =>
         index === 0 ? { ...tier, minDay: 1 } : tier
       )
     };
@@ -407,7 +419,7 @@ export function calculateFinalInvoice(arrivalDate, releaseDate, config, globalCo
 
   // 4. Calculate Main Container Storage (FULL)
   // ملاحظة: الحاويات الخطرة لا تتمتع بفترة سماح حتى في التخزين الأساسي
-  const baseStorageConfig = options.isDangerous 
+  const baseStorageConfig = options.isDangerous
     ? { ...config, GRACE_PERIOD_DAYS: 0, TIERS: config.TIERS.map((t, i) => i === 0 ? { ...t, minDay: 1 } : t) }
     : adjustedConfig;
 
@@ -418,19 +430,19 @@ export function calculateFinalInvoice(arrivalDate, releaseDate, config, globalCo
   // تحسب كإضافة على التخزين الأساسي
   let surchargeUSD = 0;
   let surchargeBreakdown = [];
-  
+
   if (surchargeConfig) {
     // في حالة التخزين الخارجي أو الحاويات الخطرة، نلغي السماح للصنف أيضاً
     const surchargeGrace = (isExternalStorage || options.isDangerous) ? 0 : (surchargeConfig.GRACE_PERIOD_DAYS || 0);
-    
-    const adjustedSurchargeConfig = { 
-      ...surchargeConfig, 
+
+    const adjustedSurchargeConfig = {
+      ...surchargeConfig,
       GRACE_PERIOD_DAYS: surchargeGrace,
-      TIERS: surchargeConfig.TIERS?.map((tier, index) => 
+      TIERS: surchargeConfig.TIERS?.map((tier, index) =>
         (index === 0 && surchargeGrace === 0) ? { ...tier, minDay: 1 } : tier
       )
     };
-      
+
     const surRes = calculateStorageFee(days, adjustedSurchargeConfig, options);
     surchargeUSD = surRes.storageFeeUSD * containerCount;
     surchargeBreakdown = surRes.breakdown.map(b => ({ ...b, tierName: `إضافي صنف - ${b.tierName}` }));
@@ -457,10 +469,10 @@ export function calculateFinalInvoice(arrivalDate, releaseDate, config, globalCo
 
   // 6. Calculate Services
   const serviceResult = calculateServiceFee(adjustedConfig, options);
-  
+
   // ملاحظة: الرسوم الثابتة ($25) لا تفرض في حالة التجديد
   const fixedFeesUSD = options.billingType === 'RENEWAL' ? 0 : serviceResult.fixedFeesUSD;
-  
+
   // إضافة رسوم خدمة المشمول الثابتة (60$ أو 120$)
   let cargoServiceFeeUSD = 0;
   if (hasCargoService && adjustedConfig.CARGO_SERVICE_FEE) {
@@ -488,25 +500,25 @@ export function calculateFinalInvoice(arrivalDate, releaseDate, config, globalCo
       hasCargoStorage
     },
     usd: {
-        storageFee: totalStorageUSD,
-        surchargeFee: surchargeUSD,
-        cargoStorageFee: cargoStorageUSD,
-        fixedFees: fixedFeesUSD,
-        additionalServices: serviceResult.additionalServicesUSD,
-        cargoServiceFee: cargoServiceFeeUSD,
-        subtotal: totalUSD
+      storageFee: totalStorageUSD,
+      surchargeFee: surchargeUSD,
+      cargoStorageFee: cargoStorageUSD,
+      fixedFees: fixedFeesUSD,
+      additionalServices: serviceResult.additionalServicesUSD,
+      cargoServiceFee: cargoServiceFeeUSD,
+      subtotal: totalUSD
     },
     egp: {
-        subtotal: subtotalEGP,
-        vatAmount: taxResult.vatAmount,
-        martyrStamp: taxResult.martyrStamp,
-        total: taxResult.finalTotal
+      subtotal: subtotalEGP,
+      vatAmount: taxResult.vatAmount,
+      martyrStamp: taxResult.martyrStamp,
+      total: taxResult.finalTotal
     },
     details: {
-        storageBreakdown: storageResult.breakdown,
-        surchargeBreakdown: surchargeBreakdown,
-        cargoBreakdown: cargoBreakdown,
-        servicesBreakdown: serviceResult.servicesBreakdown
+      storageBreakdown: storageResult.breakdown,
+      surchargeBreakdown: surchargeBreakdown,
+      cargoBreakdown: cargoBreakdown,
+      servicesBreakdown: serviceResult.servicesBreakdown
     }
   };
 }

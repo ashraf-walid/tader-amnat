@@ -97,14 +97,6 @@ export default function AccountsDashboard() {
     return filtered;
   }, [data, search, isPriorityActive, isTransactionsOnlyActive]);
 
-  const stats = useMemo(() => {
-    return data.reduce((acc, curr) => ({
-      totalDebit: acc.totalDebit + curr.closingBalance.debit,
-      totalCredit: acc.totalCredit + curr.closingBalance.credit,
-      count: acc.count + 1
-    }), { totalDebit: 0, totalCredit: 0, count: 0 });
-  }, [data]);
-
   const saveDataToServer = async (newData) => {
     try {
       await fetch('/api/data', {
@@ -348,28 +340,6 @@ export default function AccountsDashboard() {
         ) : (
           /* Analysis View */
           <div className="space-y-6 animate-in">
-            {/* Stats Grid */}
-            {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <StatCard 
-                title="إجمالي المدين" 
-                value={stats.totalDebit.toLocaleString()} 
-                icon={<ArrowUpRight className="text-green-500" />}
-                subtitle="أرصدة نهائية"
-              />
-              <StatCard 
-                title="إجمالي الدائن" 
-                value={stats.totalCredit.toLocaleString()} 
-                icon={<ArrowDownLeft className="text-red-500" />}
-                subtitle="أرصدة نهائية"
-              />
-              <StatCard 
-                title="عدد العملاء" 
-                value={stats.count} 
-                icon={<Wallet className="text-blue-500" />}
-                subtitle="حسابات نشطة"
-              />
-            </div> */}
-
             {/* List & Search */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
               <div className="p-4 md:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col gap-4">

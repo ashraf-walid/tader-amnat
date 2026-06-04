@@ -1,13 +1,13 @@
 'use client';
 
 import { STORAGE_CONFIG, SERVICES_LIST } from "@/lib/storageConstants";
-import { 
-  ArrowRight, 
-  Info, 
-  Package, 
-  Maximize, 
-  Truck, 
-  Wrench, 
+import {
+  ArrowRight,
+  Info,
+  Package,
+  Maximize,
+  Truck,
+  Wrench,
   AlertTriangle,
   Zap,
   Clock,
@@ -25,14 +25,14 @@ export default function RatesPage() {
   const fmt = (n) => Number(n).toLocaleString('ar-EG');
 
   return (
-    <div className="min-h-screen bg-[#0b1120] text-slate-200 p-4 md:p-8 font-sans" dir="rtl">
+    <div className="min-h-screen bg-[#0b1120] text-slate-200 p-4 md:p-8" dir="rtl" style={{ fontFamily: "'Tajawal', system-ui, sans-serif" }}>
       <div className="max-w-5xl mx-auto">
-        
+
         {/* Back Button & Header */}
         <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <Link 
-              href="/Storagecalculator" 
+            <Link
+              href="/Storagecalculator"
               className="p-3 bg-slate-800/50 hover:bg-slate-700/50 rounded-2xl transition-all group border border-slate-700/50"
             >
               <ArrowRight className="w-5 h-5 text-blue-400 group-hover:translate-x-1 transition-transform" />
@@ -47,14 +47,10 @@ export default function RatesPage() {
               </p>
             </div>
           </div>
-          <div className="hidden md:flex flex-col items-end" dir="ltr">
-            <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">نسخة النظام</span>
-            <span className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-full text-xs font-bold border border-blue-500/20">v2.0.26 — تحصيل الوارد</span>
-          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          
+
           {/* SECTION: NON-STANDARD (Primary request) */}
           <section className="bg-linear-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20 rounded-4xl overflow-hidden shadow-2xl shadow-amber-500/5">
             <div className="p-6 md:p-8">
@@ -67,7 +63,7 @@ export default function RatesPage() {
                   <p className="text-sm text-slate-400 font-medium">Non-Standard Containers (OOG)</p>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <p className="text-sm leading-relaxed text-slate-300">
                   تُعرف الحاويات غير المنتظمة بأنها التي تتجاوز أبعادها أبعاد الحاوية القياسية، مما يتطلب معدات خاصة أو عناية فائقة. يتم احتساب رسومها عن طريق مضاعفة السعر الأساسي.
@@ -340,7 +336,7 @@ export default function RatesPage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                
+
                 {/* Yard Shifting */}
                 <div className="bg-slate-950/50 p-6 rounded-3xl border border-slate-800/50 hover:border-indigo-500/30 transition-colors">
                   <div className="flex items-center gap-3 mb-4">
@@ -473,7 +469,7 @@ export default function RatesPage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                
+
                 {/* External Storage */}
                 <div className="bg-slate-950/50 p-6 rounded-3xl border border-slate-800/50 hover:border-indigo-500/30 transition-colors">
                   <div className="flex items-center gap-3 mb-4">
@@ -483,6 +479,29 @@ export default function RatesPage() {
                   <p className="text-xs text-slate-400 leading-relaxed">
                     خروج الحاوية لساحة خارجية يلغي فترة السماح (0 أيام)، ويبدأ حساب التخزين فوراً من اليوم الأول بالتعريفة الأساسية.
                   </p>
+                </div>
+
+                {/* LCL Storage - جديد */}
+                <div className="bg-slate-950/50 p-6 rounded-3xl border border-amber-500/20 hover:border-amber-500/40 transition-colors shadow-lg shadow-amber-500/5">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Package className="w-5 h-5 text-amber-400" />
+                    <h3 className="font-bold text-slate-100">المخزن المشترك (LCL)</h3>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      التخزين بالمخزن المشترك يمنح فترة سماح <span className="text-amber-400 font-bold">3 أيام فقط</span> بدلاً من 5 أيام.
+                    </p>
+                    <ul className="text-[11px] text-slate-500 space-y-1.5 mt-3">
+                      <li className="flex items-start gap-2">
+                        <span className="text-amber-400">•</span>
+                        <span>يتم احتساب تفريغ المشمول تلقائياً بـ <span className="text-amber-400 font-bold">نصف السعر</span></span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-amber-400">•</span>
+                        <span>يتم احتساب نقل بين الساحات تلقائياً</span>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
 
                 {/* Cargo Storage */}
@@ -515,10 +534,10 @@ export default function RatesPage() {
 
         {/* Footer info */}
         <div className="mt-12 text-center pb-8">
-           <p className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-medium flex items-center justify-center gap-2">
-             <Clock className="w-3 h-3" />
-             آخر تحديث للبيانات: ٢٥ مايو ٢٠٢٦ — المصدر: وحدة المحاسبة م. أشرف
-           </p>
+          <p className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-medium flex items-center justify-center gap-2">
+            <Clock className="w-3 h-3" />
+            آخر تحديث للبيانات: ٢٥ مايو ٢٠٢٦ — المصدر: وحدة المحاسبة م. أشرف
+          </p>
         </div>
 
       </div>
