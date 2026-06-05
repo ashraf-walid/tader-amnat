@@ -13,7 +13,7 @@ import {
   CheckIcon,
   SummaryIcon,
   InfoIcon
-} from "./Icons";
+} from "../../components/Icons";
 import Link from "next/link";
 
 // ─────────────────────────────────────────────
@@ -90,6 +90,20 @@ export default function StorageCalculator({
     }
   }, [isLCLStorage]);
 
+  // ── Attempts ──
+  const [remainingAttempts, setRemainingAttempts] = useState(null);
+  const [attemptsLoading, setAttemptsLoading] = useState(false);
+
+  // Fetch remaining attempts on mount
+  useEffect(() => {
+    fetch('/api/attempts/consume')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setRemainingAttempts(data.remainingAttempts);
+      })
+      .catch(err => console.error('Failed to fetch attempts', err));
+  }, []);
+
   // ── Result ──
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
@@ -112,7 +126,7 @@ export default function StorageCalculator({
     return d > 0 ? d : null;
   }
 
-  function calculate() {
+  async function calculate() {
     setError(""); setResult(null);
     if (!arrDate || !relDate) { setError("الرجاء إدخال تاريخ الوصول والصرف."); return; }
     if (twentyCount <= 0 && fortyCount <= 0) { setError("الرجاء إدخال عدد الحاويات (20 أو 40 قدم)."); return; }
@@ -122,6 +136,24 @@ export default function StorageCalculator({
       setError("الرجاء تحديد تاريخ خروج المشمول من الحاوية.");
       return;
     }
+
+    // Consume attempt before calculating
+    setAttemptsLoading(true);
+    try {
+      const attemptRes = await fetch('/api/attempts/consume', { method: 'POST' });
+      const attemptData = await attemptRes.json();
+      if (!attemptRes.ok || !attemptData.success) {
+        setError(attemptData.error || 'لا توجد محاولات كافية. يرجى الاتصال بالإدارة.');
+        setAttemptsLoading(false);
+        return;
+      }
+      setRemainingAttempts(attemptData.remainingAttempts);
+    } catch (err) {
+      setError('حدث خطأ في الاتصال بالخادم أثناء التحقق من المحاولات.');
+      setAttemptsLoading(false);
+      return;
+    }
+    setAttemptsLoading(false);
 
     const maxDays = liveDays() || 0;
     if (billingType === "RENEWAL" && prevDays > maxDays) {
@@ -864,11 +896,28 @@ export default function StorageCalculator({
           </div>
         )}
 
+        {/* ── Attempts badge ── */}
+        {remainingAttempts !== null && (
+          <div className={`flex items-center justify-between px-4 py-2.5 rounded-xl mb-4 text-sm font-bold border ${
+            remainingAttempts > 0
+              ? 'bg-[#111827] border-white/[0.12] text-[#f0f2f8]'
+              : 'bg-red-500/10 border-red-500/25 text-[#f87171]'
+          }`}>
+            <span>المحاولات المتبقية</span>
+            <span className="text-lg">{remainingAttempts}</span>
+          </div>
+        )}
+
         {/* ── Calc Button ── */}
         <button
-          className="w-full py-4 text-base font-extrabold rounded-2xl border-none bg-linear-to-br from-[#f0b429] to-[#e8940a] text-[#0b1120] cursor-pointer mt-5 tracking-wide shadow-[0_4px_24px_rgba(240,180,41,0.3)] transition-all hover:opacity-90 hover:shadow-[0_6px_32px_rgba(240,180,41,0.4)] active:scale-[0.99] flex items-center justify-center gap-2"
-          onClick={calculate}>
-          احسب الفاتورة <ArrowLeft className="w-4 h-4" />
+          className="w-full py-4 text-base font-extrabold rounded-2xl border-none bg-linear-to-br from-[#f0b429] to-[#e8940a] text-[#0b1120] cursor-pointer mt-5 tracking-wide shadow-[0_4px_24px_rgba(240,180,41,0.3)] transition-all hover:opacity-90 hover:shadow-[0_6px_32px_rgba(240,180,41,0.4)] active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={calculate}
+          disabled={attemptsLoading || remainingAttempts === 0}>
+          {attemptsLoading ? (
+            <div className="w-5 h-5 border-2 border-[#0b1120]/30 border-t-[#0b1120] rounded-full animate-spin" />
+          ) : (
+            <>احسب الفاتورة <ArrowLeft className="w-4 h-4" /></>
+          )}
         </button>
 
         {error && (
