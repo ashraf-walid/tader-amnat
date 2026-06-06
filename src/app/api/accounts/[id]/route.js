@@ -49,9 +49,9 @@ export async function PUT(request, { params }) {
 
     // Hash password manually ONLY when a new plaintext password is provided
     // This avoids the pre-save hook double-hashing the already-hashed value
-    if (password && password.trim() !== '') {
+    if (password && password !== '') {
       const salt = await bcrypt.genSalt(10);
-      updateFields.password = await bcrypt.hash(password.trim(), salt);
+      updateFields.password = await bcrypt.hash(password, salt);
     }
 
     // Use findByIdAndUpdate with { strict: false } to bypass pre-save hook

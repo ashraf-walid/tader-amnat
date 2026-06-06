@@ -52,7 +52,8 @@ export async function proxy(req) {
   }
 
   try {
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+    const JWT_SECRET = process.env.JWT_SECRET;
+    const secret = new TextEncoder().encode(JWT_SECRET);
     const { payload } = await jwtVerify(token, secret);
     const role = String(payload.role).toLowerCase();
 

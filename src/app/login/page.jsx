@@ -622,7 +622,7 @@ export default function LoginPage() {
               ليس لديك حساب؟
             </span>
             <a
-              href="https://wa.me/201000980788?text=اعملى%20حساب%20على%20برنامج%20الارضيات"
+              href="https://wa.me/201000980788?text=السلام%20عليكم%20اعملى%20حساب%20على%20برنامج%20الارضيات%20باسم ...."
               target="_blank"
               rel="noopener noreferrer"
               style={{

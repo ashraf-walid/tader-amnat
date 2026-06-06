@@ -48,6 +48,18 @@ const UserSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Hash password before saving
+UserSchema.pre('save', async function () {
+  if (!this.isModified('password')) return;
+
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+  } catch (error) {
+    throw error;
+  }
+});
+
 const User = mongoose.models.User || mongoose.model('User', UserSchema);
 
 async function createOwner() {
@@ -65,9 +77,9 @@ async function createOwner() {
     }
 
     // Default owner credentials (change these!)
-    // const username = '';
-    // const password = '';
-    // const phone = '';
+    const username = process.env.OWNER_USERNAME || 'admin';
+    const password = process.env.OWNER_PASSWORD || 'admin123';
+    const phone = process.env.OWNER_PHONE || '01000980788';
 
     console.log('\n📝 Creating owner account with credentials:');
     console.log('   Username:', username);
@@ -75,14 +87,10 @@ async function createOwner() {
     console.log('   Phone:', phone);
     console.log('\n⚠️  IMPORTANT: Change these credentials immediately after first login!\n');
 
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
     // Create owner
     const owner = new User({
       username: username.toLowerCase().trim(),
-      password: hashedPassword,
+      password: password, // Will be hashed by pre-save hook
       phone: phone,
       role: 'owner',
       attempts: 999, // Unlimited attempts for owner
