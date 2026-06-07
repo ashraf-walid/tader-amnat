@@ -15,6 +15,7 @@ import {
   InfoIcon
 } from "../../components/Icons";
 import Link from "next/link";
+import AdminNav from "@/components/AdminNav";
 
 // ─────────────────────────────────────────────
 // Daily exchange rate — comes from admin (prop or context)
@@ -387,6 +388,7 @@ export default function StorageCalculator({
 
   return (
     <div className="min-h-screen bg-[#0b1120] text-[#f0f2f8]" dir="rtl" style={{ fontFamily: "'Tajawal', system-ui, sans-serif" }}>
+      <AdminNav />
       <div className="max-w-[700px] mx-auto px-4 py-6 pb-20">
 
         {/* ── Header ── */}

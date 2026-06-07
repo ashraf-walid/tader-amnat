@@ -16,6 +16,7 @@ import {
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { parseAccountingHTML } from '@/lib/parser';
+import AdminNav from '@/components/AdminNav';
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -244,6 +245,7 @@ export default function AccountsDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-8 dir-rtl" dir="rtl">
+      <AdminNav />
       <div className="max-w-7xl mx-auto space-y-8">
         
         {/* Header Section */}

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Icon } from "@/components/Icons";
 import { PROJECT_FILES, ROLES, getRoleInfo, EMPTY_FORM } from "@/lib/adminConstants";
+import AdminNav from "@/components/AdminNav";
 
 // ─── مكوّن حقل الإدخال ────────────────────────────────────────────────────────
 function Field({ label, icon: IconComp, error, children }) {
@@ -742,6 +743,8 @@ export default function AdminPage() {
           .admin-nav a, .admin-nav button { flex:1 1 auto; justify-content:center; min-width:0; padding:8px 10px; font-size:11px; }
         }
       `}</style>
+
+      <AdminNav />
 
       <div style={{ maxWidth: 960, margin: "0 auto" }}>
         {/* ─── رأس الصفحة ─────────────────────────────────────────── */}
