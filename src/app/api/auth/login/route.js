@@ -80,6 +80,7 @@ export async function POST(request) {
     const token = jwt.sign(
       {
         userId: user._id.toString(),
+        id: user._id.toString(), // Add id for compatibility with requireAuth/me
         username: user.username,
         role: user.role,
       },
@@ -92,6 +93,7 @@ export async function POST(request) {
       id: user._id.toString(),
       username: user.username,
       phone: user.phone,
+      officeName: user.officeName,
       role: user.role,
       attempts: user.attempts,
       lastLogin: user.lastLogin,

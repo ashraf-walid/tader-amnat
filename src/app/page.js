@@ -10,35 +10,17 @@ import {
   Filter,
   History,
   Download,
-  Trash2,
   RefreshCw
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { parseAccountingHTML } from '@/lib/parser';
 import AdminNav from '@/components/AdminNav';
+import { PRIORITY_CODES } from '@/lib/constants';
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
-
-const PRIORITY_CODES = [
-  '1714986', '1714994', '17142002', '17142003', '17142005', '17142006', 
-  '17142007', '17142008', '17142009', '17142010', '17142011', '17142012', '17142013', 
-  '17142015', '17142016', '17142019', '17142020', '17142021', '17142022', '17142023', 
-  '17142024', '17142025', '17142026', '17142027', '17142028', '17142029', '17142030', 
-  '17142033', '17142034', '17142035', '17142036', '17142037', '17142038', '17142039', 
-  '17142040', '17142042', '17142047', '17142048', '17142055', '17142056', '17142059', 
-  '17142060', '17142063', '17142067', '17142074', '17142075', '17142076', '17142077', 
-  '17142083', '17142084', '17142090', '17142093', '17142094', '17142095', '17142098', 
-  '17142099', '17142100', '17142105', '17142108', '17142114', '17142117', '17142118', 
-  '17142121', '17142122', '17142123', '17142124', '17142126', '17142127', '17142128', 
-  '17142131', '17142135', '17142138', '17142143', '17142144', '17142147', '17142150', 
-  '17142151', '17142152', '17142154', '17142158', '17142165', '1714893',  '17142167', 
-  '17142001', '17142004', '17142014', '17142043', '17142044', '17142045', '17142046',
-  '17142054', '17142058', '17142061', '17142065', '17142054', '17142058', '17142061', 
-  '17142065', '17142073', '17142082', '17142085', '17142096', '17142148', '17142162',
-];
 
 export default function AccountsDashboard() {
   const [data, setData] = useState([]);
@@ -47,7 +29,6 @@ export default function AccountsDashboard() {
   const [isDragging, setIsDragging] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [errorStatus, setErrorStatus] = useState(null);
-  const [isPriorityActive, setIsPriorityActive] = useState(true);
   const [isTransactionsOnlyActive, setIsTransactionsOnlyActive] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -77,11 +58,6 @@ export default function AccountsDashboard() {
   const filteredData = useMemo(() => {
     let filtered = data;
     
-    // Apply Priority Code Filter if active
-    if (isPriorityActive) {
-      filtered = filtered.filter(item => PRIORITY_CODES.includes(item.accountCode));
-    }
-
     // Apply Transactions Only Filter
     if (isTransactionsOnlyActive) {
       filtered = filtered.filter(item => item.transactions && item.transactions.length > 0);
@@ -96,7 +72,7 @@ export default function AccountsDashboard() {
     }
 
     return filtered;
-  }, [data, search, isPriorityActive, isTransactionsOnlyActive]);
+  }, [data, search, isTransactionsOnlyActive]);
 
   const saveDataToServer = async (newData) => {
     try {
@@ -204,13 +180,6 @@ export default function AccountsDashboard() {
     await saveDataToServer(updatedData);
   };
 
-  const clearData = async () => {
-    if (window.confirm('هل أنت متأكد من مسح جميع البيانات؟ سيتم حذف كافة السجلات والمعاملات لجميع المستخدمين.')) {
-      setData([]);
-      await saveDataToServer([]);
-    }
-  };
-
   const downloadData = () => {
     if (!window.confirm('هل تريد حفظ نسخة احتياطية من البيانات الحالية على جهازك؟')) return;
     
@@ -305,14 +274,6 @@ export default function AccountsDashboard() {
                 استبدال
                 <input type="file" className="hidden" accept=".html,.htm,.json" onChange={handleFileUpload} />
               </label>
-
-              <button 
-                onClick={clearData}
-                className="p-2 md:p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all border border-transparent hover:border-red-100 dark:hover:border-red-900/30"
-                title="مسح كافة البيانات"
-              >
-                <Trash2 size={18} />
-              </button>
             </div>
           )}
         </header>
@@ -353,19 +314,6 @@ export default function AccountsDashboard() {
                     </span>
                   </div>
                   <div className="flex flex-wrap items-center justify-center md:justify-end gap-2">
-                    <button 
-                      onClick={() => setIsPriorityActive(!isPriorityActive)}
-                      className={cn(
-                        "flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold transition-all",
-                        isPriorityActive 
-                          ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30" 
-                          : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200"
-                      )}
-                    >
-                      <Filter size={12} />
-                      {isPriorityActive ? "العملاء الدائمين" : "جميع العملاء"}
-                    </button>
-
                     <button 
                       onClick={() => setIsTransactionsOnlyActive(!isTransactionsOnlyActive)}
                       className={cn(

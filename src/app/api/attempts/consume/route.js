@@ -16,7 +16,8 @@ export async function POST(request) {
 
     await connectToDatabase();
 
-    const user = await User.findById(decoded.userId).select(
+    const userId = decoded.userId || decoded.id;
+    const user = await User.findById(userId).select(
       "attempts username",
     );
     if (!user) {
@@ -81,7 +82,8 @@ export async function GET(request) {
 
     await connectToDatabase();
 
-    const user = await User.findById(decoded.userId).select("attempts");
+    const userId = decoded.userId || decoded.id;
+    const user = await User.findById(userId).select("attempts");
     if (!user) {
       return NextResponse.json(
         { success: false, error: "المستخدم غير موجود" },

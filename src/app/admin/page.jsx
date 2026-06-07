@@ -381,6 +381,15 @@ function AccountForm({ initial, onSubmit, onCancel, isSaving }) {
         />
       </Field>
 
+      {/* اسم المكتب */}
+      <Field label="اسم المكتب (اختياري)" icon={Icon.Briefcase}>
+        <Input
+          value={form.officeName || ""}
+          onChange={set("officeName")}
+          placeholder="أدخل اسم المكتب"
+        />
+      </Field>
+
       {/* الدور */}
       <Field label="الدور" icon={Icon.Shield}>
         <select
@@ -508,6 +517,9 @@ function Toast({ msg, onDone }) {
 
 // ─── الصفحة الرئيسية ──────────────────────────────────────────────────────────
 export default function AdminPage() {
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [authLoaded, setAuthLoaded] = useState(false);
+
   // ── سعر الصرف ──
   const [rate, setRate] = useState("");
   const [rateLoading, setRL] = useState(true);
@@ -524,6 +536,7 @@ export default function AdminPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState({ text: "", type: "" });
   const [newAttempts, setNewAttempts] = useState("");
+  const [dataClearing, setDataClearing] = useState(false);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [deleteConfirm, setDeleteConfirm] = useState("");
@@ -531,6 +544,23 @@ export default function AdminPage() {
   const [structType, setStructType] = useState("all"); // 'all' | 'page' | 'api' | 'core'
 
   const notify = (text, type = "success") => setToast({ text, type });
+
+  // ── التحقق من الصلاحيات ──
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && (data.user.role === "admin" || data.user.role === "owner")) {
+          setIsAdmin(true);
+        } else {
+          window.location.href = "/login";
+        }
+      })
+      .catch(() => {
+        window.location.href = "/login";
+      })
+      .finally(() => setAuthLoaded(true));
+  }, []);
 
   // ── تحميل سعر الصرف ──
   useEffect(() => {
@@ -666,12 +696,40 @@ export default function AdminPage() {
     }
   };
 
+  // ── مسح البيانات المالية ──
+  const clearFinancialData = async () => {
+    if (!window.confirm('⚠️ تحذير: هل أنت متأكد من مسح جميع البيانات المالية؟ سيتم حذف كافة السجلات والمعاملات لجميع الحسابات نهائياً.')) return;
+    
+    setDataClearing(true);
+    try {
+      const res = await fetch('/api/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify([])
+      });
+      const d = await res.json();
+      if (d.success) {
+        notify("تم مسح جميع البيانات المالية بنجاح");
+      } else {
+        notify(d.error || "خطأ أثناء مسح البيانات", "error");
+      }
+    } catch (err) {
+      console.error('Error clearing data:', err);
+      notify("فشل الاتصال بالخادم", "error");
+    } finally {
+      setDataClearing(false);
+    }
+  };
+
   // ── فلترة ──
   const filtered = accounts.filter((a) => {
     const matchRole = roleFilter === "all" || a.role === roleFilter;
     const q = search.toLowerCase();
     const matchSearch =
-      !q || a.username.toLowerCase().includes(q) || (a.phone || "").includes(q);
+      !q || 
+      a.username.toLowerCase().includes(q) || 
+      (a.phone || "").includes(q) ||
+      (a.officeName || "").toLowerCase().includes(q);
     return matchRole && matchSearch;
   });
 
@@ -707,6 +765,16 @@ export default function AdminPage() {
       {children}
     </button>
   );
+
+  if (!authLoaded) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#0d1424", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Spinner size={40} />
+      </div>
+    );
+  }
+
+  if (!isAdmin) return null;
 
   return (
     <div
@@ -784,7 +852,7 @@ export default function AdminPage() {
             </div>
 
             {/* ─── أزرار التنقل ─── */}
-            <nav className="admin-nav">
+            {/* <nav className="admin-nav">
               {[
                 { href: "/", label: "الرئيسية", color: "#818cf8" },
                 { href: "/Storagecalculator", label: "حاسبة التخزين", color: "#f0b429" },
@@ -841,7 +909,7 @@ export default function AdminPage() {
                   <line x1="21" y1="12" x2="9" y2="12" />
                 </svg>
               </button>
-            </nav>
+            </nav> */}
           </div>
         </div>
 
@@ -1189,9 +1257,19 @@ export default function AdminPage() {
                               >
                                 {acc.username}
                               </div>
-                              <div style={{ fontSize: 11, color: "#8892a4" }}>
+                              {acc.officeName && (
+                                <div style={{ 
+                                  fontSize: 11.5, 
+                                  color: "#60a5fa", 
+                                  fontWeight: 500,
+                                  marginTop: 1
+                                }}>
+                                  {acc.officeName}
+                                </div>
+                              )}
+                              {/* <div style={{ fontSize: 10, color: "#475569", marginTop: 2 }}>
                                 #{acc.id}
-                              </div>
+                              </div> */}
                             </div>
                           </div>
                         </td>
@@ -1433,8 +1511,72 @@ export default function AdminPage() {
                 </Btn>
               </div>
             )}
-          </div>
-        )}
+
+            {/* إدارة البيانات */}
+              <div
+                style={{
+                  background: "#1a2035",
+                  borderRadius: 16,
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  padding: "24px 20px",
+                  marginTop: 20,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 16,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 8,
+                      background: "rgba(248,113,113,0.12)",
+                      color: "#f87171",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Icon.Trash />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>إدارة البيانات</h3>
+                    <p style={{ fontSize: 12, color: "#8892a4", margin: "2px 0 0" }}>
+                      عمليات حساسة لإدارة قاعدة بيانات الحسابات.
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    padding: 16,
+                    background: "rgba(248,113,113,0.05)",
+                    border: "1px solid rgba(248,113,113,0.1)",
+                    borderRadius: 12,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 16,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 200 }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: "#f87171", margin: "0 0 4px" }}>
+                      مسح كافة البيانات المالية
+                    </p>
+                    <p style={{ fontSize: 11, color: "#8892a4", margin: 0 }}>
+                      سيتم حذف جميع الحسابات والمعاملات المالية المسجلة حالياً. هذا الإجراء لا يمكن التراجع عنه.
+                    </p>
+                  </div>
+                  <Btn variant="danger" onClick={clearFinancialData} disabled={dataClearing}>
+                    {dataClearing ? <Spinner /> : <Icon.Trash />}
+                    {dataClearing ? "جاري المسح..." : "مسح كافة البيانات"}
+                  </Btn>
+                </div>
+              </div>
+            </div>
+          )}
 
         {/* ═══════════════════════════════════════════════════════════
             تبويب: هيكل المشروع

@@ -14,7 +14,7 @@ export async function PUT(request, { params }) {
   try {
     const { id } = await params;
     const body = await request.json();
-    const { username, password, phone, role, attempts } = body;
+    const { username, password, phone, officeName, role, attempts } = body;
 
     // Validate MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -50,6 +50,7 @@ export async function PUT(request, { params }) {
     const updateFields = {};
     if (username) updateFields.username = username.toLowerCase().trim();
     if (phone !== undefined) updateFields.phone = phone;
+    if (officeName !== undefined) updateFields.officeName = officeName;
     if (role) updateFields.role = role;
     if (typeof attempts === "number") updateFields.attempts = attempts;
 
@@ -61,6 +62,7 @@ export async function PUT(request, { params }) {
     }
 
     // Use findByIdAndUpdate with { strict: false } to bypass pre-save hook
+    console.log("💾 Updating user fields:", updateFields);
     const user = await User.findByIdAndUpdate(
       id,
       { $set: updateFields },
@@ -81,6 +83,7 @@ export async function PUT(request, { params }) {
       id: user._id.toString(),
       username: user.username,
       phone: user.phone,
+      officeName: user.officeName,
       role: user.role,
       attempts: user.attempts,
       isActive: user.isActive,

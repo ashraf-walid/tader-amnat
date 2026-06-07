@@ -1,3 +1,5 @@
+import { PRIORITY_CODES } from './constants';
+
 /**
  * Parser for the accounting HTML trial balance export.
  */
@@ -32,6 +34,11 @@ export async function parseAccountingHTML(file) {
             
             // Skip headers/totals
             if (!name || name.includes('إجمالي') || name.includes('صفحة') || name.includes('الحساب')) {
+              return;
+            }
+
+            // Filter for priority codes only to reduce DB operations
+            if (!PRIORITY_CODES.includes(code)) {
               return;
             }
             

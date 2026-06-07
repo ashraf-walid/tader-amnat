@@ -22,6 +22,7 @@ export async function GET() {
       id: user._id.toString(),
       username: user.username,
       phone: user.phone || "",
+      officeName: user.officeName || "",
       role: user.role,
       attempts: user.attempts,
       calculationsCount: user.calculationsCount || 0,
@@ -66,7 +67,7 @@ export async function GET() {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { username, password, phone, role, attempts } = body;
+    const { username, password, phone, officeName, role, attempts } = body;
 
     // Validation
     if (!username || !password) {
@@ -101,11 +102,13 @@ export async function POST(request) {
       username: username.toLowerCase().trim(),
       password, // Will be hashed by pre-save middleware
       phone: phone || "",
+      officeName: officeName || "",
       role: role || "client",
       attempts: typeof attempts === "number" ? attempts : 5,
       isActive: true,
     });
 
+    console.log("💾 Saving user with officeName:", officeName);
     await newUser.save();
 
     // Return user without password
@@ -113,6 +116,7 @@ export async function POST(request) {
       id: newUser._id.toString(),
       username: newUser.username,
       phone: newUser.phone,
+      officeName: newUser.officeName,
       role: newUser.role,
       attempts: newUser.attempts,
       isActive: newUser.isActive,

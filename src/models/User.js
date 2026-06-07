@@ -19,6 +19,11 @@ const UserSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    officeName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     role: {
       type: String,
       enum: ["owner", "admin", "employee", "client"],

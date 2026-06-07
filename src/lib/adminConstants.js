@@ -256,6 +256,7 @@ export const EMPTY_FORM = {
   username: "",
   password: "",
   phone: "",
+  officeName: "",
   role: "client",
   attempts: 5,
 };
