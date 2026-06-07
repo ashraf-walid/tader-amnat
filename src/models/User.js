@@ -1,48 +1,56 @@
-import mongoose from 'mongoose';
-import bcrypt from 'bcrypt';
+import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 
-const UserSchema = new mongoose.Schema({
-  username: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-    lowercase: true,
+const UserSchema = new mongoose.Schema(
+  {
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+    phone: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    role: {
+      type: String,
+      enum: ["owner", "admin", "employee", "client"],
+      default: "client",
+    },
+    attempts: {
+      type: Number,
+      default: 5,
+      min: 0,
+    },
+    calculationsCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    lastLogin: {
+      type: Date,
+      default: null,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
-  password: {
-    type: String,
-    required: true,
+  {
+    timestamps: true,
   },
-  phone: {
-    type: String,
-    trim: true,
-    default: '',
-  },
-  role: {
-    type: String,
-    enum: ['owner', 'admin', 'employee', 'client'],
-    default: 'client',
-  },
-  attempts: {
-    type: Number,
-    default: 5,
-    min: 0,
-  },
-  lastLogin: {
-    type: Date,
-    default: null,
-  },
-  isActive: {
-    type: Boolean,
-    default: true,
-  },
-}, {
-  timestamps: true
-});
+);
 
 // Hash password before saving
-UserSchema.pre('save', async function () {
-  if (!this.isModified('password')) return;
+UserSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
 
   try {
     const salt = await bcrypt.genSalt(10);
@@ -77,4 +85,4 @@ UserSchema.methods.resetAttempts = async function (newAttempts = 5) {
   return this.attempts;
 };
 
-export default mongoose.models.User || mongoose.model('User', UserSchema);
+export default mongoose.models.User || mongoose.model("User", UserSchema);

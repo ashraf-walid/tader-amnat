@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongodb';
-import User from '@/models/User';
-import bcrypt from 'bcrypt';
-import mongoose from 'mongoose';
+import { NextResponse } from "next/server";
+import { connectToDatabase } from "@/lib/mongodb";
+import User from "@/models/User";
+import bcrypt from "bcrypt";
+import mongoose from "mongoose";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 /**
  * PUT /api/accounts/[id]
@@ -18,10 +18,13 @@ export async function PUT(request, { params }) {
 
     // Validate MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({
-        success: false,
-        error: 'معرف الحساب غير صحيح'
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: "معرف الحساب غير صحيح",
+        },
+        { status: 400 },
+      );
     }
 
     await connectToDatabase();
@@ -30,26 +33,29 @@ export async function PUT(request, { params }) {
     if (username) {
       const existingUser = await User.findOne({
         username: username.toLowerCase().trim(),
-        _id: { $ne: id }
+        _id: { $ne: id },
       });
       if (existingUser) {
-        return NextResponse.json({
-          success: false,
-          error: 'اسم المستخدم موجود بالفعل'
-        }, { status: 409 });
+        return NextResponse.json(
+          {
+            success: false,
+            error: "اسم المستخدم موجود بالفعل",
+          },
+          { status: 409 },
+        );
       }
     }
 
     // Build update object — only include fields that were sent
     const updateFields = {};
-    if (username)                        updateFields.username = username.toLowerCase().trim();
-    if (phone !== undefined)             updateFields.phone = phone;
-    if (role)                            updateFields.role = role;
-    if (typeof attempts === 'number')    updateFields.attempts = attempts;
+    if (username) updateFields.username = username.toLowerCase().trim();
+    if (phone !== undefined) updateFields.phone = phone;
+    if (role) updateFields.role = role;
+    if (typeof attempts === "number") updateFields.attempts = attempts;
 
     // Hash password manually ONLY when a new plaintext password is provided
     // This avoids the pre-save hook double-hashing the already-hashed value
-    if (password && password !== '') {
+    if (password && password !== "") {
       const salt = await bcrypt.genSalt(10);
       updateFields.password = await bcrypt.hash(password, salt);
     }
@@ -58,14 +64,17 @@ export async function PUT(request, { params }) {
     const user = await User.findByIdAndUpdate(
       id,
       { $set: updateFields },
-      { new: true, runValidators: true, select: '-password' }
+      { returnDocument: "after", runValidators: true, select: "-password" },
     );
 
     if (!user) {
-      return NextResponse.json({
-        success: false,
-        error: 'الحساب غير موجود'
-      }, { status: 404 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: "الحساب غير موجود",
+        },
+        { status: 404 },
+      );
     }
 
     const userResponse = {
@@ -78,21 +87,23 @@ export async function PUT(request, { params }) {
       updatedAt: user.updatedAt,
     };
 
-    console.log('✅ User updated:', user.username);
+    console.log("✅ User updated:", user.username);
 
     return NextResponse.json({
       success: true,
       account: userResponse,
-      message: 'تم تحديث الحساب بنجاح'
+      message: "تم تحديث الحساب بنجاح",
     });
-
   } catch (error) {
-    console.error('PUT /api/accounts/[id] Error:', error);
-    return NextResponse.json({
-      success: false,
-      error: 'فشل في تحديث الحساب',
-      message: error.message
-    }, { status: 500 });
+    console.error("PUT /api/accounts/[id] Error:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: "فشل في تحديث الحساب",
+        message: error.message,
+      },
+      { status: 500 },
+    );
   }
 }
 
@@ -106,37 +117,57 @@ export async function DELETE(request, { params }) {
 
     // Validate MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({
-        success: false,
-        error: 'معرف الحساب غير صحيح'
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: "معرف الحساب غير صحيح",
+        },
+        { status: 400 },
+      );
     }
 
     await connectToDatabase();
+
+    // Prevent deleting owner accounts
+    const targetUser = await User.findById(id).select("role");
+    if (targetUser && targetUser.role === "owner") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "لا يمكن حذف حساب المالك",
+        },
+        { status: 403 },
+      );
+    }
 
     // Find and delete user
     const user = await User.findByIdAndDelete(id);
 
     if (!user) {
-      return NextResponse.json({
-        success: false,
-        error: 'الحساب غير موجود'
-      }, { status: 404 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: "الحساب غير موجود",
+        },
+        { status: 404 },
+      );
     }
 
-    console.log('✅ User deleted:', user.username);
+    console.log("✅ User deleted:", user.username);
 
     return NextResponse.json({
       success: true,
-      message: 'تم حذف الحساب بنجاح'
+      message: "تم حذف الحساب بنجاح",
     });
-
   } catch (error) {
-    console.error('DELETE /api/accounts/[id] Error:', error);
-    return NextResponse.json({
-      success: false,
-      error: 'فشل في حذف الحساب',
-      message: error.message
-    }, { status: 500 });
+    console.error("DELETE /api/accounts/[id] Error:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: "فشل في حذف الحساب",
+        message: error.message,
+      },
+      { status: 500 },
+    );
   }
 }

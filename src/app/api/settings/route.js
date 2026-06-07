@@ -22,7 +22,7 @@ export async function GET(req) {
     console.error("Failed to fetch settings:", error);
     return NextResponse.json(
       { success: false, error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -38,7 +38,7 @@ export async function PUT(req) {
     if (!exchangeRate || isNaN(exchangeRate)) {
       return NextResponse.json(
         { success: false, error: "Invalid exchange rate" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -47,7 +47,7 @@ export async function PUT(req) {
     const rateSetting = await Settings.findOneAndUpdate(
       { key: "exchangeRate" },
       { value: Number(exchangeRate) },
-      { new: true, upsert: true }
+      { returnDocument: "after", upsert: true },
     );
 
     return NextResponse.json({
@@ -58,19 +58,19 @@ export async function PUT(req) {
     if (error.name === "AuthError") {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
     if (error.name === "ForbiddenError") {
       return NextResponse.json(
         { success: false, error: "Forbidden - Admin only" },
-        { status: 403 }
+        { status: 403 },
       );
     }
     console.error("Failed to update settings:", error);
     return NextResponse.json(
       { success: false, error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

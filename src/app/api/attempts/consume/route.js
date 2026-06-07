@@ -17,12 +17,12 @@ export async function POST(request) {
     await connectToDatabase();
 
     const user = await User.findById(decoded.userId).select(
-      "attempts username"
+      "attempts username",
     );
     if (!user) {
       return NextResponse.json(
         { success: false, error: "المستخدم غير موجود" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -34,17 +34,17 @@ export async function POST(request) {
             "لقد استنفدت جميع المحاولات المتاحة. يرجى الاتصال بالإدارة لتجديد المحاولات.",
           remainingAttempts: 0,
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
-    // Decrement using findByIdAndUpdate to bypass bcrypt pre-save hook
+    // Decrement attempts using findByIdAndUpdate to bypass bcrypt pre-save hook
     const updated = await User.findByIdAndUpdate(
       user._id,
       { $inc: { attempts: -1 } },
-      { new: true, select: "attempts username" }
+      { returnDocument: 'after', select: "attempts username" }
     );
-
+    
     return NextResponse.json({
       success: true,
       remainingAttempts: updated.attempts,
@@ -56,7 +56,7 @@ export async function POST(request) {
     if (error.name === "AuthError") {
       return NextResponse.json(
         { success: false, error: "يجب تسجيل الدخول" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -66,7 +66,7 @@ export async function POST(request) {
         error: "حدث خطأ أثناء خصم المحاولة",
         message: error.message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -85,7 +85,7 @@ export async function GET(request) {
     if (!user) {
       return NextResponse.json(
         { success: false, error: "المستخدم غير موجود" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -97,12 +97,12 @@ export async function GET(request) {
     if (error.name === "AuthError") {
       return NextResponse.json(
         { success: false, error: "يجب تسجيل الدخول" },
-        { status: 401 }
+        { status: 401 },
       );
     }
     return NextResponse.json(
       { success: false, error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

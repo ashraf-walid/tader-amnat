@@ -93,7 +93,7 @@ async function createOwner() {
       password: password, // Will be hashed by pre-save hook
       phone: phone,
       role: 'owner',
-      attempts: 999, // Unlimited attempts for owner
+      attempts: 10, // Unlimited attempts for owner
       isActive: true,
     });
 

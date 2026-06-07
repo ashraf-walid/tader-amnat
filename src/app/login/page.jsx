@@ -31,7 +31,15 @@ export default function LoginPage() {
         setLoading(false);
         return;
       }
-      router.push("/");
+      // Redirect based on role
+      const role = data.user?.role;
+      if (role === "admin" || role === "owner") {
+        router.push("/admin");
+      } else if (role === "employee") {
+        router.push("/");
+      } else {
+        router.push("/Storagecalculator");
+      }
     } catch (err) {
       setError("حدث خطأ في الاتصال بالخادم");
       setLoading(false);

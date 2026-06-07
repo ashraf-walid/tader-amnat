@@ -2,259 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Icon } from "@/components/Icons";
-
-// ─── هيكل المشروع والملفات ───────────────────────────────────────────────────
-const PROJECT_FILES = [
-  // --- Pages ---
-  {
-    name: "الصفحة الرئيسية للعملاء",
-    path: "src/app/page.js",
-    type: "page",
-    badge: "صفحة",
-    badgeColor: "#3b82f6",
-    desc: "لوحة التحكم للعملاء لعرض وتحليل الحسابات المالية المرفوعة عبر ملفات HTML وتعديل الأرصدة وعرض المعاملات.",
-    icon: "🏠",
-  },
-  {
-    name: "حاسبة أرضيات الحاويات",
-    path: "src/app/Storagecalculator/page.jsx",
-    type: "page",
-    badge: "صفحة",
-    badgeColor: "#3b82f6",
-    desc: "حاسبة إلكترونية متطورة لحساب غرامات وأرضيات الحاويات بناءً على التواريخ، نوع الحاوية، أسعار الصرف، وفترات السماح.",
-    icon: "🧮",
-  },
-  {
-    name: "إدارة فئات الأسعار",
-    path: "src/app/Storagecalculator/rates/page.jsx",
-    type: "page",
-    badge: "صفحة",
-    badgeColor: "#3b82f6",
-    desc: "صفحة مخصصة لإدارة وعرض فئات وأسعار غرامات الحاويات المختلفة ونسب الشرائح اليومية وفترات السماح لكل فئة.",
-    icon: "🏷️",
-  },
-  {
-    name: "لوحة الإدارة والتحكم",
-    path: "src/app/admin/page.jsx",
-    type: "page",
-    badge: "صفحة",
-    badgeColor: "#3b82f6",
-    desc: "لوحة الإدارة الحالية لإدارة حسابات المستخدمين وأدوارهم، وتحديث سعر صرف الدولار، واستعراض هيكل ملفات المشروع والـ APIs.",
-    icon: "⚙️",
-  },
-  {
-    name: "صفحة تسجيل الدخول",
-    path: "src/app/login/page.js",
-    type: "page",
-    badge: "صفحة",
-    badgeColor: "#3b82f6",
-    desc: "صفحة مصادقة وتأمين دخول المستخدمين مع التحقق من صحة البيانات وحماية الحسابات من الاختراق أو المحاولات المتكررة.",
-    icon: "🔒",
-  },
-  // --- APIs ---
-  {
-    name: "جلب الحسابات",
-    path: "GET /api/accounts",
-    type: "api",
-    badge: "API (GET)",
-    badgeColor: "#10b981",
-    desc: "جلب قائمة بكافة الحسابات المسجلة بقاعدة البيانات مع حجب كلمات المرور لأمان البيانات وتصنيفهم من الأحدث للأقدم.",
-    icon: "📡",
-  },
-  {
-    name: "إضافة حساب جديد",
-    path: "POST /api/accounts",
-    type: "api",
-    badge: "API (POST)",
-    badgeColor: "#10b981",
-    desc: "إنشاء حساب مستخدم جديد وتأمين وحفظ كلمة المرور بعد تشفيرها تلقائياً وتحديد دوره وعدد محاولات تسجيل دخوله.",
-    icon: "📡",
-  },
-  {
-    name: "تحديث بيانات الحساب",
-    path: "PUT /api/accounts/[id]",
-    type: "api",
-    badge: "API (PUT)",
-    badgeColor: "#10b981",
-    desc: "تحديث الحساب الحالي (تعديل الاسم، تغيير الرقم السري، تغيير الدور، تعديل عدد محاولات الدخول المتبقية).",
-    icon: "📡",
-  },
-  {
-    name: "حذف الحساب",
-    path: "DELETE /api/accounts/[id]",
-    type: "api",
-    badge: "API (DELETE)",
-    badgeColor: "#10b981",
-    desc: "حذف حساب مستخدم معين نهائياً وبشكل كامل من قاعدة البيانات بالاعتماد على معرّفه الفريد.",
-    icon: "📡",
-  },
-  {
-    name: "تعديل محاولات الدخول",
-    path: "PATCH /api/accounts/[id]/attempts",
-    type: "api",
-    badge: "API (PATCH)",
-    badgeColor: "#10b981",
-    desc: "تحديث وتصفير أو زيادة عدد محاولات الدخول المسموح بها للمستخدم بعد قفله، بحد أقصى أو قيم مخصصة.",
-    icon: "📡",
-  },
-  {
-    name: "تسجيل دخول الحساب",
-    path: "POST /api/auth/login",
-    type: "api",
-    badge: "API (POST)",
-    badgeColor: "#10b981",
-    desc: "تسجيل دخول للمستخدم والتأكد من نشاط حسابه ومطابقة كلمة المرور وتوليد رمز توثيق أمني (JWT Token) مشفر كملف ارتباط.",
-    icon: "📡",
-  },
-  {
-    name: "تسجيل الخروج",
-    path: "POST /api/auth/logout",
-    type: "api",
-    badge: "API (POST)",
-    badgeColor: "#10b981",
-    desc: "إلغاء جلسة المستخدم النشطة وحذف ملف تعريف ارتباط التوثيق الآمن (auth-token Cookie).",
-    icon: "📡",
-  },
-  {
-    name: "جلب البيانات المالية",
-    path: "GET /api/data",
-    type: "api",
-    badge: "API (GET)",
-    badgeColor: "#10b981",
-    desc: "استرداد جميع جداول حسابات العملاء والحركات المسجلة عليها من قاعدة البيانات مرتبة بكود الحساب.",
-    icon: "📡",
-  },
-  {
-    name: "حفظ واستبدال البيانات المالية",
-    path: "POST /api/data",
-    type: "api",
-    badge: "API (POST)",
-    badgeColor: "#10b981",
-    desc: "مسح كامل جداول حسابات العملاء القديمة واستبدالها بالقائمة الجديدة المرفوعة من ملفات Excel/HTML للحسابات.",
-    icon: "📡",
-  },
-  {
-    name: "جلب سعر صرف العملة",
-    path: "GET /api/settings",
-    type: "api",
-    badge: "API (GET)",
-    badgeColor: "#10b981",
-    desc: "استدعاء القيمة الحالية لسعر الصرف الرسمي المسجل بالمشروع، مع توفير قيمة افتراضية في حالة عدم التسجيل.",
-    icon: "📡",
-  },
-  {
-    name: "تعديل سعر صرف العملة",
-    path: "PUT /api/settings",
-    type: "api",
-    badge: "API (PUT)",
-    badgeColor: "#10b981",
-    desc: "تحديث وحفظ سعر صرف الدولار مقابل الجنيه في قاعدة البيانات لتحديث حسابات حاسبة الأرضيات فوراً.",
-    icon: "📡",
-  },
-  // --- Libs & Models ---
-  {
-    name: "نموذج المستخدم (User Model)",
-    path: "src/models/User.js",
-    type: "core",
-    badge: "قاعدة بيانات",
-    badgeColor: "#818cf8",
-    desc: "مخطط MongoDB لحسابات المستخدمين؛ يحتوي على البيانات الأساسية والتشفير التلقائي لكلمات المرور وتجزيئها.",
-    icon: "🗄️",
-  },
-  {
-    name: "نموذج البيانات المالية (AccountData)",
-    path: "src/models/AccountData.js",
-    type: "core",
-    badge: "قاعدة بيانات",
-    badgeColor: "#818cf8",
-    desc: "مخطط MongoDB لحفظ جداول الحسابات المالية المرفوعة وسجلات العمليات المالية المسجلة محلياً عليها.",
-    icon: "🗄️",
-  },
-  {
-    name: "نموذج الإعدادات (Settings Model)",
-    path: "src/models/Settings.js",
-    type: "core",
-    badge: "قاعدة بيانات",
-    badgeColor: "#818cf8",
-    desc: "مخطط MongoDB لتخزين المتغيرات العامة للنظام مثل قيمة سعر صرف الدولار المحدثة.",
-    icon: "🗄️",
-  },
-  {
-    name: "رابط قاعدة البيانات (MongoDB Lib)",
-    path: "src/lib/mongodb.js",
-    type: "core",
-    badge: "مكتبة",
-    badgeColor: "#f43f5e",
-    desc: "مكتبة الربط بقاعدة بيانات MongoDB Atlas بشكل آمن مع توفير خاصية الكاش والتحقق من حالة الاتصال لتفادي تكراره.",
-    icon: "🛠️",
-  },
-  {
-    name: "محلل الملفات (HTML Parser)",
-    path: "src/lib/parser.js",
-    type: "core",
-    badge: "مكتبة",
-    badgeColor: "#f43f5e",
-    desc: "معالج ذكي يقوم بقراءة ملفات HTML المحاسبية وتحويلها برمجياً إلى مصفوفات جيسون منظمة يسهل حفظها وعرضها.",
-    icon: "🛠️",
-  },
-  {
-    name: "لوجيك حاسبة الأرضيات",
-    path: "src/lib/storageCalculator.js",
-    type: "core",
-    badge: "مكتبة",
-    badgeColor: "#f43f5e",
-    desc: "المكتبة الرياضية لحساب الغرامات والأرضيات المعقدة والشرائح اليومية وتواريخ انتهاء فترات السماح للحاويات.",
-    icon: "🛠️",
-  },
-  {
-    name: "ثوابت وقيم الأرضيات",
-    path: "src/lib/storageConstants.js",
-    type: "core",
-    badge: "مكتبة",
-    badgeColor: "#f43f5e",
-    desc: "ملف يحتوي على ثوابت تصنيفات الحاويات (تلاجة، عادي)، وفترات السماح والأسعار الافتراضية لكل شريحة من الغرامات.",
-    icon: "🛠️",
-  },
-  {
-    name: "التوثيق والمصادقة (Auth Utils)",
-    path: "src/lib/auth.js",
-    type: "core",
-    badge: "مكتبة",
-    badgeColor: "#f43f5e",
-    desc: "مكتبة مساعدة للتحقق من هوية وصلاحيات المستخدمين وتوليد رموز JWT وحماية المسارات الداخلية والمحاولات.",
-    icon: "🛠️",
-  },
-];
-
-// ─── ثوابت الأدوار ───────────────────────────────────────────────────────────
-const ROLES = [
-  {
-    value: "owner",
-    label: "المالك",
-    color: "#f0b429",
-    bg: "rgba(240,180,41,0.12)",
-  },
-  {
-    value: "admin",
-    label: "مدير",
-    color: "#818cf8",
-    bg: "rgba(129,140,248,0.12)",
-  },
-  {
-    value: "employee",
-    label: "موظف",
-    color: "#34d399",
-    bg: "rgba(52,211,153,0.12)",
-  },
-  {
-    value: "client",
-    label: "عميل",
-    color: "#60a5fa",
-    bg: "rgba(96,165,250,0.12)",
-  },
-];
-
-const getRoleInfo = (v) => ROLES.find((r) => r.value === v) || ROLES[3];
+import { PROJECT_FILES, ROLES, getRoleInfo, EMPTY_FORM } from "@/lib/adminConstants";
 
 // ─── مكوّن حقل الإدخال ────────────────────────────────────────────────────────
 function Field({ label, icon: IconComp, error, children }) {
@@ -536,13 +284,6 @@ function AttemptsBadge({ attempts }) {
 }
 
 // ─── نموذج الحساب ─────────────────────────────────────────────────────────────
-const EMPTY_FORM = {
-  username: "",
-  password: "",
-  phone: "",
-  role: "client",
-  attempts: 5,
-};
 
 function AccountForm({ initial, onSubmit, onCancel, isSaving }) {
   const [form, setForm] = useState(initial || EMPTY_FORM);
@@ -989,48 +730,115 @@ export default function AdminPage() {
         select option { background: #1a2035; }
         input[type=number]::-webkit-inner-spin-button,
         input[type=number]::-webkit-outer-spin-button { opacity: 1; }
+
+        .admin-header { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:4px; }
+        .admin-header-title { display:flex; align-items:center; gap:10px; }
+        .admin-nav { display:flex; gap:6px; flex-wrap:wrap; }
+        .admin-nav a, .admin-nav button { display:inline-flex; align-items:center; gap:5px; padding:6px 12px; font-size:12px; font-weight:600; border-radius:8px; text-decoration:none; transition:all 0.2s; white-space:nowrap; cursor:pointer; font-family:inherit; }
+
+        @media (max-width: 640px) {
+          .admin-header { flex-direction:column; align-items:flex-start; gap:14px; }
+          .admin-nav { width:100%; flex-direction:row; flex-wrap:wrap; gap:6px; }
+          .admin-nav a, .admin-nav button { flex:1 1 auto; justify-content:center; min-width:0; padding:8px 10px; font-size:11px; }
+        }
       `}</style>
 
       <div style={{ maxWidth: 960, margin: "0 auto" }}>
         {/* ─── رأس الصفحة ─────────────────────────────────────────── */}
         <div style={{ marginBottom: 28 }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              marginBottom: 4,
-            }}
-          >
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 12,
-                background: "linear-gradient(135deg, #0ea5e9, #818cf8)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 4px 16px rgba(14,165,233,0.3)",
-              }}
-            >
-              <Icon.Shield />
-            </div>
-            <div>
-              <h1
+          <div className="admin-header">
+            <div className="admin-header-title">
+              <div
                 style={{
-                  fontSize: 22,
-                  fontWeight: 800,
-                  margin: 0,
-                  color: "#f0f2f8",
+                  width: 40,
+                  height: 40,
+                  borderRadius: 12,
+                  background: "linear-gradient(135deg, #0ea5e9, #818cf8)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 4px 16px rgba(14,165,233,0.3)",
+                  flexShrink: 0,
                 }}
               >
-                لوحة الإدارة
-              </h1>
-              <p style={{ fontSize: 12.5, color: "#8892a4", margin: 0 }}>
-                نظام أرضيات الحاويات الواردة
-              </p>
+                <Icon.Shield />
+              </div>
+              <div>
+                <h1
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 800,
+                    margin: 0,
+                    color: "#f0f2f8",
+                  }}
+                >
+                  لوحة الإدارة
+                </h1>
+                <p style={{ fontSize: 12.5, color: "#8892a4", margin: 0 }}>
+                  نظام أرضيات الحاويات الواردة
+                </p>
+              </div>
             </div>
+
+            {/* ─── أزرار التنقل ─── */}
+            <nav className="admin-nav">
+              {[
+                { href: "/", label: "الرئيسية", color: "#818cf8" },
+                { href: "/Storagecalculator", label: "حاسبة التخزين", color: "#f0b429" },
+                { href: "/Storagecalculator/rates", label: "التعريفات", color: "#60a5fa" },
+              ].map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  style={{
+                    color: link.color,
+                    background: `${link.color}15`,
+                    border: `1px solid ${link.color}30`,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = `${link.color}25`;
+                    e.currentTarget.style.borderColor = `${link.color}50`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = `${link.color}15`;
+                    e.currentTarget.style.borderColor = `${link.color}30`;
+                  }}
+                >
+                  {link.label}
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M7 17l9.2-9.2M17 17V7H7" />
+                  </svg>
+                </a>
+              ))}
+              <button
+                onClick={async () => {
+                  try {
+                    await fetch("/api/auth/logout", { method: "POST" });
+                    window.location.href = "/login";
+                  } catch {}
+                }}
+                style={{
+                  color: "#f87171",
+                  background: "rgba(248,113,113,0.1)",
+                  border: "1px solid rgba(248,113,113,0.25)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(248,113,113,0.2)";
+                  e.currentTarget.style.borderColor = "rgba(248,113,113,0.4)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(248,113,113,0.1)";
+                  e.currentTarget.style.borderColor = "rgba(248,113,113,0.25)";
+                }}
+              >
+                خروج
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+              </button>
+            </nav>
           </div>
         </div>
 
@@ -1298,6 +1106,7 @@ export default function AdminPage() {
                         "رقم الهاتف",
                         "الدور",
                         "المحاولات",
+                        "الفواتير",
                         "الإجراءات",
                       ].map((h) => (
                         <th
@@ -1443,6 +1252,27 @@ export default function AdminPage() {
                           </div>
                         </td>
 
+                        {/* الفواتير */}
+                        <td style={{ padding: "14px 16px" }}>
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 5,
+                              padding: "3px 10px",
+                              borderRadius: 20,
+                              fontSize: 11.5,
+                              fontWeight: 700,
+                              color: "#f0b429",
+                              background: "rgba(240,180,41,0.1)",
+                              border: "1px solid rgba(240,180,41,0.25)",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {acc.calculationsCount || 0} فاتورة
+                          </span>
+                        </td>
+
                         {/* الإجراءات */}
                         <td style={{ padding: "14px 16px" }}>
                           <div style={{ display: "flex", gap: 6 }}>
@@ -1457,18 +1287,20 @@ export default function AdminPage() {
                             >
                               <Icon.Edit /> تعديل
                             </Btn>
-                            <Btn
-                              size="xs"
-                              variant="danger"
-                              title="حذف"
-                              onClick={() => {
-                                setSelected(acc);
-                                setDeleteConfirm("");
-                                setModal("delete");
-                              }}
-                            >
-                              <Icon.Trash /> حذف
-                            </Btn>
+                            {acc.role !== "owner" && (
+                              <Btn
+                                size="xs"
+                                variant="danger"
+                                title="حذف"
+                                onClick={() => {
+                                  setSelected(acc);
+                                  setDeleteConfirm("");
+                                  setModal("delete");
+                                }}
+                              >
+                                <Icon.Trash /> حذف
+                              </Btn>
+                            )}
                           </div>
                         </td>
                       </tr>

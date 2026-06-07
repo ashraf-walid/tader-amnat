@@ -360,6 +360,9 @@ export default function StorageCalculator({
         invoice.egp.total = Math.ceil(newEgpSubtotal2 + vatAmount2 + martyrStamp2);
       }
       setResult(invoice);
+      console.log("invoice created successfully");
+      // Track successful calculation (fire-and-forget)
+      fetch('/api/attempts/track', { method: 'POST' }).catch(() => {});
       setTimeout(() => document.getElementById('result-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     } catch (e) {
       setError(e.message);
@@ -897,7 +900,7 @@ export default function StorageCalculator({
         )}
 
         {/* ── Attempts badge ── */}
-        {remainingAttempts !== null && (
+        {/* {remainingAttempts !== null && (
           <div className={`flex items-center justify-between px-4 py-2.5 rounded-xl mb-4 text-sm font-bold border ${
             remainingAttempts > 0
               ? 'bg-[#111827] border-white/[0.12] text-[#f0f2f8]'
@@ -906,7 +909,7 @@ export default function StorageCalculator({
             <span>المحاولات المتبقية</span>
             <span className="text-lg">{remainingAttempts}</span>
           </div>
-        )}
+        )} */}
 
         {/* ── Calc Button ── */}
         <button

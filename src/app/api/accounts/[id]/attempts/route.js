@@ -36,7 +36,7 @@ export async function PATCH(request, { params }) {
     const user = await User.findByIdAndUpdate(
       id,
       { $set: { attempts } },
-      { new: true, runValidators: true, select: 'username attempts role' }
+      { returnDocument: 'after', runValidators: true, select: 'username attempts role' }
     );
 
     if (!user) {
