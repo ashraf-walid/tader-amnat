@@ -32,6 +32,8 @@ export async function GET(request) {
         officeName: user.officeName,
         attempts: user.attempts,
         accountCode: user.accountCode,
+        savingStartTime: user.savingStartTime || "00:00",
+        savingEndTime: user.savingEndTime || "23:59",
         isActive: user.isActive,
       },
     });

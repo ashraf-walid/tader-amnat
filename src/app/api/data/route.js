@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import AccountData from "@/models/AccountData";
+import Settings from "@/models/Settings";
 import { requireAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -33,9 +34,12 @@ export async function GET(request) {
 
     // If fetching all (backup), skip pagination
     if (fetchAll) {
-      const data = await AccountData.find(filter).sort({ accountCode: 1 });
+      const [data, dateRangeSetting] = await Promise.all([
+        AccountData.find(filter).sort({ accountCode: 1 }),
+        Settings.findOne({ key: "dateRange" }),
+      ]);
       return NextResponse.json(
-        { data, timestamp: Date.now() },
+        { data, dateRange: dateRangeSetting?.value || "", timestamp: Date.now() },
         {
           headers: {
             "Cache-Control": "no-store, max-age=0, must-revalidate",
@@ -48,9 +52,10 @@ export async function GET(request) {
 
     const skip = (page - 1) * limit;
 
-    const [data, total] = await Promise.all([
+    const [data, total, dateRangeSetting] = await Promise.all([
       AccountData.find(filter).sort({ accountCode: 1 }).skip(skip).limit(limit),
       AccountData.countDocuments(filter),
+      Settings.findOne({ key: "dateRange" }),
     ]);
 
     const totalPages = Math.ceil(total / limit) || 1;
@@ -58,6 +63,7 @@ export async function GET(request) {
     return NextResponse.json(
       {
         data,
+        dateRange: dateRangeSetting?.value || "",
         pagination: {
           page,
           limit,
@@ -101,17 +107,36 @@ export async function POST(request) {
     // Only admin/owner can upload data
     requireAdmin(request);
 
-    const data = await request.json();
+    const body = await request.json();
     await connectToDatabase();
+
+    let dataToSave = [];
+    let dateRange = null;
+
+    if (Array.isArray(body)) {
+      dataToSave = body;
+    } else if (body && body.data) {
+      dataToSave = body.data;
+      dateRange = body.dateRange;
+    }
 
     // Replace all data with the new uploaded data
     // This matches the original logic of overwriting the JSON file
     await AccountData.deleteMany({});
-    if (data && data.length > 0) {
-      await AccountData.insertMany(data);
+    if (dataToSave && dataToSave.length > 0) {
+      await AccountData.insertMany(dataToSave);
     }
 
-    console.log("POST /api/data: Saved", data.length, "items to MongoDB");
+    // Save dateRange if provided
+    if (dateRange !== null) {
+      await Settings.findOneAndUpdate(
+        { key: "dateRange" },
+        { value: dateRange },
+        { upsert: true, new: true }
+      );
+    }
+
+    console.log("POST /api/data: Saved", dataToSave.length, "items to MongoDB");
     return NextResponse.json({ success: true, timestamp: Date.now() });
   } catch (error) {
     console.error("POST /api/data Error:", error);

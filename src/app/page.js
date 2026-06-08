@@ -21,6 +21,7 @@ function cn(...inputs) {
 
 export default function AccountsDashboard() {
   const [data, setData] = useState([]);
+  const [dateRange, setDateRange] = useState("");
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [isDragging, setIsDragging] = useState(false);
@@ -53,6 +54,7 @@ export default function AccountsDashboard() {
         const result = await res.json();
         if (result && Array.isArray(result.data)) {
           setData(result.data);
+          if (result.dateRange) setDateRange(result.dateRange);
           if (result.pagination) setPagination(result.pagination);
           setLastUpdated(new Date(result.timestamp).toLocaleTimeString());
           setErrorStatus(null);
@@ -87,12 +89,15 @@ export default function AccountsDashboard() {
 
   const filteredData = data;
 
-  const saveDataToServer = async (newData) => {
+  const saveDataToServer = async (newData, newDateRange = null) => {
     try {
       await fetch("/api/data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newData),
+        body: JSON.stringify({
+          data: newData,
+          dateRange: newDateRange || dateRange,
+        }),
       });
     } catch (err) {
       console.error("Error saving data:", err);
@@ -124,10 +129,12 @@ export default function AccountsDashboard() {
 
         // التحقق من وجود مصفوفة البيانات (سواء كانت في backup.data أو كانت هي الملف نفسه)
         const dataToRestore = Array.isArray(backup) ? backup : backup.data;
+        const restoredDateRange = backup.dateRange || "";
 
         if (Array.isArray(dataToRestore)) {
           setData(dataToRestore);
-          await saveDataToServer(dataToRestore);
+          if (restoredDateRange) setDateRange(restoredDateRange);
+          await saveDataToServer(dataToRestore, restoredDateRange);
           await fetchData(1, "", false);
           setSearch("");
           setIsTransactionsOnlyActive(false);
@@ -140,7 +147,7 @@ export default function AccountsDashboard() {
       }
 
       // إذا كان ملف HTML من النظام المحاسبي
-      const results = await parseAccountingHTML(file);
+      const { data: results, dateRange: extractedDateRange } = await parseAccountingHTML(file);
 
       // Preserve existing transactions when uploading a new file
       const mergedResults = results.map((newRecord) => {
@@ -154,7 +161,8 @@ export default function AccountsDashboard() {
       });
 
       setData(mergedResults);
-      await saveDataToServer(mergedResults);
+      if (extractedDateRange) setDateRange(extractedDateRange);
+      await saveDataToServer(mergedResults, extractedDateRange);
       await fetchData(1, "", false);
       setSearch("");
       setIsTransactionsOnlyActive(false);
@@ -232,6 +240,7 @@ export default function AccountsDashboard() {
       const backupData = {
         timestamp: new Date().toISOString(),
         data: result.data,
+        dateRange: result.dateRange,
       };
       const blob = new Blob([JSON.stringify(backupData, null, 2)], {
         type: "application/json",
@@ -279,6 +288,11 @@ export default function AccountsDashboard() {
             <h1 className="text-xl sm:text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
               أمانات | تحليل حسابات العملاء
             </h1>
+            {dateRange && (
+              <p className="text-slate-600 dark:text-slate-300 font-medium mt-1">
+                {dateRange}
+              </p>
+            )}
             <div className="flex flex-wrap items-center gap-4 mt-2">
               <div className="flex items-center gap-2 max-sm:hidden">
                 <div
@@ -451,6 +465,15 @@ export default function AccountsDashboard() {
                       <th className="px-6 py-4 text-right font-medium">
                         العميل / الحساب
                       </th>
+                      <th className="px-4 py-4 text-center font-medium">
+                        الرصيد الإفتتاحي
+                      </th>
+                      <th className="px-4 py-4 text-center font-medium text-green-600">
+                        دائن
+                      </th>
+                      <th className="px-4 py-4 text-center font-medium text-orange-600">
+                        مدين
+                      </th>
                       <th className="px-6 py-4 text-center font-medium text-blue-600">
                         إضافة مبلغ (+)
                       </th>
@@ -475,7 +498,12 @@ export default function AccountsDashboard() {
                       const addition = pending.manualAddition || 0;
                       const deduction = pending.manualDeduction || 0;
                       const baseBalance =
-                        item.closingBalance.debit - item.closingBalance.credit;
+                        (item.closingBalance?.debit || 0) - (item.closingBalance?.credit || 0);
+                      const openingBalanceVal =
+                        (item.openingBalance?.debit || 0) - (item.openingBalance?.credit || 0);
+                      const movementCredit = item.totals?.credit || 0;
+                      const movementDebit = item.totals?.debit || 0;
+                      
                       const finalBalance =
                         baseBalance +
                         historyAddition +
@@ -521,6 +549,34 @@ export default function AccountsDashboard() {
                               </span>
                             </div>
                           </td>
+
+                          <td className="px-4 py-4 text-center font-mono text-sm whitespace-nowrap">
+                            <span className={cn(
+                              "px-2 py-0.5 rounded",
+                              openingBalanceVal > 0 ? "text-slate-600 dark:text-slate-400" : "text-red-500 bg-red-50 dark:bg-red-950/20"
+                            )}>
+                              {openingBalanceVal.toLocaleString()}
+                            </span>
+                          </td>
+
+                          <td className="px-4 py-4 text-center font-mono text-sm whitespace-nowrap">
+                            <span className={cn(
+                              "px-2 py-0.5 rounded",
+                              movementDebit > 0 ? "text-green-600 bg-green-50 dark:bg-green-900/20" : "text-slate-300 dark:text-slate-700"
+                            )}>
+                              {movementDebit > 0 ? "+" : ""}{movementDebit.toLocaleString()}
+                            </span>
+                          </td>
+
+                          <td className="px-4 py-4 text-center font-mono text-sm whitespace-nowrap">
+                            <span className={cn(
+                              "px-2 py-0.5 rounded",
+                              movementCredit > 0 ? "text-orange-600 bg-orange-50 dark:bg-orange-950/20" : "text-slate-300 dark:text-slate-700"
+                            )}>
+                              {movementCredit > 0 ? "-" : ""}{movementCredit.toLocaleString()}
+                            </span>
+                          </td>
+
                           {/*
                            */}
                           <td className="px-6 py-4 text-center">
@@ -595,7 +651,12 @@ export default function AccountsDashboard() {
                   const addition = pending.manualAddition || 0;
                   const deduction = pending.manualDeduction || 0;
                   const baseBalance =
-                    item.closingBalance.debit - item.closingBalance.credit;
+                    (item.closingBalance?.debit || 0) - (item.closingBalance?.credit || 0);
+                  const openingBalanceVal =
+                    (item.openingBalance?.debit || 0) - (item.openingBalance?.credit || 0);
+                  const movementCredit = item.totals?.credit || 0;
+                  const movementDebit = item.totals?.debit || 0;
+
                   const finalBalance =
                     baseBalance +
                     historyAddition +
@@ -623,7 +684,17 @@ export default function AccountsDashboard() {
                           <h4 className="font-bold text-slate-900 dark:text-white leading-tight">
                             {item.account}
                           </h4>
-                          {/* <span className="text-[10px] px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded font-bold uppercase">{item.accountCode}</span> */}
+                          <div className="flex flex-wrap items-center gap-2 pt-1">
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded border border-slate-200 dark:border-slate-700">
+                              سابق: {openingBalanceVal.toLocaleString()}
+                            </span>
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 bg-green-50 dark:bg-green-900/10 text-green-600 rounded border border-green-100 dark:border-green-900/20">
+                              إيداع: +{movementDebit.toLocaleString()}
+                            </span>
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 bg-orange-50 dark:bg-orange-900/10 text-orange-600 rounded border border-orange-100 dark:border-orange-900/20">
+                              سحب: -{movementCredit.toLocaleString()}
+                            </span>
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
                           {transactionCount > 0 && (

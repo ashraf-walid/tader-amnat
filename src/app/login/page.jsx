@@ -47,6 +47,8 @@ export default function LoginPage() {
         router.push("/admin");
       } else if (role === "employee") {
         router.push("/");
+      } else if (role === "client") {
+        router.push("/client/balance");
       } else {
         router.push("/Storagecalculator");
       }

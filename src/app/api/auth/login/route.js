@@ -83,6 +83,7 @@ export async function POST(request) {
         id: user._id.toString(), // Add id for compatibility with requireAuth/me
         username: user.username,
         role: user.role,
+        accountCode: user.accountCode,
       },
       JWT_SECRET,
       { expiresIn: "7d" }
@@ -97,6 +98,7 @@ export async function POST(request) {
       role: user.role,
       attempts: user.attempts,
       lastLogin: user.lastLogin,
+      accountCode: user.accountCode,
     };
 
     console.log("✅ User logged in:", user.username, `(${user.role})`);

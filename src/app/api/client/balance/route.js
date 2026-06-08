@@ -1,63 +1,59 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
-import User from "@/models/User";
 import AccountData from "@/models/AccountData";
+import Settings from "@/models/Settings";
 import { requireAuth, AuthError } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 /**
  * GET /api/client/balance
- * Gets the openingBalance.debit for the authenticated user's accountCode.
+ * Gets the openingBalance.debit for the accountCode carried in the user's token.
  */
 export async function GET(request) {
   try {
-    // 1. التوثيق والتحقق من هوية المستخدم
+    // 1. التوثيق والتحقق من هوية المستخدم واستخراج كود الحساب من الـ Token
     const decoded = requireAuth(request);
-    await connectToDatabase();
-
-    const userId = decoded.id || decoded.userId;
-    const user = await User.findById(userId).select("accountCode username");
-
-    if (!user) {
+    
+    // التأكد من وجود accountCode داخل الـ Token
+    if (!decoded.accountCode) {
       return NextResponse.json(
-        { success: false, error: "المستخدم غير موجود" },
-        { status: 404 }
-      );
-    }
-
-    // 2. التأكد من وجود accountCode لدى المستخدم
-    if (!user.accountCode) {
-      return NextResponse.json(
-        { success: false, error: "لا يوجد كود حساب مرتبط بحسابك الحالي" },
+        { success: false, error: "لا يوجد كود حساب مرتبط بجلسة الدخول الحالية. يرجى تسجيل الخروج والدخول مجدداً." },
         { status: 400 }
       );
     }
 
-    // 3. البحث في مجموعة accountdatas عن الحساب الذي يطابق بياناته accountCode
-    // نحول الكود الرقمي للمستخدم إلى نص لأن حقل accountCode في AccountData هو String
-    const account = await AccountData.findOne({
-      accountCode: String(user.accountCode),
-    }).lean();
+    await connectToDatabase();
+
+    // 2. البحث في مجموعة accountdatas عن الحساب الذي يطابق accountCode المستخرج من الـ Token
+    // وكذلك جلب تاريخ الفترة من الإعدادات
+    const [account, dateRangeSetting] = await Promise.all([
+      AccountData.findOne({
+        accountCode: String(decoded.accountCode),
+      }).lean(),
+      Settings.findOne({ key: "dateRange" }).lean(),
+    ]);
 
     if (!account) {
       return NextResponse.json(
         {
           success: false,
-          error: `لم يتم العثور على بيانات مالية لكود الحساب: ${user.accountCode}`,
+          error: `لم يتم العثور على بيانات مالية لكود الحساب: ${decoded.accountCode}`,
         },
         { status: 404 }
       );
     }
 
-    // 4. جلب openingBalance.debit وإرجاعها للواجهة الأمامية
-    const debit = account.openingBalance?.debit ?? 0;
-
+    // 3. إرجاع كافة البيانات المالية والعمليات
     return NextResponse.json({
       success: true,
-      accountCode: user.accountCode,
+      accountCode: decoded.accountCode,
       accountName: account.account,
-      debit: debit,
+      dateRange: dateRangeSetting?.value || "",
+      openingBalance: account.openingBalance,
+      totals: account.totals,
+      closingBalance: account.closingBalance,
+      transactions: account.transactions || [],
     });
   } catch (error) {
     console.error("GET /api/client/balance error:", error);

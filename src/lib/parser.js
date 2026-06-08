@@ -16,6 +16,16 @@ export async function parseAccountingHTML(file) {
 
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlText, 'text/html');
+        
+        // Extract date range from the top of the file
+        // Pattern: خلال الفترة من 2026/6/6 إلى 2026/6/7
+        let dateRange = '';
+        const bodyText = doc.body.textContent;
+        const dateMatch = bodyText.match(/خلال الفترة من\s+([\d\/]+)\s+إلى\s+([\d\/]+)/);
+        if (dateMatch) {
+          dateRange = dateMatch[0];
+        }
+
         const rows = Array.from(doc.querySelectorAll('tr'));
         
         const data = [];
@@ -54,20 +64,16 @@ export async function parseAccountingHTML(file) {
               data.push({
                 account: name,
                 accountCode: code,
-                // Mapping based on user feedback:
-                // values[0,1] -> Closing Balance (Final)
-                // values[2,3] -> Totals (Movement)
-                // values[4,5] -> Opening Balance
                 openingBalance: {
                   debit: values[4] || 0,
                   credit: values[5] || 0
                 },
                 totals: {
-                  debit: values[2],
-                  credit: values[3]
+                  debit: values[2] || 0,
+                  credit: values[3] || 0
                 },
                 closingBalance: {
-                  debit: values[0],
+                  debit: values[0] || 0,
                   credit: values[1] || 0
                 }
               });
@@ -75,7 +81,7 @@ export async function parseAccountingHTML(file) {
           }
         });
 
-        resolve(data);
+        resolve({ data, dateRange });
       } catch (err) {
         console.error('Parsing error:', err);
         reject(err);

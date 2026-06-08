@@ -15,10 +15,41 @@ import {
 } from '@/components/Icons';
 
 const NAV_ITEMS = [
-  { href: '/',                      label: 'تحليل الحسابات', icon: NavChartIcon,    exactMatch: true },
-  { href: '/admin',                  label: 'لوحة الإدارة',   icon: NavSettingsIcon, exactMatch: true },
-  { href: '/Storagecalculator',      label: 'حاسبة التخزين',  icon: NavMonitorIcon,  exactMatch: true },
-  { href: '/Storagecalculator/rates',label: 'التعريفات',       icon: NavFileTextIcon, exactMatch: true },
+  { 
+    href: '/',                      
+    label: 'تحليل الحسابات', 
+    icon: NavChartIcon,    
+    exactMatch: true,
+    roles: ['owner', 'admin', 'employee']
+  },
+  { 
+    href: '/admin',                  
+    label: 'لوحة الإدارة',   
+    icon: NavSettingsIcon, 
+    exactMatch: true,
+    roles: ['owner', 'admin']
+  },
+  { 
+    href: '/Storagecalculator',      
+    label: 'حاسبة التخزين',  
+    icon: NavMonitorIcon,  
+    exactMatch: true,
+    roles: ['owner', 'admin', 'employee', 'client']
+  },
+  { 
+    href: '/client/balance',
+    label: 'رصيد الحساب',
+    icon: NavChartIcon,
+    exactMatch: true,
+    roles: ['client']
+  },
+  { 
+    href: '/Storagecalculator/rates',
+    label: 'التعريفات',       
+    icon: NavFileTextIcon, 
+    exactMatch: true,
+    roles: ['owner', 'admin', 'employee']
+  },
 ];
 
 const roleLabels = { owner: 'المالك', admin: 'مدير', employee: 'موظف', client: 'عميل' };
@@ -57,7 +88,7 @@ export default function AdminNav() {
     fetch('/api/auth/me')
       .then(r => r.json())
       .then(d => {
-        if (d.success && (d.user.role === 'admin' || d.user.role === 'owner')) {
+        if (d.success) {
           setUser(d.user);
           cachedUser = d.user;
           cachedLoaded = true;
@@ -188,7 +219,7 @@ export default function AdminNav() {
           
           {/* ── روابط التنقل (ديسكتوب) ── */}
           <div className="admin-nav-links">
-            {NAV_ITEMS.map(item => {
+            {NAV_ITEMS.filter(item => item.roles.includes(user.role)).map(item => {
               const active   = isActive(item);
               const IconComp = item.icon;
               return (
@@ -314,26 +345,29 @@ export default function AdminNav() {
 
                 {/* روابط */}
                 <div style={{ padding: '6px 0' }}>
-                  <Link
-                    href="/admin"
-                    onClick={() => setUserMenuOpen(false)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 10,
-                      padding: '8px 14px',
-                      fontSize: 13,
-                      color: '#cbd5e1',
-                      textDecoration: 'none',
-                      transition: 'background 0.12s',
-                    }}
-                    className="admin-dropdown-item"
-                  >
-                    <NavSettingsIcon size={14} />
-                    لوحة الإدارة
-                  </Link>
-
-                  <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '4px 0' }} />
+                  {(user.role === 'admin' || user.role === 'owner') && (
+                    <>
+                      <Link
+                        href="/admin"
+                        onClick={() => setUserMenuOpen(false)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          padding: '8px 14px',
+                          fontSize: 13,
+                          color: '#cbd5e1',
+                          textDecoration: 'none',
+                          transition: 'background 0.12s',
+                        }}
+                        className="admin-dropdown-item"
+                      >
+                        <NavSettingsIcon size={14} />
+                        لوحة الإدارة
+                      </Link>
+                      <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '4px 0' }} />
+                    </>
+                  )}
 
                   <button
                     onClick={handleLogout}
@@ -460,7 +494,7 @@ export default function AdminNav() {
               >
                 التنقل
               </p>
-              {NAV_ITEMS.map(item => {
+              {NAV_ITEMS.filter(item => item.roles.includes(user.role)).map(item => {
                 const active   = isActive(item);
                 const IconComp = item.icon;
                 return (
