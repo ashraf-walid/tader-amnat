@@ -14,7 +14,7 @@ export async function PUT(request, { params }) {
   try {
     const { id } = await params;
     const body = await request.json();
-    const { username, password, phone, officeName, role, attempts } = body;
+    const { username, password, phone, officeName, role, attempts, accountCode } = body;
 
     // Validate MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -53,6 +53,9 @@ export async function PUT(request, { params }) {
     if (officeName !== undefined) updateFields.officeName = officeName;
     if (role) updateFields.role = role;
     if (typeof attempts === "number") updateFields.attempts = attempts;
+    if (accountCode !== undefined) {
+      updateFields.accountCode = accountCode ? Number(accountCode) : null;
+    }
 
     // Hash password manually ONLY when a new plaintext password is provided
     // This avoids the pre-save hook double-hashing the already-hashed value
@@ -86,6 +89,7 @@ export async function PUT(request, { params }) {
       officeName: user.officeName,
       role: user.role,
       attempts: user.attempts,
+      accountCode: user.accountCode,
       isActive: user.isActive,
       updatedAt: user.updatedAt,
     };

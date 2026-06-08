@@ -7,7 +7,6 @@ const outfit = Outfit({
   variable: '--font-sans',
 });
 
-
 const alexandria = Alexandria({
   subsets: ['arabic', 'latin'],
   variable: '--font-sans',

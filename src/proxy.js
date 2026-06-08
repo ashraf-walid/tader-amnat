@@ -66,10 +66,6 @@ export async function proxy(req) {
       }
     }
 
-    // ── Admin-only APIs (/api/accounts, /api/data, /api/settings) ──
-    // Note: GET on /api/settings and /api/data is allowed for all authenticated users
-    // The PUT/POST restrictions are enforced in the route handlers themselves
-    // Here we only block non-staff from /api/accounts entirely
     if (pathname.startsWith("/api/accounts")) {
       if (role !== "admin" && role !== "owner") {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });

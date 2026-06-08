@@ -31,6 +31,7 @@ export async function GET(request) {
         phone: user.phone,
         officeName: user.officeName,
         attempts: user.attempts,
+        accountCode: user.accountCode,
         isActive: user.isActive,
       },
     });

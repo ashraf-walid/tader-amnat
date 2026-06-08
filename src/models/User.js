@@ -24,6 +24,10 @@ const UserSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    accountCode: {
+      type: Number,
+      default: null,
+    },
     role: {
       type: String,
       enum: ["owner", "admin", "employee", "client"],
@@ -52,6 +56,11 @@ const UserSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+
+// Single Field Index (descending) — for: .find({}).sort({ createdAt: -1 })
+// Note: username already has unique: true which creates a unique index automatically
+// Note: _id is indexed by default (used by findById, findByIdAndUpdate)
+UserSchema.index({ createdAt: -1 });
 
 // Hash password before saving
 UserSchema.pre("save", async function () {

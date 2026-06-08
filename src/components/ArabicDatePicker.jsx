@@ -23,7 +23,7 @@ const PICKER_CSS = `
   .adp-wrap .react-datepicker__input-container { width:100%; }
 
   .adp-wrap .react-datepicker__input-container input {
-    font-family:'Tajawal',system-ui,sans-serif;
+    font-family:'Alexandria',system-ui,sans-serif;
     font-size:15px; font-weight:500;
     padding:13px 14px 13px 40px;
     border-radius:12px;
@@ -51,7 +51,7 @@ const PICKER_CSS = `
 
   .adp-popper { z-index:9999; direction:rtl; }
   .adp-popper .react-datepicker {
-    font-family:'Tajawal',system-ui,sans-serif;
+    font-family:'Alexandria',system-ui,sans-serif;
     background:#131929; border:1px solid rgba(255,255,255,0.1);
     border-radius:16px; overflow:hidden;
     box-shadow:0 16px 48px rgba(0,0,0,.6);

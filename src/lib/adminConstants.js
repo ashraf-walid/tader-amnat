@@ -259,4 +259,5 @@ export const EMPTY_FORM = {
   officeName: "",
   role: "client",
   attempts: 5,
+  accountCode: "",
 };

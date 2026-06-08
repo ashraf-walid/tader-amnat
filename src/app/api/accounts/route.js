@@ -26,6 +26,7 @@ export async function GET() {
       role: user.role,
       attempts: user.attempts,
       calculationsCount: user.calculationsCount || 0,
+      accountCode: user.accountCode,
       isActive: user.isActive,
       lastLogin: user.lastLogin,
       createdAt: user.createdAt,
@@ -67,7 +68,7 @@ export async function GET() {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { username, password, phone, officeName, role, attempts } = body;
+    const { username, password, phone, officeName, role, attempts, accountCode } = body;
 
     // Validation
     if (!username || !password) {
@@ -105,6 +106,7 @@ export async function POST(request) {
       officeName: officeName || "",
       role: role || "client",
       attempts: typeof attempts === "number" ? attempts : 5,
+      accountCode: accountCode ? Number(accountCode) : null,
       isActive: true,
     });
 
@@ -119,6 +121,7 @@ export async function POST(request) {
       officeName: newUser.officeName,
       role: newUser.role,
       attempts: newUser.attempts,
+      accountCode: newUser.accountCode,
       isActive: newUser.isActive,
       createdAt: newUser.createdAt,
     };
