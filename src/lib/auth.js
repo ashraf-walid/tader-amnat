@@ -59,7 +59,7 @@ export function requireAuth(req) {
  */
 export function requireAdmin(req) {
   const decoded = requireAuth(req);
-  const ADMIN_ROLES = ["admin", "owner"];
+  const ADMIN_ROLES = ["admin", "owner", "employee"];
   if (!decoded || !ADMIN_ROLES.includes(String(decoded.role).toLowerCase())) {
     throw new ForbiddenError("Admin only");
   }

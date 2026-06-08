@@ -366,7 +366,7 @@ export default function AccountsDashboard() {
           )}
         </header>
 
-        {data.length === 0 && !search ? (
+        {data.length === 0 && !search && !isTransactionsOnlyActive ? (
           /* Empty State / Upload Zone */
           <div
             className={cn(
