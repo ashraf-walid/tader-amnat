@@ -16,6 +16,7 @@ import {
   ShieldAlert
 } from "lucide-react";
 import Link from "next/link";
+import AdminNav from "@/components/AdminNav";
 
 export default function RatesPage() {
   const t20 = STORAGE_CONFIG.IMPORT.TWENTY_FT;
@@ -25,8 +26,9 @@ export default function RatesPage() {
   const fmt = (n) => Number(n).toLocaleString('ar-EG');
 
   return (
-    <div className="min-h-screen bg-[#0b1120] text-slate-200 p-4 md:p-8" dir="rtl" style={{ fontFamily: "'Tajawal', system-ui, sans-serif" }}>
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-[#0b1120] text-slate-200" dir="rtl" style={{ fontFamily: "'Alexandria', system-ui, sans-serif" }}>
+      <AdminNav />
+      <div className="max-w-5xl mx-auto p-4 md:p-8">
 
         {/* Back Button & Header */}
         <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
