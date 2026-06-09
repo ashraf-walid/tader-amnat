@@ -15,61 +15,29 @@ import {
 } from '@/components/Icons';
 
 const NAV_ITEMS = [
-  { 
-    href: '/',                      
-    label: 'تحليل الحسابات', 
-    icon: NavChartIcon,    
-    exactMatch: true,
-    roles: ['owner', 'admin', 'employee']
-  },
-  { 
-    href: '/admin',                  
-    label: 'لوحة الإدارة',   
-    icon: NavSettingsIcon, 
-    exactMatch: true,
-    roles: ['owner', 'admin']
-  },
-  { 
-    href: '/Storagecalculator',      
-    label: 'حاسبة التخزين',  
-    icon: NavMonitorIcon,  
-    exactMatch: true,
-    roles: ['owner', 'admin', 'employee', 'client']
-  },
-  { 
-    href: '/client/balance',
-    label: 'رصيد الحساب',
-    icon: NavChartIcon,
-    exactMatch: true,
-    roles: ['client']
-  },
-  { 
-    href: '/Storagecalculator/rates',
-    label: 'التعريفات',       
-    icon: NavFileTextIcon, 
-    exactMatch: true,
-    roles: ['owner', 'admin', 'employee']
-  },
+  { href: '/', label: 'الحسابات', icon: NavChartIcon, exactMatch: true, roles: ['owner', 'admin', 'employee'] },
+  { href: '/admin', label: 'لوحة الإدارة', icon: NavSettingsIcon, exactMatch: true, roles: ['owner', 'admin'] },
+  { href: '/Storagecalculator', label: 'أرضيات', icon: NavMonitorIcon, exactMatch: true, roles: ['owner', 'admin', 'employee', 'client'] },
+  { href: '/client/balance', label: 'رصيد الحساب', icon: NavChartIcon, exactMatch: true, roles: ['client'] },
+  { href: '/Storagecalculator/rates', label: 'التعريفه', icon: NavFileTextIcon, exactMatch: true, roles: ['owner', 'admin', 'employee'] },
 ];
 
-const roleLabels = { owner: 'المالك', admin: 'مدير', employee: 'موظف', client: 'عميل' };
-const roleColors = { owner: '#f0b429', admin: '#818cf8', employee: '#34d399',  client: '#60a5fa' };
+const roleLabels = { owner: 'المالك', admin: 'مدير', employee: 'قائد', client: 'مُستخلص' };
+const roleColors = { owner: '#f0b429', admin: '#818cf8', employee: '#34d399', client: '#60a5fa' };
 
 // ذاكرة تخزين مؤقت لتجنب تأخير التحميل عند الانتقال بين الصفحات (SPA Navigation)
 let cachedUser = null;
 let cachedLoaded = false;
 
 export default function AdminNav() {
-  const pathname  = usePathname();
-  const router    = useRouter();
+  const pathname = usePathname();
+  const router = useRouter();
 
-  const [user, setUser]           = useState(cachedUser);
-  const [loaded, setLoaded]       = useState(cachedLoaded);
-  const [logging, setLogging]     = useState(false);
-
-  // ── حالتان منفصلتان: dropdown المستخدم على الديسكتوب، وقائمة الجوال ──
+  const [user, setUser] = useState(cachedUser);
+  const [loaded, setLoaded] = useState(cachedLoaded);
+  const [logging, setLogging] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [mobileOpen, setMobileOpen]     = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const userMenuRef = useRef(null);
   const prevPathnameRef = useRef(pathname);
@@ -99,9 +67,7 @@ export default function AdminNav() {
         }
       })
       .catch(() => {})
-      .finally(() => {
-        setLoaded(true);
-      });
+      .finally(() => setLoaded(true));
   }, []);
 
   // إغلاق dropdown المستخدم عند النقر خارجه
@@ -118,11 +84,7 @@ export default function AdminNav() {
 
   // منع تمرير الصفحة عند فتح قائمة الجوال
   useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    document.body.style.overflow = mobileOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [mobileOpen]);
 
@@ -140,28 +102,22 @@ export default function AdminNav() {
     }
   };
 
-  // ── منع وميض الصفحة (CLS): نعرض شريطاً فارغاً بنفس الارتفاع أثناء التحميل لأول مرة فقط ──
+  // ── منع وميض الصفحة (CLS): شريط فارغ بنفس الارتفاع أثناء التحميل لأول مرة ──
   if (!loaded) {
     return (
       <div
         aria-hidden="true"
+        className="sticky top-0 z-50 h-14"
         style={{
-          height: 56,
           background: 'rgba(13,20,36,0.93)',
           borderBottom: '1px solid rgba(255,255,255,0.07)',
           boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
-          position: 'sticky',
-          top: 0,
-          zIndex: 50,
         }}
       />
     );
   }
 
-  // إذا انتهى التحميل ولم يكن المستخدم مسجل دخول أو ليس لديه صلاحيات، لا يتم عرض النافبار
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   const isActive = (item) =>
     item.exactMatch ? pathname === item.href : pathname.startsWith(item.href);
@@ -170,9 +126,6 @@ export default function AdminNav() {
 
   return (
     <>
-      {/* ══════════════════════════════════════════════════════
-          شريط التنقل الرئيسي
-      ══════════════════════════════════════════════════════ */}
       <nav
         dir="rtl"
         role="navigation"
@@ -188,77 +141,45 @@ export default function AdminNav() {
       >
         {/* شريط الدور الملوّن */}
         <div
-          style={{
-            height: 2,
-            opacity: 0.75,
-            background: `linear-gradient(90deg, transparent 0%, ${roleColor} 40%, ${roleColor} 60%, transparent 100%)`,
-          }}
+          className="h-0.5 opacity-75"
+          style={{ background: `linear-gradient(90deg, transparent 0%, ${roleColor} 40%, ${roleColor} 60%, transparent 100%)` }}
         />
 
-        <div
-          style={{
-            maxWidth: 1200,
-            margin: '0 auto',
-            padding: '0 16px',
-            height: 54,
-            display: 'flex ',
-            alignItems: 'center',
-            gap: 6,
-          }}
-        >
-
-                    {/* ── زر الهامبرغر (جوال فقط) ── */}
+        <div className="max-w-[1200px] mx-auto px-4 h-[54px] flex items-center gap-1.5">
+          {/* ── زر الهامبرغر (جوال فقط) ── */}
           <button
             onClick={() => setMobileOpen(v => !v)}
             aria-expanded={mobileOpen}
             aria-label={mobileOpen ? 'إغلاق القائمة' : 'فتح القائمة'}
-            className="admin-hamburger"
+            className="flex md:hidden items-center justify-center w-9 h-9 bg-white/[0.06] border border-white/10 rounded-[9px] text-slate-400 shrink-0 transition-colors hover:bg-white/[0.12]"
           >
             {mobileOpen ? <CloseIcon size={17} /> : <MenuIcon size={17} />}
           </button>
-          
+
           {/* ── روابط التنقل (ديسكتوب) ── */}
-          <div className="admin-nav-links">
+          <div className="hidden md:flex items-center gap-0.5 flex-1 overflow-hidden">
             {NAV_ITEMS.filter(item => item.roles.includes(user.role)).map(item => {
-              const active   = isActive(item);
+              const active = isActive(item);
               const IconComp = item.icon;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   aria-current={active ? 'page' : undefined}
+                  className="admin-nav-link inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] rounded-lg shrink-0 transition-all whitespace-nowrap no-underline"
                   style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '6px 12px',
-                    fontSize: 13,
-                    borderRadius: 8,
                     border: `1px solid ${active ? 'rgba(59,130,246,0.35)' : 'transparent'}`,
                     background: active ? 'rgba(59,130,246,0.15)' : 'transparent',
                     color: active ? '#fff' : '#94a3b8',
                     fontWeight: active ? 600 : 400,
-                    textDecoration: 'none',
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0,
-                    transition: 'all 0.15s',
                   }}
-                  className="admin-nav-link"
                 >
-                  <span style={{ display: 'flex', opacity: active ? 1 : 0.7 }}>
+                  <span className="flex" style={{ opacity: active ? 1 : 0.7 }}>
                     <IconComp />
                   </span>
                   {item.label}
                   {active && (
-                    <span
-                      style={{
-                        width: 5,
-                        height: 5,
-                        borderRadius: '50%',
-                        background: '#3b82f6',
-                        flexShrink: 0,
-                      }}
-                    />
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
                   )}
                 </Link>
               );
@@ -266,29 +187,21 @@ export default function AdminNav() {
           </div>
 
           {/* مساحة مرنة */}
-          <div style={{ flex: 1 }} />
+          <div className="flex-1" />
 
           {/* ── زر معلومات المستخدم + dropdown (ديسكتوب) ── */}
-          <div ref={userMenuRef} style={{ position: 'relative', flexShrink: 0 }}>
+          <div ref={userMenuRef} className="relative shrink-0">
             <button
               onClick={() => setUserMenuOpen(v => !v)}
               aria-expanded={userMenuOpen}
               aria-haspopup="true"
               aria-label="قائمة المستخدم"
-              className="admin-nav-user-btn"
+              className="admin-nav-user-btn flex items-center gap-2 px-2.5 py-1.5 bg-transparent border border-white/10 rounded-[10px] cursor-pointer font-[inherit] transition-all hover:bg-white/[0.07] hover:border-white/[0.18]"
             >
               {/* أفاتار */}
               <div
+                className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
                 style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 11,
-                  fontWeight: 700,
-                  flexShrink: 0,
                   background: `${roleColor}22`,
                   border: `1.5px solid ${roleColor}55`,
                   color: roleColor,
@@ -298,11 +211,11 @@ export default function AdminNav() {
               </div>
 
               {/* الاسم والدور */}
-              <div style={{ textAlign: 'right', lineHeight: 1.3, display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: 12.5, fontWeight: 600, color: '#f1f5f9', whiteSpace: 'nowrap' }}>
+              <div className="text-right leading-tight flex flex-col">
+                <span className="text-[12.5px] font-semibold text-slate-100 whitespace-nowrap">
                   {user?.username}
                 </span>
-                <span style={{ fontSize: 10.5, fontWeight: 500, color: roleColor }}>
+                <span className="text-[10.5px] font-medium" style={{ color: roleColor }}>
                   {roleLabels[user?.role] || user?.role}
                 </span>
               </div>
@@ -310,81 +223,52 @@ export default function AdminNav() {
               {/* سهم */}
               <ChevronDownIcon
                 size={12}
-                style={{
-                  flexShrink: 0,
-                  color: '#64748b',
-                  transition: 'transform 0.2s',
-                  transform: userMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                }}
+                className="shrink-0 text-slate-500 transition-transform"
+                style={{ transform: userMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
               />
             </button>
 
             {/* ── Dropdown المستخدم ── */}
             {userMenuOpen && (
-              <div className="admin-user-dropdown">
+              <div className="admin-user-dropdown absolute top-[calc(100%+8px)] left-0 min-w-[210px] bg-[#1a2035] border border-white/10 rounded-[14px] overflow-hidden shadow-[0_16px_48px_rgba(0,0,0,0.45),0_4px_12px_rgba(0,0,0,0.3)] z-[100] animate-nav-dropdown">
                 {/* رأس القائمة */}
-                <div
-                  style={{
-                    padding: '12px 14px',
-                    borderBottom: '1px solid rgba(255,255,255,0.07)',
-                    background: 'rgba(255,255,255,0.03)',
-                  }}
-                >
-                  <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#f1f5f9' }}>
+                <div className="px-3.5 py-3 border-b border-white/[0.07] bg-white/[0.03]">
+                  <p className="m-0 text-[13px] font-semibold text-slate-100">
                     {user?.username}
                   </p>
                   {user?.officeName && (
-                    <p style={{ marginTop: 2, marginBottom: 0, fontSize: 11, color: '#3b82f6', fontWeight: 500 }}>
+                    <p className="mt-0.5 mb-0 text-[11px] text-blue-500 font-medium">
                       {user.officeName}
                     </p>
                   )}
-                  <p style={{ marginTop: 4, marginBottom: 0, fontSize: 11.5, color: '#64748b' }}>
+                  <p className="mt-1 mb-0 text-[11.5px] text-slate-500">
                     {user?.phone || 'لا يوجد هاتف'}
                   </p>
                 </div>
 
                 {/* روابط */}
-                <div style={{ padding: '6px 0' }}>
+                <div className="py-1.5">
                   {(user.role === 'admin' || user.role === 'owner') && (
                     <>
                       <Link
                         href="/admin"
                         onClick={() => setUserMenuOpen(false)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 10,
-                          padding: '8px 14px',
-                          fontSize: 13,
-                          color: '#cbd5e1',
-                          textDecoration: 'none',
-                          transition: 'background 0.12s',
-                        }}
-                        className="admin-dropdown-item"
+                        className="admin-dropdown-item flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-slate-300 no-underline w-full"
                       >
                         <NavSettingsIcon size={14} />
                         لوحة الإدارة
                       </Link>
-                      <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '4px 0' }} />
+                      <div className="h-px bg-white/[0.06] my-1" />
                     </>
                   )}
 
                   <button
                     onClick={handleLogout}
                     disabled={logging}
-                    className="admin-dropdown-item admin-dropdown-logout"
+                    className="admin-dropdown-item admin-dropdown-logout flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-red-400 w-full bg-transparent border-none cursor-pointer font-[inherit] text-right disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {logging ? (
-                      <div
-                        style={{
-                          width: 14,
-                          height: 14,
-                          borderRadius: '50%',
-                          border: '2px solid rgba(248,113,113,0.3)',
-                          borderTopColor: '#f87171',
-                          animation: 'spin 0.7s linear infinite',
-                        }}
-                      />
+                      <div className="w-3.5 h-3.5 rounded-full border-2 border-red-400/30 border-t-red-400 animate-spin" />
                     ) : (
                       <LogOutIcon size={14} />
                     )}
@@ -394,56 +278,32 @@ export default function AdminNav() {
               </div>
             )}
           </div>
-
-
         </div>
       </nav>
 
-      {/* ══════════════════════════════════════════════════════
+      {/* ══════════════════════════════════════════
           قائمة الجوال — Overlay كامل الشاشة
-      ══════════════════════════════════════════════════════ */}
+      ══════════════════════════════════════════ */}
       {mobileOpen && (
         <>
           {/* خلفية شفافة لإغلاق القائمة */}
           <div
             onClick={() => setMobileOpen(false)}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              zIndex: 49,
-              background: 'rgba(0,0,0,0.45)',
-              backdropFilter: 'blur(2px)',
-              WebkitBackdropFilter: 'blur(2px)',
-            }}
+            className="fixed inset-0 z-[49] bg-black/45 backdrop-blur-[2px]"
             aria-hidden="true"
           />
 
           {/* لوحة القائمة */}
           <div
             dir="rtl"
-            className="admin-mobile-panel"
+            className="admin-mobile-panel fixed top-0 right-0 bottom-0 w-[min(300px,85vw)] z-50 bg-[rgba(13,20,36,0.98)] border-l border-white/[0.09] shadow-[-16px_0_48px_rgba(0,0,0,0.5)] flex flex-col overflow-y-auto animate-mobile-slide-in text-slate-100 font-[inherit]"
           >
             {/* رأس اللوحة */}
-            <div
-              style={{
-                padding: '14px 16px',
-                borderBottom: '1px solid rgba(255,255,255,0.08)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div className="px-4 py-3.5 border-b border-white/[0.08] flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
                 <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold"
                   style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 13,
-                    fontWeight: 700,
                     background: `${roleColor}22`,
                     border: `1.5px solid ${roleColor}55`,
                     color: roleColor,
@@ -452,10 +312,10 @@ export default function AdminNav() {
                   {user?.username?.[0]?.toUpperCase() || '؟'}
                 </div>
                 <div>
-                  <p style={{ margin: 0, fontSize: 13.5, fontWeight: 600, color: '#f1f5f9' }}>
+                  <p className="m-0 text-[13.5px] font-semibold text-slate-100">
                     {user?.username}
                   </p>
-                  <p style={{ margin: 0, fontSize: 11, fontWeight: 500, color: roleColor }}>
+                  <p className="m-0 text-[11px] font-medium" style={{ color: roleColor }}>
                     {roleLabels[user?.role] || user?.role}
                     {user?.officeName ? ` · ${user.officeName}` : ''}
                   </p>
@@ -463,39 +323,19 @@ export default function AdminNav() {
               </div>
               <button
                 onClick={() => setMobileOpen(false)}
-                style={{
-                  background: 'rgba(255,255,255,0.08)',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: 8,
-                  width: 34,
-                  height: 34,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  color: '#94a3b8',
-                }}
+                className="bg-white/[0.08] border border-white/[0.12] rounded-lg w-[34px] h-[34px] flex items-center justify-center cursor-pointer text-slate-400"
               >
                 <CloseIcon size={16} />
               </button>
             </div>
 
             {/* روابط التنقل */}
-            <div style={{ padding: '8px 10px', flex: 1 }}>
-              <p
-                style={{
-                  margin: '4px 8px 6px',
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: '#475569',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                }}
-              >
+            <div className="p-2.5 flex-1">
+              <p className="mx-2 mb-1.5 text-[10px] font-bold text-slate-600 uppercase tracking-[0.08em]">
                 التنقل
               </p>
               {NAV_ITEMS.filter(item => item.roles.includes(user.role)).map(item => {
-                const active   = isActive(item);
+                const active = isActive(item);
                 const IconComp = item.icon;
                 return (
                   <Link
@@ -503,37 +343,21 @@ export default function AdminNav() {
                     href={item.href}
                     aria-current={active ? 'page' : undefined}
                     onClick={() => setMobileOpen(false)}
+                    className="admin-mobile-link flex items-center gap-3 p-2.5 rounded-[10px] mb-0.5 no-underline transition-all"
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
-                      padding: '10px 12px',
-                      borderRadius: 10,
-                      marginBottom: 2,
-                      textDecoration: 'none',
                       fontWeight: active ? 600 : 400,
                       fontSize: 14,
                       color: active ? '#60a5fa' : '#94a3b8',
                       background: active ? 'rgba(59,130,246,0.1)' : 'transparent',
                       border: `1px solid ${active ? 'rgba(59,130,246,0.2)' : 'transparent'}`,
-                      transition: 'all 0.12s',
                     }}
-                    className="admin-mobile-link"
                   >
-                    <span style={{ display: 'flex', opacity: active ? 1 : 0.65 }}>
+                    <span className="flex" style={{ opacity: active ? 1 : 0.65 }}>
                       <IconComp size={16} />
                     </span>
                     {item.label}
                     {active && (
-                      <span
-                        style={{
-                          marginRight: 'auto',
-                          width: 6,
-                          height: 6,
-                          borderRadius: '50%',
-                          background: '#3b82f6',
-                        }}
-                      />
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500" />
                     )}
                   </Link>
                 );
@@ -541,44 +365,14 @@ export default function AdminNav() {
             </div>
 
             {/* فاصل وتسجيل الخروج */}
-            <div
-              style={{
-                padding: '8px 10px 12px',
-                borderTop: '1px solid rgba(255,255,255,0.07)',
-              }}
-            >
+            <div className="p-2.5 pb-3 border-t border-white/[0.07]">
               <button
                 onClick={handleLogout}
                 disabled={logging}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: '10px 12px',
-                  borderRadius: 10,
-                  background: 'rgba(239,68,68,0.08)',
-                  border: '1px solid rgba(239,68,68,0.18)',
-                  color: '#f87171',
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: logging ? 'not-allowed' : 'pointer',
-                  fontFamily: 'inherit',
-                  transition: 'all 0.12s',
-                  opacity: logging ? 0.7 : 1,
-                }}
+                className="w-full flex items-center gap-2.5 p-2.5 rounded-[10px] bg-red-500/[0.08] border border-red-500/[0.18] text-red-400 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-70 font-[inherit]"
               >
                 {logging ? (
-                  <div
-                    style={{
-                      width: 16,
-                      height: 16,
-                      borderRadius: '50%',
-                      border: '2px solid rgba(248,113,113,0.3)',
-                      borderTopColor: '#f87171',
-                      animation: 'spin 0.7s linear infinite',
-                    }}
-                  />
+                  <div className="w-4 h-4 rounded-full border-2 border-red-400/30 border-t-red-400 animate-spin" />
                 ) : (
                   <LogOutIcon size={16} />
                 )}
@@ -588,135 +382,6 @@ export default function AdminNav() {
           </div>
         </>
       )}
-
-      {/* ══════════════════════════════════════════════════════
-          CSS المخصص للنافبار
-      ══════════════════════════════════════════════════════ */}
-      <style>{`
-        /* ─ Keyframes ─ */
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes navDropdown {
-          from { opacity: 0; transform: translateY(-6px) scale(0.97); }
-          to   { opacity: 1; transform: translateY(0)   scale(1); }
-        }
-        @keyframes mobileSlideIn {
-          from { opacity: 0; transform: translateX(20px); }
-          to   { opacity: 1; transform: translateX(0); }
-        }
-
-        /* ─ روابط الديسكتوب ─ */
-        .admin-nav-links {
-          display: none;
-          align-items: center;
-          gap: 2px;
-          flex: 1;
-          overflow: hidden;
-        }
-        .admin-nav-link:hover {
-          background: rgba(255,255,255,0.08) !important;
-          color: #e2e8f0 !important;
-        }
-
-        /* ─ زر المستخدم ─ */
-        .admin-nav-user-btn {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 6px 10px;
-          background: transparent;
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 10px;
-          cursor: pointer;
-          font-family: inherit;
-          transition: background 0.15s, border-color 0.15s;
-        }
-        .admin-nav-user-btn:hover {
-          background: rgba(255,255,255,0.07);
-          border-color: rgba(255,255,255,0.18);
-        }
-
-        /* ─ Dropdown ديسكتوب ─ */
-        .admin-user-dropdown {
-          position: absolute;
-          top: calc(100% + 8px);
-          left: 0;
-          min-width: 210px;
-          background: #1a2035;
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 14px;
-          overflow: hidden;
-          box-shadow: 0 16px 48px rgba(0,0,0,0.45), 0 4px 12px rgba(0,0,0,0.3);
-          z-index: 100;
-          animation: navDropdown 0.18s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        .admin-dropdown-item {
-          width: 100%;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 8px 14px;
-          font-size: 13px;
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          font-family: inherit;
-          text-align: right;
-          transition: background 0.12s;
-        }
-        .admin-dropdown-item:hover { background: rgba(255,255,255,0.06); }
-        .admin-dropdown-logout { color: #f87171; }
-        .admin-dropdown-logout:hover { background: rgba(239,68,68,0.12) !important; }
-
-        /* ─ زر الهامبرغر (جوال) ─ */
-        .admin-hamburger {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 36px;
-          height: 36px;
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 9px;
-          cursor: pointer;
-          color: #94a3b8;
-          flex-shrink: 0;
-          transition: background 0.15s;
-        }
-        .admin-hamburger:hover { background: rgba(255,255,255,0.12); }
-
-        /* ─ لوحة الجوال ─ */
-        .admin-mobile-panel {
-          position: fixed;
-          top: 0;
-          right: 0;
-          bottom: 0;
-          width: min(300px, 85vw);
-          z-index: 50;
-          background: rgba(13,20,36,0.98);
-          border-left: 1px solid rgba(255,255,255,0.09);
-          box-shadow: -16px 0 48px rgba(0,0,0,0.5);
-          display: flex;
-          flex-direction: column;
-          overflow-y: auto;
-          animation: mobileSlideIn 0.22s cubic-bezier(0.22, 1, 0.36, 1);
-          color: #f1f5f9;
-          font-family: inherit;
-        }
-        .admin-mobile-link:hover {
-          background: rgba(255,255,255,0.06) !important;
-          color: #e2e8f0 !important;
-        }
-
-        /* ─ Breakpoints ─ */
-        @media (min-width: 768px) {
-          .admin-nav-links  { display: flex; }
-          .admin-hamburger  { display: none; }
-        }
-        @media (max-width: 767px) {
-          .admin-nav-user-btn span:last-of-type,
-          .admin-nav-user-btn div { display: none; }
-        }
-      `}</style>
     </>
   );
 }

@@ -3,6 +3,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import User from "@/models/User";
 import bcrypt from "bcrypt";
 import mongoose from "mongoose";
+import { invalidateCache } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -96,6 +97,10 @@ export async function PUT(request, { params }) {
 
     console.log("✅ User updated:", user.username);
 
+    // 🔥 مسح الـ Cache بعد التحديث
+    invalidateCache("accounts:");
+    console.log("🗑️ Accounts cache invalidated after update");
+
     return NextResponse.json({
       success: true,
       account: userResponse,
@@ -161,6 +166,10 @@ export async function DELETE(request, { params }) {
     }
 
     console.log("✅ User deleted:", user.username);
+
+    // 🔥 مسح الـ Cache بعد الحذف
+    invalidateCache("accounts:");
+    console.log("🗑️ Accounts cache invalidated after deletion");
 
     return NextResponse.json({
       success: true,

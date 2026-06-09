@@ -147,7 +147,8 @@ export default function AccountsDashboard() {
       }
 
       // إذا كان ملف HTML من النظام المحاسبي
-      const { data: results, dateRange: extractedDateRange } = await parseAccountingHTML(file);
+      const { data: results, dateRange: extractedDateRange } =
+        await parseAccountingHTML(file);
 
       // Preserve existing transactions when uploading a new file
       const mergedResults = results.map((newRecord) => {
@@ -351,22 +352,22 @@ export default function AccountsDashboard() {
                 <Download size={14} className="text-blue-500" />
                 نسخة احتياطية
               </button>
-
-              <label className="flex-1 md:flex-none cursor-pointer px-3 py-2 text-xs md:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2">
-                <Upload size={14} />
-                استبدال
-                <input
-                  type="file"
-                  className="hidden"
-                  accept=".html,.htm,.json"
-                  onChange={handleFileUpload}
-                />
-              </label>
             </div>
           )}
         </header>
 
-        {data.length === 0 && !search && !isTransactionsOnlyActive ? (
+        {/* ── Loading Spinner (no data yet) ── */}
+        {loading &&
+        data.length === 0 &&
+        !search &&
+        !isTransactionsOnlyActive ? (
+          <div className="flex flex-col items-center justify-center h-[300px] md:h-[400px] mx-4 md:mx-0">
+            <div className="w-12 h-12 rounded-full border-4 border-blue-200 dark:border-blue-900/40 border-t-blue-600 animate-spin mb-4" />
+            <p className="text-sm font-medium text-slate-500">
+              جاري تحميل البيانات...
+            </p>
+          </div>
+        ) : data.length === 0 && !search && !isTransactionsOnlyActive ? (
           /* Empty State / Upload Zone */
           <div
             className={cn(
@@ -498,12 +499,14 @@ export default function AccountsDashboard() {
                       const addition = pending.manualAddition || 0;
                       const deduction = pending.manualDeduction || 0;
                       const baseBalance =
-                        (item.closingBalance?.debit || 0) - (item.closingBalance?.credit || 0);
+                        (item.closingBalance?.debit || 0) -
+                        (item.closingBalance?.credit || 0);
                       const openingBalanceVal =
-                        (item.openingBalance?.debit || 0) - (item.openingBalance?.credit || 0);
+                        (item.openingBalance?.debit || 0) -
+                        (item.openingBalance?.credit || 0);
                       const movementCredit = item.totals?.credit || 0;
                       const movementDebit = item.totals?.debit || 0;
-                      
+
                       const finalBalance =
                         baseBalance +
                         historyAddition +
@@ -551,29 +554,43 @@ export default function AccountsDashboard() {
                           </td>
 
                           <td className="px-4 py-4 text-center font-mono text-sm whitespace-nowrap">
-                            <span className={cn(
-                              "px-2 py-0.5 rounded",
-                              openingBalanceVal > 0 ? "text-slate-600 dark:text-slate-400" : "text-red-500 bg-red-50 dark:bg-red-950/20"
-                            )}>
+                            <span
+                              className={cn(
+                                "px-2 py-0.5 rounded",
+                                openingBalanceVal > 0
+                                  ? "text-slate-600 dark:text-slate-400"
+                                  : "text-red-500 bg-red-50 dark:bg-red-950/20",
+                              )}
+                            >
                               {openingBalanceVal.toLocaleString()}
                             </span>
                           </td>
 
                           <td className="px-4 py-4 text-center font-mono text-sm whitespace-nowrap">
-                            <span className={cn(
-                              "px-2 py-0.5 rounded",
-                              movementDebit > 0 ? "text-green-600 bg-green-50 dark:bg-green-900/20" : "text-slate-300 dark:text-slate-700"
-                            )}>
-                              {movementDebit > 0 ? "+" : ""}{movementDebit.toLocaleString()}
+                            <span
+                              className={cn(
+                                "px-2 py-0.5 rounded",
+                                movementDebit > 0
+                                  ? "text-green-600 bg-green-50 dark:bg-green-900/20"
+                                  : "text-slate-300 dark:text-slate-700",
+                              )}
+                            >
+                              {movementDebit > 0 ? "+" : ""}
+                              {movementDebit.toLocaleString()}
                             </span>
                           </td>
 
                           <td className="px-4 py-4 text-center font-mono text-sm whitespace-nowrap">
-                            <span className={cn(
-                              "px-2 py-0.5 rounded",
-                              movementCredit > 0 ? "text-orange-600 bg-orange-50 dark:bg-orange-950/20" : "text-slate-300 dark:text-slate-700"
-                            )}>
-                              {movementCredit > 0 ? "-" : ""}{movementCredit.toLocaleString()}
+                            <span
+                              className={cn(
+                                "px-2 py-0.5 rounded",
+                                movementCredit > 0
+                                  ? "text-orange-600 bg-orange-50 dark:bg-orange-950/20"
+                                  : "text-slate-300 dark:text-slate-700",
+                              )}
+                            >
+                              {movementCredit > 0 ? "-" : ""}
+                              {movementCredit.toLocaleString()}
                             </span>
                           </td>
 
@@ -651,9 +668,11 @@ export default function AccountsDashboard() {
                   const addition = pending.manualAddition || 0;
                   const deduction = pending.manualDeduction || 0;
                   const baseBalance =
-                    (item.closingBalance?.debit || 0) - (item.closingBalance?.credit || 0);
+                    (item.closingBalance?.debit || 0) -
+                    (item.closingBalance?.credit || 0);
                   const openingBalanceVal =
-                    (item.openingBalance?.debit || 0) - (item.openingBalance?.credit || 0);
+                    (item.openingBalance?.debit || 0) -
+                    (item.openingBalance?.credit || 0);
                   const movementCredit = item.totals?.credit || 0;
                   const movementDebit = item.totals?.debit || 0;
 

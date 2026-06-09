@@ -168,3 +168,60 @@ input.no-spinner::-webkit-inner-spin-button {
 .animate-slide-up {
   animation: slide-up 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+/* ════════════════════════ Admin Navbar ════════════════════════ */
+
+@keyframes navDropdown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes mobileSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-nav-dropdown {
+  animation: navDropdown 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.animate-mobile-slide-in {
+  animation: mobileSlideIn 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.admin-nav-link:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #e2e8f0 !important;
+}
+
+.admin-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.admin-dropdown-logout:hover {
+  background: rgba(239, 68, 68, 0.12) !important;
+}
+
+.admin-mobile-link:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #e2e8f0 !important;
+}
+
+@media (max-width: 767px) {
+  .admin-nav-user-btn > div,
+  .admin-nav-user-btn > span:not(:first-child) {
+    display: none;
+  }
+}

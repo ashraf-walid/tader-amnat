@@ -1,15 +1,37 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import User from "@/models/User";
+import cache, { CacheKeys, CacheTTL, invalidateCache } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
 /**
  * GET /api/accounts
- * Get all user accounts
+ * Get all user accounts with caching
  */
 export async function GET() {
   try {
+    // 1️⃣ محاولة القراءة من الذاكرة
+    const cachedAccounts = cache.get(CacheKeys.ALL_ACCOUNTS);
+    if (cachedAccounts !== null) {
+      console.log("✅ Accounts from cache:", cachedAccounts.length);
+      return NextResponse.json(
+        {
+          success: true,
+          accounts: cachedAccounts,
+          count: cachedAccounts.length,
+          timestamp: Date.now(),
+          fromCache: true,
+        },
+        {
+          headers: {
+            "Cache-Control": "private, max-age=60, stale-while-revalidate=30",
+          },
+        },
+      );
+    }
+
+    // 2️⃣ إذا لم توجد، اقرأ من MongoDB
     await connectToDatabase();
 
     const users = await User.find({})
@@ -33,18 +55,21 @@ export async function GET() {
       updatedAt: user.updatedAt,
     }));
 
+    // 3️⃣ احفظ في الذاكرة لمدة 5 دقائق
+    cache.set(CacheKeys.ALL_ACCOUNTS, accounts, CacheTTL.ACCOUNTS_LIST);
+    console.log("📦 Accounts cached:", accounts.length);
+
     return NextResponse.json(
       {
         success: true,
         accounts,
         count: accounts.length,
         timestamp: Date.now(),
+        fromCache: false,
       },
       {
         headers: {
-          "Cache-Control": "no-store, max-age=0, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
+          "Cache-Control": "private, max-age=60, stale-while-revalidate=30",
         },
       },
     );
@@ -112,6 +137,10 @@ export async function POST(request) {
 
     console.log("💾 Saving user with officeName:", officeName);
     await newUser.save();
+
+    // 🔥 مسح الـ Cache لأن البيانات تغيرت
+    invalidateCache("accounts:");
+    console.log("🗑️ Accounts cache invalidated");
 
     // Return user without password
     const userResponse = {

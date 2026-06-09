@@ -2,22 +2,47 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import Settings from "@/models/Settings";
 import { requireAdmin } from "@/lib/auth";
+import cache, { CacheKeys, CacheTTL, invalidateCache } from "@/lib/cache";
 
 export async function GET(req) {
   try {
+    // 1️⃣ محاولة القراءة من الذاكرة أولاً
+    const cachedRate = cache.get(CacheKeys.EXCHANGE_RATE);
+    if (cachedRate !== null) {
+      console.log("✅ Exchange rate from cache:", cachedRate);
+      return NextResponse.json(
+        { success: true, exchangeRate: cachedRate, fromCache: true },
+        {
+          headers: {
+            "Cache-Control": "public, max-age=300, stale-while-revalidate=60",
+          },
+        },
+      );
+    }
+
+    // 2️⃣ إذا لم توجد في الذاكرة، اقرأ من MongoDB
     await connectToDatabase();
-    // Default to the original hardcoded rate if it hasn't been saved yet
     const defaultRate = 53;
 
-    const rateSetting = await Settings.findOne({ key: "exchangeRate" });
+    const rateSetting = await Settings.findOne({ key: "exchangeRate" }).lean();
 
-    // Return the value directly if it exists, otherwise default
     const rateValue =
       rateSetting && rateSetting.value
         ? Number(rateSetting.value)
         : defaultRate;
 
-    return NextResponse.json({ success: true, exchangeRate: rateValue });
+    // 3️⃣ احفظ في الذاكرة لمدة ساعة
+    cache.set(CacheKeys.EXCHANGE_RATE, rateValue, CacheTTL.EXCHANGE_RATE);
+    console.log("📦 Exchange rate cached:", rateValue);
+
+    return NextResponse.json(
+      { success: true, exchangeRate: rateValue, fromCache: false },
+      {
+        headers: {
+          "Cache-Control": "public, max-age=300, stale-while-revalidate=60",
+        },
+      },
+    );
   } catch (error) {
     console.error("Failed to fetch settings:", error);
     return NextResponse.json(
@@ -49,6 +74,13 @@ export async function PUT(req) {
       { value: Number(exchangeRate) },
       { returnDocument: "after", upsert: true },
     );
+
+    // 🔥 مسح الـ Cache القديم فوراً
+    cache.delete(CacheKeys.EXCHANGE_RATE);
+    console.log("🗑️ Exchange rate cache invalidated");
+
+    // حفظ القيمة الجديدة في الذاكرة
+    cache.set(CacheKeys.EXCHANGE_RATE, rateSetting.value, CacheTTL.EXCHANGE_RATE);
 
     return NextResponse.json({
       success: true,

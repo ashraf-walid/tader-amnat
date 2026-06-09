@@ -57,10 +57,16 @@ const UserSchema = new mongoose.Schema(
   },
 );
 
-// Single Field Index (descending) — for: .find({}).sort({ createdAt: -1 })
-// Note: username already has unique: true which creates a unique index automatically
-// Note: _id is indexed by default (used by findById, findByIdAndUpdate)
-UserSchema.index({ createdAt: -1 });
+// ─── Database Indexes للأداء العالي ───────────────────────────────────────
+// 1️⃣ username: مفهرس تلقائياً بسبب unique: true
+// 2️⃣ _id: مفهرس تلقائياً من MongoDB
+// 3️⃣ Indexes إضافية للاستعلامات الشائعة:
+
+UserSchema.index({ createdAt: -1 }); // لترتيب الحسابات حسب تاريخ الإنشاء
+UserSchema.index({ role: 1 }); // للبحث حسب الدور (admin, client, etc.)
+UserSchema.index({ accountCode: 1 }); // للبحث حسب كود الحساب
+UserSchema.index({ isActive: 1, attempts: -1 }); // للبحث عن الحسابات النشطة حسب المحاولات
+UserSchema.index({ username: 1, role: 1 }); // Compound index للبحث المركب
 
 // Hash password before saving
 UserSchema.pre("save", async function () {

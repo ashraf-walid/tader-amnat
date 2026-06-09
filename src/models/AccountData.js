@@ -27,8 +27,13 @@ const AccountDataSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-// Single Field Index — for: .find({}).sort({ accountCode: 1 })
-AccountDataSchema.index({ accountCode: 1 });
+// ─── Database Indexes للأداء العالي ───────────────────────────────────────
+// 1️⃣ Indexes للاستعلامات الشائعة:
+
+AccountDataSchema.index({ accountCode: 1 }); // للترتيب والبحث حسب كود الحساب
+AccountDataSchema.index({ account: "text" }); // للبحث النصي في اسم الحساب
+AccountDataSchema.index({ "transactions.date": -1 }); // للبحث في تواريخ المعاملات
+AccountDataSchema.index({ accountCode: 1, account: "text" }); // Compound index للبحث المركب
 
 export default mongoose.models.AccountData ||
   mongoose.model("AccountData", AccountDataSchema);

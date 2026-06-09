@@ -22,10 +22,17 @@ export async function connectToDatabase() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      // 🚀 Connection Pooling للأداء العالي
+      maxPoolSize: 10, // عدد الاتصالات المتزامنة (افتراضي: 100، نخفضه لتوفير الموارد)
+      minPoolSize: 2, // الحد الأدنى من الاتصالات الجاهزة
+      serverSelectionTimeoutMS: 5000, // وقت الانتظار لاختيار Server
+      socketTimeoutMS: 45000, // وقت انتهاء Socket
+      family: 4, // استخدام IPv4 فقط (أسرع)
     };
-    
+
     cached.promise = mongoose.connect(uri, opts).then((mongoose) => {
       console.log('✅ MongoDB connected successfully');
+      console.log('📊 Connection Pool: min=2, max=10');
       return mongoose;
     }).catch((error) => {
       console.error('❌ MongoDB connection error:', error.message);

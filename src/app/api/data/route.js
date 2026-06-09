@@ -104,7 +104,6 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    // Only admin/owner can upload data
     requireAdmin(request);
 
     const body = await request.json();
