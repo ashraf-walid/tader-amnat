@@ -89,21 +89,6 @@ export default function AccountsDashboard() {
 
   const filteredData = data;
 
-  const saveDataToServer = async (newData, newDateRange = null) => {
-    try {
-      await fetch("/api/data", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          data: newData,
-          dateRange: newDateRange || dateRange,
-        }),
-      });
-    } catch (err) {
-      console.error("Error saving data:", err);
-    }
-  };
-
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -132,9 +117,19 @@ export default function AccountsDashboard() {
         const restoredDateRange = backup.dateRange || "";
 
         if (Array.isArray(dataToRestore)) {
+          // ✅ حفظ البيانات الكاملة في قاعدة البيانات
+          await fetch("/api/data", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              data: dataToRestore,
+              dateRange: restoredDateRange,
+            }),
+          });
+
+          // تحديث الواجهة
           setData(dataToRestore);
           if (restoredDateRange) setDateRange(restoredDateRange);
-          await saveDataToServer(dataToRestore, restoredDateRange);
           await fetchData(1, "", false);
           setSearch("");
           setIsTransactionsOnlyActive(false);
@@ -161,16 +156,26 @@ export default function AccountsDashboard() {
         };
       });
 
+      // ✅ حفظ البيانات الكاملة في قاعدة البيانات
+      await fetch("/api/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          data: mergedResults,
+          dateRange: extractedDateRange,
+        }),
+      });
+
+      // تحديث الواجهة
       setData(mergedResults);
       if (extractedDateRange) setDateRange(extractedDateRange);
-      await saveDataToServer(mergedResults, extractedDateRange);
       await fetchData(1, "", false);
       setSearch("");
       setIsTransactionsOnlyActive(false);
     } catch (err) {
       alert(
         err.message ||
-          "حدث خطأ أثناء معالجة الملف. يرجى التأكد من أنه ملف صحيح.",
+        "حدث خطأ أثناء معالجة الملف. يرجى التأكد من أنه ملف صحيح.",
       );
     } finally {
       setLoading(false);
@@ -193,37 +198,65 @@ export default function AccountsDashboard() {
     const changes = pendingChanges[accountCode];
     if (!changes) return;
 
-    const updatedData = data.map((item) => {
-      if (item.accountCode === accountCode) {
-        const newTransactions = [...(item.transactions || [])];
-        if (changes.manualAddition > 0) {
-          newTransactions.push({
-            type: "addition",
-            amount: changes.manualAddition,
-            date: new Date().toISOString(),
-          });
-        }
-        if (changes.manualDeduction > 0) {
-          newTransactions.push({
-            type: "deduction",
-            amount: changes.manualDeduction,
-            date: new Date().toISOString(),
-          });
-        }
-        return { ...item, transactions: newTransactions };
+    // Find the account to update
+    const accountToUpdate = data.find(
+      (item) => item.accountCode === accountCode,
+    );
+    if (!accountToUpdate) return;
+
+    // Build new transactions array
+    const newTransactions = [...(accountToUpdate.transactions || [])];
+    if (changes.manualAddition > 0) {
+      newTransactions.push({
+        type: "addition",
+        amount: changes.manualAddition,
+        date: new Date().toISOString(),
+      });
+    }
+    if (changes.manualDeduction > 0) {
+      newTransactions.push({
+        type: "deduction",
+        amount: changes.manualDeduction,
+        date: new Date().toISOString(),
+      });
+    }
+
+    // ✅ Update only this specific account via API
+    try {
+      const response = await fetch(`/api/data/${accountCode}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transactions: newTransactions }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Update local state
+        setData((prevData) =>
+          prevData.map((item) =>
+            item.accountCode === accountCode
+              ? { ...item, transactions: newTransactions }
+              : item,
+          ),
+        );
+
+        // Clear pending changes
+        setPendingChanges((prev) => {
+          const next = { ...prev };
+          delete next[accountCode];
+          return next;
+        });
+
+        // Refresh current page to get updated data
+        fetchCurrentPage();
+      } else {
+        alert(`خطأ: ${result.error || "فشل في حفظ المعاملة"}`);
       }
-      return item;
-    });
-
-    setData(updatedData);
-    setPendingChanges((prev) => {
-      const next = { ...prev };
-      delete next[accountCode];
-      return next;
-    });
-
-    await saveDataToServer(updatedData);
-    fetchCurrentPage();
+    } catch (err) {
+      console.error("Error committing changes:", err);
+      alert("حدث خطأ أثناء حفظ المعاملة");
+    }
   };
 
   const downloadData = async () => {
@@ -358,9 +391,9 @@ export default function AccountsDashboard() {
 
         {/* ── Loading Spinner (no data yet) ── */}
         {loading &&
-        data.length === 0 &&
-        !search &&
-        !isTransactionsOnlyActive ? (
+          data.length === 0 &&
+          !search &&
+          !isTransactionsOnlyActive ? (
           <div className="flex flex-col items-center justify-center h-[300px] md:h-[400px] mx-4 md:mx-0">
             <div className="w-12 h-12 rounded-full border-4 border-blue-200 dark:border-blue-900/40 border-t-blue-600 animate-spin mb-4" />
             <p className="text-sm font-medium text-slate-500">
@@ -912,7 +945,7 @@ export default function AccountsDashboard() {
 
             <div className="p-6 max-h-[400px] overflow-y-auto">
               {!selectedAccount.transactions ||
-              selectedAccount.transactions.length === 0 ? (
+                selectedAccount.transactions.length === 0 ? (
                 <div className="text-center py-8 text-slate-400 text-sm italic">
                   لا توجد عمليات مسجلة لهذا الحساب حتى الآن
                 </div>

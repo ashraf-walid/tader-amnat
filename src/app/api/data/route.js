@@ -3,6 +3,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import AccountData from "@/models/AccountData";
 import Settings from "@/models/Settings";
 import { requireAdmin } from "@/lib/auth";
+import { invalidateCache } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -119,6 +120,21 @@ export async function POST(request) {
       dateRange = body.dateRange;
     }
 
+    // ⚠️ Safety check: Prevent accidental data loss
+    if (dataToSave.length > 0 && dataToSave.length < 5) {
+      const currentCount = await AccountData.countDocuments();
+      if (currentCount > dataToSave.length * 2) {
+        console.warn(
+          `⚠️ WARNING: Attempting to replace ${currentCount} accounts with only ${dataToSave.length}. This might be a filtered dataset!`,
+        );
+        // Optionally, you can reject the request:
+        // return NextResponse.json(
+        //   { success: false, error: "Suspicious data replacement detected" },
+        //   { status: 400 }
+        // );
+      }
+    }
+
     // Replace all data with the new uploaded data
     // This matches the original logic of overwriting the JSON file
     await AccountData.deleteMany({});
@@ -134,6 +150,10 @@ export async function POST(request) {
         { upsert: true, new: true }
       );
     }
+
+    // 🔥 Invalidate all data cache
+    invalidateCache("data:");
+    console.log("🗑️ Data cache invalidated after bulk upload");
 
     console.log("POST /api/data: Saved", dataToSave.length, "items to MongoDB");
     return NextResponse.json({ success: true, timestamp: Date.now() });
