@@ -31,7 +31,7 @@ export async function GET(req) {
         ? Number(rateSetting.value)
         : defaultRate;
 
-    // 3️⃣ احفظ في الذاكرة لمدة ساعة
+    // 3️⃣ احفظ في الذاكرة لمدة 24 ساعة
     cache.set(CacheKeys.EXCHANGE_RATE, rateValue, CacheTTL.EXCHANGE_RATE);
     console.log("📦 Exchange rate cached:", rateValue);
 

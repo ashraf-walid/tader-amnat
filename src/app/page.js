@@ -14,6 +14,22 @@ import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { parseAccountingHTML } from "@/lib/parser";
 import AdminNav from "@/components/AdminNav";
+import {
+  isDBEmpty,
+  getAllAccounts,
+  searchAccounts,
+  getAccountsWithTransactions,
+  saveAllAccounts,
+  updateTransactions,
+  clearAllData,
+  setMetadata,
+  getMetadata,
+  setLastSyncTimestamp,
+  getLastSyncTimestamp,
+  setDateRange as setDateRangeDB,
+  getDateRange as getDateRangeDB,
+  isIndexedDBSupported,
+} from "@/lib/localDB";
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -31,8 +47,6 @@ export default function AccountsDashboard() {
     useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pagination, setPagination] = useState(null);
 
   // Debounce search value
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -41,51 +55,109 @@ export default function AccountsDashboard() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Fetch data with explicit params
-  const fetchData = useCallback(
-    async (page = 1, searchQuery = "", transOnly = false) => {
+  // Fetch data with explicit params (من MongoDB - يُستخدم كـ fallback فقط)
+  const fetchDataFromMongoDB = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/data?limit=0`, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const result = await res.json();
+      if (result && Array.isArray(result.data)) {
+        // حفظ في IndexedDB
+        await saveAllAccounts(result.data);
+        if (result.dateRange) await setDateRangeDB(result.dateRange);
+        await setLastSyncTimestamp(Date.now());
+
+        setData(result.data);
+        if (result.dateRange) setDateRange(result.dateRange);
+        setLastUpdated(new Date(result.timestamp).toLocaleTimeString());
+        setErrorStatus(null);
+      }
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setErrorStatus(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // قراءة ذكية: IndexedDB أولاً، ثم MongoDB إذا لزم الأمر
+  const loadDataSmart = useCallback(async () => {
+    setLoading(true);
+
+    try {
+      // التحقق من دعم IndexedDB
+      if (!isIndexedDBSupported()) {
+        console.warn("⚠️ IndexedDB غير مدعوم، استخدام MongoDB مباشرة");
+        await fetchDataFromMongoDB();
+        return;
+      }
+
+      // التحقق من IndexedDB
+      const isEmpty = await isDBEmpty();
+
+      if (isEmpty) {
+        // IndexedDB فارغ → قراءة من MongoDB
+        console.log("📡 IndexedDB فارغ، جلب البيانات من MongoDB...");
+        await fetchDataFromMongoDB();
+      } else {
+        // IndexedDB موجود → قراءة فورية
+        console.log("⚡ قراءة من IndexedDB...");
+        const localData = await getAllAccounts();
+        const localDateRange = await getDateRangeDB();
+
+        setData(localData);
+        setDateRange(localDateRange);
+        setLastUpdated(new Date().toLocaleTimeString());
+        setErrorStatus(null);
+      }
+    } catch (err) {
+      console.error("Error loading data:", err);
+      setErrorStatus(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchDataFromMongoDB]);
+
+  // ✨ تحميل البيانات عند فتح الصفحة لأول مرة (من IndexedDB أو MongoDB)
+  React.useEffect(() => {
+    loadDataSmart(); // eslint-disable-line react-hooks/set-state-in-effect
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 🔍 البحث والفلترة محليًا عند تغيير البحث أو الفلتر
+  React.useEffect(() => {
+    const performLocalSearch = async () => {
       setLoading(true);
       try {
-        const params = new URLSearchParams({ page: String(page), limit: "50" });
-        if (searchQuery) params.set("search", searchQuery);
-        if (transOnly) params.set("transactionsOnly", "true");
-        const res = await fetch(`/api/data?${params}`, { cache: "no-store" });
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const result = await res.json();
-        if (result && Array.isArray(result.data)) {
-          setData(result.data);
-          if (result.dateRange) setDateRange(result.dateRange);
-          if (result.pagination) setPagination(result.pagination);
-          setLastUpdated(new Date(result.timestamp).toLocaleTimeString());
-          setErrorStatus(null);
+        let results;
+
+        // تطبيق البحث
+        if (debouncedSearch) {
+          results = await searchAccounts(debouncedSearch);
+        } else {
+          results = await getAllAccounts();
         }
+
+        // تطبيق الفلتر (المعاملات فقط)
+        if (isTransactionsOnlyActive) {
+          results = results.filter(
+            (acc) =>
+              acc.transactions &&
+              Array.isArray(acc.transactions) &&
+              acc.transactions.length > 0
+          );
+        }
+
+        setData(results);
       } catch (err) {
-        console.error("Error fetching data:", err);
-        setErrorStatus(err.message);
+        console.error("Error during local search:", err);
       } finally {
         setLoading(false);
       }
-    },
-    [],
-  );
+    };
 
-  // Re-fetch on filter changes (debounced search, transactionsOnly toggle)
-  React.useEffect(() => {
-    setCurrentPage(1); // eslint-disable-line react-hooks/set-state-in-effect
-    fetchData(1, debouncedSearch, isTransactionsOnlyActive);
-  }, [debouncedSearch, isTransactionsOnlyActive, fetchData]);
-
-  const fetchCurrentPage = useCallback(() => {
-    fetchData(currentPage, debouncedSearch, isTransactionsOnlyActive);
-  }, [fetchData, currentPage, debouncedSearch, isTransactionsOnlyActive]);
-
-  const goToPage = useCallback(
-    (page) => {
-      setCurrentPage(page);
-      fetchData(page, debouncedSearch, isTransactionsOnlyActive);
-    },
-    [fetchData, debouncedSearch, isTransactionsOnlyActive],
-  );
+    performLocalSearch();
+  }, [debouncedSearch, isTransactionsOnlyActive]);
 
   const filteredData = data;
 
@@ -117,22 +189,33 @@ export default function AccountsDashboard() {
         const restoredDateRange = backup.dateRange || "";
 
         if (Array.isArray(dataToRestore)) {
-          // ✅ حفظ البيانات الكاملة في قاعدة البيانات
-          await fetch("/api/data", {
+          // ✅ 1. حفظ في IndexedDB أولاً (فوري)
+          await saveAllAccounts(dataToRestore);
+          if (restoredDateRange) await setDateRangeDB(restoredDateRange);
+
+          // ✅ 2. تحديث الواجهة فوراً
+          setData(dataToRestore);
+          if (restoredDateRange) setDateRange(restoredDateRange);
+          setSearch("");
+          setIsTransactionsOnlyActive(false);
+
+          // ✅ 3. رفع إلى MongoDB في الخلفية (بدون انتظار)
+          fetch("/api/data", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               data: dataToRestore,
               dateRange: restoredDateRange,
             }),
-          });
+          })
+            .then(() => {
+              console.log("✅ تمت المزامنة مع MongoDB");
+              setLastSyncTimestamp(Date.now());
+            })
+            .catch((err) =>
+              console.error("⚠️ فشلت المزامنة مع MongoDB:", err),
+            );
 
-          // تحديث الواجهة
-          setData(dataToRestore);
-          if (restoredDateRange) setDateRange(restoredDateRange);
-          await fetchData(1, "", false);
-          setSearch("");
-          setIsTransactionsOnlyActive(false);
           return;
         } else {
           throw new Error(
@@ -145,9 +228,10 @@ export default function AccountsDashboard() {
       const { data: results, dateRange: extractedDateRange } =
         await parseAccountingHTML(file);
 
-      // Preserve existing transactions when uploading a new file
+      // الحفاظ على المعاملات السابقة من IndexedDB
+      const existingAccounts = await getAllAccounts();
       const mergedResults = results.map((newRecord) => {
-        const oldRecord = data.find(
+        const oldRecord = existingAccounts.find(
           (r) => r.accountCode === newRecord.accountCode,
         );
         return {
@@ -156,22 +240,30 @@ export default function AccountsDashboard() {
         };
       });
 
-      // ✅ حفظ البيانات الكاملة في قاعدة البيانات
-      await fetch("/api/data", {
+      // ✅ 1. حفظ في IndexedDB أولاً (فوري)
+      await saveAllAccounts(mergedResults);
+      if (extractedDateRange) await setDateRangeDB(extractedDateRange);
+
+      // ✅ 2. تحديث الواجهة فوراً
+      setData(mergedResults);
+      if (extractedDateRange) setDateRange(extractedDateRange);
+      setSearch("");
+      setIsTransactionsOnlyActive(false);
+
+      // ✅ 3. رفع إلى MongoDB في الخلفية (بدون انتظار)
+      fetch("/api/data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           data: mergedResults,
           dateRange: extractedDateRange,
         }),
-      });
-
-      // تحديث الواجهة
-      setData(mergedResults);
-      if (extractedDateRange) setDateRange(extractedDateRange);
-      await fetchData(1, "", false);
-      setSearch("");
-      setIsTransactionsOnlyActive(false);
+      })
+        .then(() => {
+          console.log("✅ تمت المزامنة مع MongoDB");
+          setLastSyncTimestamp(Date.now());
+        })
+        .catch((err) => console.error("⚠️ فشلت المزامنة مع MongoDB:", err));
     } catch (err) {
       alert(
         err.message ||
@@ -221,42 +313,43 @@ export default function AccountsDashboard() {
       });
     }
 
-    // ✅ Update only this specific account via API
-    try {
-      const response = await fetch(`/api/data/${accountCode}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transactions: newTransactions }),
+    // ✅ 1. حفظ في IndexedDB أولاً (فوري)
+    await updateTransactions(accountCode, newTransactions);
+
+    // ✅ 2. تحديث الواجهة فوراً
+    setData((prevData) =>
+      prevData.map((item) =>
+        item.accountCode === accountCode
+          ? { ...item, transactions: newTransactions }
+          : item,
+      ),
+    );
+
+    // ✅ 3. مسح التغييرات المعلقة
+    setPendingChanges((prev) => {
+      const next = { ...prev };
+      delete next[accountCode];
+      return next;
+    });
+
+    // ✅ 4. مزامنة مع MongoDB في الخلفية (بدون انتظار)
+    fetch(`/api/data/${accountCode}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ transactions: newTransactions }),
+    })
+      .then(async (response) => {
+        const result = await response.json();
+        if (result.success) {
+          console.log(`✅ تمت مزامنة الحساب ${accountCode} مع MongoDB`);
+          await setLastSyncTimestamp(Date.now());
+        } else {
+          console.error(`⚠️ فشلت مزامنة الحساب ${accountCode}:`, result.error);
+        }
+      })
+      .catch((err) => {
+        console.error("⚠️ فشلت المزامنة مع MongoDB:", err);
       });
-
-      const result = await response.json();
-
-      if (result.success) {
-        // Update local state
-        setData((prevData) =>
-          prevData.map((item) =>
-            item.accountCode === accountCode
-              ? { ...item, transactions: newTransactions }
-              : item,
-          ),
-        );
-
-        // Clear pending changes
-        setPendingChanges((prev) => {
-          const next = { ...prev };
-          delete next[accountCode];
-          return next;
-        });
-
-        // Refresh current page to get updated data
-        fetchCurrentPage();
-      } else {
-        alert(`خطأ: ${result.error || "فشل في حفظ المعاملة"}`);
-      }
-    } catch (err) {
-      console.error("Error committing changes:", err);
-      alert("حدث خطأ أثناء حفظ المعاملة");
-    }
   };
 
   const downloadData = async () => {
@@ -338,7 +431,7 @@ export default function AccountsDashboard() {
                 <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
                   {errorStatus
                     ? `خطأ في الاتصال: ${errorStatus}`
-                    : "مزامنة مباشرة عبر الشبكة"}
+                    : "⚡  تخزين محلى (متزامن)"}
                 </p>
               </div>
 
@@ -350,7 +443,7 @@ export default function AccountsDashboard() {
 
               {errorStatus && (
                 <button
-                  onClick={fetchData}
+                  onClick={() => fetchDataFromMongoDB(1, "", false)}
                   className="text-xs p-1 bg-blue-50 text-blue-600 rounded"
                 >
                   إعادة محاولة
@@ -362,7 +455,7 @@ export default function AccountsDashboard() {
           {(data.length > 0 || search) && (
             <div className="flex flex-wrap items-center gap-2 md:gap-3">
               <button
-                onClick={fetchData}
+                onClick={() => fetchDataFromMongoDB(1, "", false)}
                 disabled={loading}
                 className={cn(
                   "max-sm:hidden flex-1 md:flex-none px-3 py-2 text-xs md:text-sm font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border",
@@ -370,12 +463,13 @@ export default function AccountsDashboard() {
                     ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
                     : "bg-white dark:bg-slate-900 text-blue-600 border-blue-100 dark:border-blue-900/30 hover:bg-blue-50",
                 )}
+                title="جلب أحدث البيانات من السيرفر"
               >
                 <RefreshCw
                   size={14}
                   className={cn(loading && "animate-spin")}
                 />
-                تحديث
+                تحديث من السيرفر
               </button>
 
               <button
@@ -394,7 +488,7 @@ export default function AccountsDashboard() {
           data.length === 0 &&
           !search &&
           !isTransactionsOnlyActive ? (
-          <div className="flex flex-col items-center justify-center h-[300px] md:h-[400px] mx-4 md:mx-0">
+          <div className="flex flex-col items-center justify-center h-75 md:h-100 mx-4 md:mx-0">
             <div className="w-12 h-12 rounded-full border-4 border-blue-200 dark:border-blue-900/40 border-t-blue-600 animate-spin mb-4" />
             <p className="text-sm font-medium text-slate-500">
               جاري تحميل البيانات...
@@ -404,7 +498,7 @@ export default function AccountsDashboard() {
           /* Empty State / Upload Zone */
           <div
             className={cn(
-              "relative group h-[300px] md:h-[400px] border-2 border-dashed rounded-3xl flex flex-col items-center justify-center transition-all animate-in duration-700 mx-4 md:mx-0",
+              "relative group h-75 md:h-100 border-2 border-dashed rounded-3xl flex flex-col items-center justify-center transition-all animate-in duration-700 mx-4 md:mx-0",
               isDragging
                 ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/10 scale-[0.99]"
                 : "border-slate-200 dark:border-slate-800 hover:border-blue-400",
@@ -445,9 +539,7 @@ export default function AccountsDashboard() {
                       تفاصيل حسابات العملاء
                     </h3>
                     <span className="text-xs text-slate-500 font-medium text-center md:text-right">
-                      {pagination
-                        ? `عرض ${(pagination.page - 1) * pagination.limit + 1}-${Math.min(pagination.page * pagination.limit, pagination.total)} من ${pagination.total} نتيجة`
-                        : `إجمالي المعروض: ${filteredData.length}`}
+                      إجمالي المعروض: {filteredData.length}
                     </span>
                   </div>
                   <div className="flex flex-wrap items-center justify-center md:justify-end gap-2">
@@ -837,78 +929,6 @@ export default function AccountsDashboard() {
                     className="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 rounded-xl hover:bg-blue-100 transition-colors"
                   >
                     <X size={14} /> مسح البحث
-                  </button>
-                </div>
-              )}
-
-              {/* Pagination */}
-              {pagination && pagination.totalPages > 1 && (
-                <div className="px-4 md:px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <button
-                    onClick={() => goToPage(currentPage - 1)}
-                    disabled={!pagination.hasPrevPage}
-                    className={cn(
-                      "px-4 py-2 rounded-xl text-sm font-bold transition-all",
-                      pagination.hasPrevPage
-                        ? "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50"
-                        : "bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-600 border border-slate-100 dark:border-slate-800 cursor-not-allowed",
-                    )}
-                  >
-                    السابق
-                  </button>
-
-                  <div className="flex items-center gap-1">
-                    {Array.from(
-                      { length: pagination.totalPages },
-                      (_, i) => i + 1,
-                    )
-                      .filter(
-                        (p) =>
-                          p === 1 ||
-                          p === pagination.totalPages ||
-                          Math.abs(p - currentPage) <= 1,
-                      )
-                      .reduce((acc, p, i, arr) => {
-                        if (i > 0 && p - arr[i - 1] > 1) acc.push("...");
-                        acc.push(p);
-                        return acc;
-                      }, [])
-                      .map((item, i) =>
-                        typeof item === "number" ? (
-                          <button
-                            key={item}
-                            onClick={() => goToPage(item)}
-                            className={cn(
-                              "w-9 h-9 rounded-lg text-sm font-bold transition-all",
-                              item === currentPage
-                                ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30"
-                                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800",
-                            )}
-                          >
-                            {item}
-                          </button>
-                        ) : (
-                          <span
-                            key={`dots-${i}`}
-                            className="w-9 h-9 flex items-center justify-center text-slate-400 text-sm"
-                          >
-                            …
-                          </span>
-                        ),
-                      )}
-                  </div>
-
-                  <button
-                    onClick={() => goToPage(currentPage + 1)}
-                    disabled={!pagination.hasNextPage}
-                    className={cn(
-                      "px-4 py-2 rounded-xl text-sm font-bold transition-all",
-                      pagination.hasNextPage
-                        ? "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50"
-                        : "bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-600 border border-slate-100 dark:border-slate-800 cursor-not-allowed",
-                    )}
-                  >
-                    التالي
                   </button>
                 </div>
               )}

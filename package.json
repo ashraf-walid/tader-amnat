@@ -12,6 +12,7 @@
     "bcrypt": "^6.0.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "dexie": "^4.4.3",
     "dotenv": "^17.2.3",
     "jose": "^6.2.3",
     "jsonwebtoken": "^9.0.3",
