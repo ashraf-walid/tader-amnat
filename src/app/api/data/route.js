@@ -7,74 +7,17 @@ import { invalidateCache } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request) {
+export async function GET() {
   try {
     await connectToDatabase();
 
-    const { searchParams } = new URL(request.url);
-    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-    const limitParam = parseInt(searchParams.get("limit") || "50", 10);
-    // limit=0 means "return all" (used by backup download)
-    const fetchAll = limitParam === 0;
-    const limit = fetchAll ? 0 : Math.min(Math.max(1, limitParam), 200);
-    const search = (searchParams.get("search") || "").trim();
-    const transactionsOnly = searchParams.get("transactionsOnly") === "true";
-
-    // Build query filter
-    const filter = {};
-    if (search) {
-      const regex = new RegExp(
-        search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
-        "i",
-      );
-      filter.$or = [{ account: regex }, { accountCode: regex }];
-    }
-    if (transactionsOnly) {
-      filter.transactions = { $exists: true, $not: { $size: 0 } };
-    }
-
-    // If fetching all (backup), skip pagination
-    if (fetchAll) {
-      const [data, dateRangeSetting] = await Promise.all([
-        AccountData.find(filter).sort({ accountCode: 1 }),
-        Settings.findOne({ key: "dateRange" }),
-      ]);
-      return NextResponse.json(
-        { data, dateRange: dateRangeSetting?.value || "", timestamp: Date.now() },
-        {
-          headers: {
-            "Cache-Control": "no-store, max-age=0, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
-        },
-      );
-    }
-
-    const skip = (page - 1) * limit;
-
-    const [data, total, dateRangeSetting] = await Promise.all([
-      AccountData.find(filter).sort({ accountCode: 1 }).skip(skip).limit(limit),
-      AccountData.countDocuments(filter),
+    // fetch all data
+    const [data, dateRangeSetting] = await Promise.all([
+      AccountData.find({}).sort({ accountCode: 1 }),
       Settings.findOne({ key: "dateRange" }),
     ]);
-
-    const totalPages = Math.ceil(total / limit) || 1;
-
     return NextResponse.json(
-      {
-        data,
-        dateRange: dateRangeSetting?.value || "",
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages,
-          hasNextPage: page < totalPages,
-          hasPrevPage: page > 1,
-        },
-        timestamp: Date.now(),
-      },
+      { data, dateRange: dateRangeSetting?.value || "", timestamp: Date.now() },
       {
         headers: {
           "Cache-Control": "no-store, max-age=0, must-revalidate",
@@ -86,18 +29,7 @@ export async function GET(request) {
   } catch (error) {
     console.error("GET /api/data Error:", error);
     return NextResponse.json(
-      {
-        data: [],
-        pagination: {
-          page: 1,
-          limit: 50,
-          total: 0,
-          totalPages: 1,
-          hasNextPage: false,
-          hasPrevPage: false,
-        },
-        timestamp: Date.now(),
-      },
+      { data: [], timestamp: Date.now() },
       { status: 500 },
     );
   }

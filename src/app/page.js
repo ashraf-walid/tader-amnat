@@ -18,14 +18,9 @@ import {
   isDBEmpty,
   getAllAccounts,
   searchAccounts,
-  getAccountsWithTransactions,
   saveAllAccounts,
   updateTransactions,
-  clearAllData,
-  setMetadata,
-  getMetadata,
   setLastSyncTimestamp,
-  getLastSyncTimestamp,
   setDateRange as setDateRangeDB,
   getDateRange as getDateRangeDB,
   isIndexedDBSupported,
@@ -55,15 +50,15 @@ export default function AccountsDashboard() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Fetch data with explicit params (من MongoDB - يُستخدم كـ fallback فقط)
+  // Fetch data with 
   const fetchDataFromMongoDB = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/data?limit=0`, { cache: "no-store" });
+      const res = await fetch(`/api/data`, { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const result = await res.json();
       if (result && Array.isArray(result.data)) {
-        // حفظ في IndexedDB
+        // Save data to IndexedDB
         await saveAllAccounts(result.data);
         if (result.dateRange) await setDateRangeDB(result.dateRange);
         await setLastSyncTimestamp(Date.now());
@@ -81,28 +76,28 @@ export default function AccountsDashboard() {
     }
   }, []);
 
-  // قراءة ذكية: IndexedDB أولاً، ثم MongoDB إذا لزم الأمر
+  // Load data from IndexedDB First or fallback to MongoDB
   const loadDataSmart = useCallback(async () => {
     setLoading(true);
 
     try {
-      // التحقق من دعم IndexedDB
+      // Check if IndexedDB is supported
       if (!isIndexedDBSupported()) {
-        console.warn("⚠️ IndexedDB غير مدعوم، استخدام MongoDB مباشرة");
+        console.warn("⚠️ IndexedDB not supported, using MongoDB directly");
         await fetchDataFromMongoDB();
         return;
       }
 
-      // التحقق من IndexedDB
+      // Check if IndexedDB is empty
       const isEmpty = await isDBEmpty();
 
       if (isEmpty) {
-        // IndexedDB فارغ → قراءة من MongoDB
-        console.log("📡 IndexedDB فارغ، جلب البيانات من MongoDB...");
+        // IndexedDB is empty → Load from MongoDB
+        console.log("📡 IndexedDB is empty, loading from from MongoDB...");
         await fetchDataFromMongoDB();
       } else {
-        // IndexedDB موجود → قراءة فورية
-        console.log("⚡ قراءة من IndexedDB...");
+        // IndexedDB is not empty → Load from IndexedDB
+        console.log("⚡ Loading from IndexedDB...");
         const localData = await getAllAccounts();
         const localDateRange = await getDateRangeDB();
 
@@ -119,26 +114,26 @@ export default function AccountsDashboard() {
     }
   }, [fetchDataFromMongoDB]);
 
-  // ✨ تحميل البيانات عند فتح الصفحة لأول مرة (من IndexedDB أو MongoDB)
+  // ✨ Load data from IndexedDB or MongoDB
   React.useEffect(() => {
     loadDataSmart(); // eslint-disable-line react-hooks/set-state-in-effect
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 🔍 البحث والفلترة محليًا عند تغيير البحث أو الفلتر
+  // 🔍 Search and filter locally when changing the search or filter
   React.useEffect(() => {
     const performLocalSearch = async () => {
       setLoading(true);
       try {
         let results;
 
-        // تطبيق البحث
+        // Apply search filter
         if (debouncedSearch) {
           results = await searchAccounts(debouncedSearch);
         } else {
           results = await getAllAccounts();
         }
 
-        // تطبيق الفلتر (المعاملات فقط)
+        // Apply filter filter
         if (isTransactionsOnlyActive) {
           results = results.filter(
             (acc) =>
@@ -361,7 +356,7 @@ export default function AccountsDashboard() {
       return;
     try {
       setLoading(true);
-      const res = await fetch("/api/data?limit=0", { cache: "no-store" });
+      const res = await fetch("/api/data", { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const result = await res.json();
       const backupData = {
