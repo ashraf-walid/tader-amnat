@@ -142,10 +142,10 @@ export default function StorageCalculator({ adminExchangeRate }) {
       return;
     }
 
-    // Consume attempt before calculating
+    // Use one attempt and track calculation (combined API)
     setAttemptsLoading(true);
     try {
-      const attemptRes = await fetch('/api/attempts/consume', { method: 'POST' });
+      const attemptRes = await fetch('/api/attempts/use', { method: 'POST' });
       const attemptData = await attemptRes.json();
       if (!attemptRes.ok || !attemptData.success) {
         setError(attemptData.error || 'لا توجد محاولات كافية. يرجى الاتصال بالإدارة.');
@@ -366,8 +366,6 @@ export default function StorageCalculator({ adminExchangeRate }) {
       }
       setResult(invoice);
       console.log("invoice created successfully");
-      // Track successful calculation (fire-and-forget)
-      fetch('/api/attempts/track', { method: 'POST' }).catch(() => {});
       setTimeout(() => document.getElementById('result-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     } catch (e) {
       setError(e.message);
@@ -688,7 +686,7 @@ export default function StorageCalculator({ adminExchangeRate }) {
           onClick={() => setAdvOpen(o => !o)}>
           <span className="flex items-center gap-2">
             <OptionsIcon />
-            خيارات متقدمة
+             خدمات اضافية 
             {hasAdvanced && <span className="w-[7px] h-[7px] rounded-full bg-[#f0b429] inline-block mr-0.5" />}
           </span>
           <span className={`text-lg transition-transform ${advOpen ? 'rotate-180' : ''}`}>⌄</span>

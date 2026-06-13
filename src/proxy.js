@@ -5,17 +5,11 @@ import { jwtVerify } from "jose";
 // ── Route access rules ──
 const PUBLIC_PATHS = ["/login", "/api/auth/login", "/api/auth/logout"];
 
-// Pages accessible by any authenticated user
-const ALL_AUTHENTICATED = ["/Storagecalculator"];
-
 // Pages restricted to internal staff (owner, admin, employee)
 const STAFF_ONLY = ["/"];
 
 // Pages restricted to admin/owner
 const ADMIN_ONLY_PAGES = ["/admin"];
-
-// API paths restricted to admin/owner
-const ADMIN_ONLY_APIS = ["/api/accounts", "/api/data", "/api/settings"];
 
 function matchesPath(pathname, paths) {
   return paths.some((p) => pathname === p || pathname.startsWith(p + "/"));
@@ -23,6 +17,12 @@ function matchesPath(pathname, paths) {
 
 export async function proxy(req) {
   const { pathname } = req.nextUrl;
+
+  // 🔒 التأكد من تعيين JWT_SECRET
+  if (!process.env.JWT_SECRET) {
+    console.error("❌ JWT_SECRET must be set in environment variables!");
+    throw new Error("JWT_SECRET is not configured");
+  }
 
   // Skip static files, _next internals
   if (
@@ -83,7 +83,7 @@ export async function proxy(req) {
     }
 
     // ── All authenticated paths — any logged-in user can access ──
-    // (/Storagecalculator, /api/attempts/consume, /api/settings GET, /api/data GET)
+    // (/Storagecalculator, /api/attempts/consume, /api/attempts/use, /api/settings GET, /api/data GET)
 
     // Attach user info to headers for downstream use
     const requestHeaders = new Headers(req.headers);

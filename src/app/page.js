@@ -17,7 +17,6 @@ import AdminNav from "@/components/AdminNav";
 import {
   isDBEmpty,
   getAllAccounts,
-  searchAccounts,
   saveAllAccounts,
   updateTransactions,
   setLastSyncTimestamp,
@@ -31,7 +30,8 @@ function cn(...inputs) {
 }
 
 export default function AccountsDashboard() {
-  const [data, setData] = useState([]);
+  const [allAccounts, setAllAccounts] = useState([]); // الحالة الرئيسية لجميع الحسابات
+  const [data, setData] = useState([]); // الحسابات المصفوفة/المتبوّضة (التي تُعرض حاليًا)
   const [dateRange, setDateRange] = useState("");
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -43,6 +43,9 @@ export default function AccountsDashboard() {
     useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  
+  // مرجع لحقل البحث
+  const searchInputRef = React.useRef(null);
 
   // Fetch data and save to IndexedDB
   const fetchDataFromMongoDB = useCallback(async () => {
@@ -57,6 +60,7 @@ export default function AccountsDashboard() {
         if (result.dateRange) await setDateRangeDB(result.dateRange);
         await setLastSyncTimestamp(Date.now());
 
+        setAllAccounts(result.data); // تحديث الحالة الرئيسية
         setData(result.data);
         if (result.dateRange) setDateRange(result.dateRange);
         setLastUpdated(new Date(result.timestamp).toLocaleTimeString());
@@ -95,6 +99,7 @@ export default function AccountsDashboard() {
         const localData = await getAllAccounts();
         const localDateRange = await getDateRangeDB();
 
+        setAllAccounts(localData); // تحديث الحالة الرئيسية
         setData(localData);
         setDateRange(localDateRange);
         setLastUpdated(new Date().toLocaleTimeString());
@@ -111,42 +116,58 @@ export default function AccountsDashboard() {
   // ✨ Load data from IndexedDB or MongoDB
   React.useEffect(() => {
     loadDataSmart(); // eslint-disable-line react-hooks/set-state-in-effect
+    // تركيز على حقل البحث عند فتح الصفحة لأول مرة
+    searchInputRef.current?.focus();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 🔍 Arabic Text Normalization Helper
+  const normalizeArabicText = (text) => {
+    if (!text) return '';
+    return text
+      .toLowerCase()
+      // Normalize Alef forms
+      .replace(/[أإآ]/g, 'ا')
+      // Normalize Yaa forms
+      .replace(/[ى]/g, 'ي')
+      // Normalize Taa Marbuta
+      .replace(/[ة]/g, 'ه')
+      // Normalize Waw forms
+      .replace(/[ؤ]/g, 'و')
+      // Remove tatweel (stretch characters)
+      .replace(/ـ/g, '');
+  };
 
   // 🔍 Search and filter locally when changing the search or filter
   React.useEffect(() => {
-    const performLocalSearch = async () => {
-      setLoading(true);
-      try {
-        let results;
+    const performLocalSearch = () => {
+      // Start with all accounts from our master state
+      let results = [...allAccounts];
 
-        // Apply search filter
-        if (search) {
-          results = await searchAccounts(search);
-        } else {
-          results = await getAllAccounts();
-        }
-
-        // Apply filter filter
-        if (isTransactionsOnlyActive) {
-          results = results.filter(
-            (acc) =>
-              acc.transactions &&
-              Array.isArray(acc.transactions) &&
-              acc.transactions.length > 0,
-          );
-        }
-
-        setData(results);
-      } catch (err) {
-        console.error("Error during local search:", err);
-      } finally {
-        setLoading(false);
+      // Apply search filter (in-memory)
+      if (search) {
+        const normalizedQuery = normalizeArabicText(search);
+        results = results.filter(account => {
+          const normalizedAccountName = normalizeArabicText(account.account || '');
+          const normalizedAccountCode = normalizeArabicText(account.accountCode || '');
+          return normalizedAccountName.includes(normalizedQuery) || normalizedAccountCode.includes(normalizedQuery);
+        });
       }
+
+      // Apply transactions only filter
+      if (isTransactionsOnlyActive) {
+        results = results.filter(
+          (acc) =>
+            acc.transactions &&
+            Array.isArray(acc.transactions) &&
+            acc.transactions.length > 0,
+        );
+      }
+
+      setData(results);
     };
 
     performLocalSearch();
-  }, [search, isTransactionsOnlyActive]);
+  }, [search, isTransactionsOnlyActive, allAccounts]);
 
   const filteredData = data;
 
@@ -183,6 +204,7 @@ export default function AccountsDashboard() {
           if (restoredDateRange) await setDateRangeDB(restoredDateRange);
 
           // ✅ 2. تحديث الواجهة فوراً
+          setAllAccounts(dataToRestore); // تحديث الحالة الرئيسية
           setData(dataToRestore);
           if (restoredDateRange) setDateRange(restoredDateRange);
           setSearch("");
@@ -232,6 +254,7 @@ export default function AccountsDashboard() {
       if (extractedDateRange) await setDateRangeDB(extractedDateRange);
 
       // ✅ 2. تحديث الواجهة فوراً
+      setAllAccounts(mergedResults); // تحديث الحالة الرئيسية
       setData(mergedResults);
       if (extractedDateRange) setDateRange(extractedDateRange);
       setSearch("");
@@ -304,6 +327,13 @@ export default function AccountsDashboard() {
     await updateTransactions(accountCode, newTransactions);
 
     // ✅ 2. تحديث الواجهة فوراً
+    setAllAccounts((prevAll) =>
+      prevAll.map((item) =>
+        item.accountCode === accountCode
+          ? { ...item, transactions: newTransactions }
+          : item,
+      ),
+    );
     setData((prevData) =>
       prevData.map((item) =>
         item.accountCode === accountCode
@@ -445,7 +475,7 @@ export default function AccountsDashboard() {
                 onClick={() => fetchDataFromMongoDB(1, "", false)}
                 disabled={loading}
                 className={cn(
-                  "max-sm:hidden flex-1 md:flex-none px-3 py-2 text-xs md:text-sm font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border",
+                  "flex-1 md:flex-none px-3 py-2 text-xs md:text-sm font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border",
                   loading
                     ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
                     : "bg-white dark:bg-slate-900 text-blue-600 border-blue-100 dark:border-blue-900/30 hover:bg-blue-50",
@@ -472,7 +502,7 @@ export default function AccountsDashboard() {
 
         {/* ── Loading Spinner (no data yet) ── */}
         {loading &&
-        data.length === 0 &&
+        allAccounts.length === 0 &&
         !search &&
         !isTransactionsOnlyActive ? (
           <div className="flex flex-col items-center justify-center h-75 md:h-100 mx-4 md:mx-0">
@@ -481,7 +511,7 @@ export default function AccountsDashboard() {
               جاري تحميل البيانات...
             </p>
           </div>
-        ) : data.length === 0 &&
+        ) : allAccounts.length === 0 &&
           !search &&
           !loading &&
           !isTransactionsOnlyActive ? (
@@ -556,6 +586,7 @@ export default function AccountsDashboard() {
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
                   />
                   <input
+                    ref={searchInputRef}
                     type="text"
                     lang="ar"
                     dir="rtl"
@@ -571,7 +602,11 @@ export default function AccountsDashboard() {
                   />
                   {search && (
                     <button
-                      onClick={() => setSearch("")}
+                      onClick={() => {
+                        setSearch("");
+                        // تركيز على الحقل بعد مسح البحث
+                        searchInputRef.current?.focus();
+                      }}
                       className="absolute left-3 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
                     >
                       <X size={14} />

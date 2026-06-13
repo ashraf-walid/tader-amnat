@@ -7,9 +7,9 @@ import { invalidateCache } from "@/lib/cache";
 export const dynamic = "force-dynamic";
 
 /**
- * POST /api/attempts/consume
- * Consume one attempt for bill calculation.
- * Returns remaining attempts or error if none left.
+ * POST /api/attempts/use
+ * Combined API: Consume one attempt AND increment calculationsCount atomically.
+ * This ensures both operations happen together or not at all.
  */
 export async function POST(request) {
   try {
@@ -19,7 +19,7 @@ export async function POST(request) {
 
     const userId = decoded.userId || decoded.id;
     const user = await User.findById(userId).select(
-      "attempts username",
+      "attempts username calculationsCount",
     );
     if (!user) {
       return NextResponse.json(
@@ -40,24 +40,25 @@ export async function POST(request) {
       );
     }
 
-    // Decrement attempts using findByIdAndUpdate to bypass bcrypt pre-save hook
+    // Perform both operations in one update (atomic as much as possible)
     const updated = await User.findByIdAndUpdate(
       user._id,
-      { $inc: { attempts: -1 } },
-      { returnDocument: 'after', select: "attempts username" }
+      { $inc: { attempts: -1, calculationsCount: 1 } },
+      { returnDocument: "after", select: "attempts username calculationsCount" },
     );
-    
-    // 🔥 مسح الـ Cache لأن بيانات الحساب تغيرت
+
+    // 🔥 مسح الـ Cache لأن بيانات الحساب تغيرت (محاولات و فواتير)
     invalidateCache("accounts:");
-    console.log("🗑️ Accounts cache invalidated after consuming attempt");
+    console.log("🗑️ Accounts cache invalidated after combined use attempt");
 
     return NextResponse.json({
       success: true,
       remainingAttempts: updated.attempts,
+      calculationsCount: updated.calculationsCount,
       message: `متبقي ${updated.attempts} محاولة`,
     });
   } catch (error) {
-    console.error("POST /api/attempts/consume Error:", error);
+    console.error("POST /api/attempts/use Error:", error);
 
     if (error.name === "AuthError") {
       return NextResponse.json(
@@ -69,46 +70,9 @@ export async function POST(request) {
     return NextResponse.json(
       {
         success: false,
-        error: "حدث خطأ أثناء خصم المحاولة",
+        error: "حدث خطأ أثناء تحديث المحاولات والفواتير",
         message: error.message,
       },
-      { status: 500 },
-    );
-  }
-}
-
-/**
- * GET /api/attempts/consume
- * Get current remaining attempts.
- */
-export async function GET(request) {
-  try {
-    const decoded = requireAuth(request);
-
-    await connectToDatabase();
-
-    const userId = decoded.userId || decoded.id;
-    const user = await User.findById(userId).select("attempts");
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: "المستخدم غير موجود" },
-        { status: 404 },
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      remainingAttempts: user.attempts,
-    });
-  } catch (error) {
-    if (error.name === "AuthError") {
-      return NextResponse.json(
-        { success: false, error: "يجب تسجيل الدخول" },
-        { status: 401 },
-      );
-    }
-    return NextResponse.json(
-      { success: false, error: error.message },
       { status: 500 },
     );
   }

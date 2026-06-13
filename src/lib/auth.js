@@ -30,7 +30,13 @@ export function getTokenFromReq(req) {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
+// 🔒 JWT Secret - يجب أن يتم تعيينه في متغيرات البيئة فقط
+// في بيئة الإنتاج، لا تتركه بدون قيمة!
 const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET must be set in environment variables!");
+}
 
 /**
  * Checks the token and returns the payload or throws an AuthError.
@@ -66,4 +72,4 @@ export function requireAdmin(req) {
   return decoded;
 }
 
-export { AuthError, ForbiddenError };
+export { AuthError, ForbiddenError, JWT_SECRET };

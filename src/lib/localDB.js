@@ -67,6 +67,27 @@ export async function getAccountByCode(accountCode) {
 }
 
 /**
+ * Arabic Text Normalization Helper
+ * @param {string} text - النص المراد تطبيعيه
+ * @returns {string} - النص بعد التطبيع
+ */
+function normalizeArabicText(text) {
+  if (!text) return '';
+  return text
+    .toLowerCase()
+    // Normalize Alef forms
+    .replace(/[أإآ]/g, 'ا')
+    // Normalize Yaa forms
+    .replace(/[ى]/g, 'ي')
+    // Normalize Taa Marbuta
+    .replace(/[ة]/g, 'ه')
+    // Normalize Waw forms
+    .replace(/[ؤ]/g, 'و')
+    // Remove tatweel (stretch characters)
+    .replace(/ـ/g, '');
+}
+
+/**
  * البحث في الحسابات (بالاسم أو الكود)
  * @param {string} query - نص البحث
  * @returns {Promise<Array>}
@@ -77,16 +98,16 @@ export async function searchAccounts(query) {
       return await getAllAccounts();
     }
 
-    const lowerQuery = query.toLowerCase();
+    const normalizedQuery = normalizeArabicText(query);
 
     // البحث في كل من اسم الحساب وكود الحساب
     const results = await db.accounts
       .filter(account => {
-        const accountName = (account.account || '').toLowerCase();
-        const accountCode = (account.accountCode || '').toLowerCase();
+        const normalizedAccountName = normalizeArabicText(account.account || '');
+        const normalizedAccountCode = normalizeArabicText(account.accountCode || '');
 
-        return accountName.includes(lowerQuery) ||
-          accountCode.includes(lowerQuery);
+        return normalizedAccountName.includes(normalizedQuery) ||
+          normalizedAccountCode.includes(normalizedQuery);
       })
       .toArray();
 
@@ -140,13 +161,13 @@ export async function getAccountsPaginated(page = 1, limit = 50, searchQuery = '
     }
 
     if (searchQuery && searchQuery.trim() !== '') {
-      const lowerQuery = searchQuery.toLowerCase();
+      const normalizedQuery = normalizeArabicText(searchQuery);
       query = query.filter(account => {
-        const accountName = (account.account || '').toLowerCase();
-        const accountCode = (account.accountCode || '').toLowerCase();
+        const normalizedAccountName = normalizeArabicText(account.account || '');
+        const normalizedAccountCode = normalizeArabicText(account.accountCode || '');
 
-        return accountName.includes(lowerQuery) ||
-          accountCode.includes(lowerQuery);
+        return normalizedAccountName.includes(normalizedQuery) ||
+          normalizedAccountCode.includes(normalizedQuery);
       });
     }
 

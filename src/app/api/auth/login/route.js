@@ -2,11 +2,9 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import User from "@/models/User";
 import jwt from "jsonwebtoken";
+import { JWT_SECRET } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
-
-const JWT_SECRET =
-  process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 /**
  * POST /api/auth/login

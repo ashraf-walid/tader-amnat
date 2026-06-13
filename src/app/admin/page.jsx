@@ -423,7 +423,7 @@ export default function AdminPage() {
                 <table className="w-full border-collapse rtl min-w-[640px]">
                   <thead>
                     <tr className="bg-white/[0.03]">
-                      {["اسم المستخدم", "رقم الهاتف", "الدور", "المحاولاتالمتبقية", "الفواتير", "الإجراءات"].map((h) => (
+                      {["اسم المستخدم", "رقم الهاتف", "الدور", "المحاولات المتبقية", "الفواتير", "الإجراءات"].map((h) => (
                         <th key={h} className="px-4 py-3 text-right text-xs font-bold text-[#8892a4] border-b border-white/[0.07] whitespace-nowrap">{h}</th>
                       ))}
                     </tr>

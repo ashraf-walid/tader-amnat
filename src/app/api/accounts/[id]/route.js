@@ -4,6 +4,7 @@ import User from "@/models/User";
 import bcrypt from "bcrypt";
 import mongoose from "mongoose";
 import { invalidateCache } from "@/lib/cache";
+import { requireAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,9 @@ export const dynamic = "force-dynamic";
  */
 export async function PUT(request, { params }) {
   try {
+    // 🔒 تحقق من صلاحيات المدير
+    requireAdmin(request);
+
     const { id } = await params;
     const body = await request.json();
     const { username, password, phone, officeName, role, attempts, accountCode } = body;
@@ -108,6 +112,12 @@ export async function PUT(request, { params }) {
     });
   } catch (error) {
     console.error("PUT /api/accounts/[id] Error:", error);
+    if (error.name === "AuthError" || error.name === "ForbiddenError") {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
     return NextResponse.json(
       {
         success: false,
@@ -125,6 +135,9 @@ export async function PUT(request, { params }) {
  */
 export async function DELETE(request, { params }) {
   try {
+    // 🔒 تحقق من صلاحيات المدير
+    requireAdmin(request);
+
     const { id } = await params;
 
     // Validate MongoDB ObjectId
@@ -177,6 +190,12 @@ export async function DELETE(request, { params }) {
     });
   } catch (error) {
     console.error("DELETE /api/accounts/[id] Error:", error);
+    if (error.name === "AuthError" || error.name === "ForbiddenError") {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
     return NextResponse.json(
       {
         success: false,

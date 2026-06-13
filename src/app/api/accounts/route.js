@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import User from "@/models/User";
 import cache, { CacheKeys, CacheTTL, invalidateCache } from "@/lib/cache";
+import { requireAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -9,8 +10,11 @@ export const dynamic = "force-dynamic";
  * GET /api/accounts
  * Get all user accounts with caching
  */
-export async function GET() {
+export async function GET(request) {
   try {
+    // 🔒 تحقق من صلاحيات المدير
+    requireAdmin(request);
+
     // 1️⃣ محاولة القراءة من الذاكرة
     const cachedAccounts = cache.get(CacheKeys.ALL_ACCOUNTS);
     if (cachedAccounts !== null) {
@@ -75,6 +79,12 @@ export async function GET() {
     );
   } catch (error) {
     console.error("GET /api/accounts Error:", error);
+    if (error.name === "AuthError" || error.name === "ForbiddenError") {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
     return NextResponse.json(
       {
         success: false,
@@ -92,6 +102,9 @@ export async function GET() {
  */
 export async function POST(request) {
   try {
+    // 🔒 تحقق من صلاحيات المدير
+    requireAdmin(request);
+
     const body = await request.json();
     const { username, password, phone, officeName, role, attempts, accountCode } = body;
 
@@ -167,6 +180,12 @@ export async function POST(request) {
     );
   } catch (error) {
     console.error("POST /api/accounts Error:", error);
+    if (error.name === "AuthError" || error.name === "ForbiddenError") {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
     return NextResponse.json(
       {
         success: false,

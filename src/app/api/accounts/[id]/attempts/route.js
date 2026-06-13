@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
 import mongoose from 'mongoose';
+import { invalidateCache } from '@/lib/cache';
+import { requireAdmin } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +13,9 @@ export const dynamic = 'force-dynamic';
  */
 export async function PATCH(request, { params }) {
   try {
+    // 🔒 تحقق من صلاحيات المدير
+    requireAdmin(request);
+
     const { id } = await params;
     const body = await request.json();
     const { attempts } = body;
@@ -48,6 +53,10 @@ export async function PATCH(request, { params }) {
 
     console.log(`✅ User attempts updated: ${user.username} → ${attempts}`);
 
+    // 🔥 مسح الـ Cache لأن البيانات تغيرت
+    invalidateCache("accounts:");
+    console.log("🗑️ Accounts cache invalidated");
+
     return NextResponse.json({
       success: true,
       attempts: user.attempts,
@@ -57,6 +66,12 @@ export async function PATCH(request, { params }) {
 
   } catch (error) {
     console.error('PATCH /api/accounts/[id]/attempts Error:', error);
+    if (error.name === 'AuthError' || error.name === 'ForbiddenError') {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
     return NextResponse.json({
       success: false,
       error: 'فشل في تحديث المحاولات',

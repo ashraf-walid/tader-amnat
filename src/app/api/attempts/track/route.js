@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import User from "@/models/User";
 import { requireAuth } from "@/lib/auth";
+import { invalidateCache } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,10 @@ export async function POST(request) {
       calculationsCount: updated?.calculationsCount,
       username: updated?.username,
     });
+
+    // 🔥 مسح الـ Cache لأن بيانات الحساب تغيرت (عدد الفواتير)
+    invalidateCache("accounts:");
+    console.log("🗑️ Accounts cache invalidated after incrementing calculationsCount");
 
     if (!updated) {
       return NextResponse.json(
