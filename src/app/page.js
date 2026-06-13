@@ -35,6 +35,7 @@ export default function AccountsDashboard() {
   const [dateRange, setDateRange] = useState("");
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const [isEnglishKeyboard, setIsEnglishKeyboard] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [errorStatus, setErrorStatus] = useState(null);
@@ -43,14 +44,7 @@ export default function AccountsDashboard() {
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
-  // Debounce search value
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  React.useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 400);
-    return () => clearTimeout(timer);
-  }, [search]);
-
-  // Fetch data with 
+  // Fetch data and save to IndexedDB
   const fetchDataFromMongoDB = useCallback(async () => {
     setLoading(true);
     try {
@@ -127,8 +121,8 @@ export default function AccountsDashboard() {
         let results;
 
         // Apply search filter
-        if (debouncedSearch) {
-          results = await searchAccounts(debouncedSearch);
+        if (search) {
+          results = await searchAccounts(search);
         } else {
           results = await getAllAccounts();
         }
@@ -139,7 +133,7 @@ export default function AccountsDashboard() {
             (acc) =>
               acc.transactions &&
               Array.isArray(acc.transactions) &&
-              acc.transactions.length > 0
+              acc.transactions.length > 0,
           );
         }
 
@@ -152,7 +146,7 @@ export default function AccountsDashboard() {
     };
 
     performLocalSearch();
-  }, [debouncedSearch, isTransactionsOnlyActive]);
+  }, [search, isTransactionsOnlyActive]);
 
   const filteredData = data;
 
@@ -207,9 +201,7 @@ export default function AccountsDashboard() {
               console.log("✅ تمت المزامنة مع MongoDB");
               setLastSyncTimestamp(Date.now());
             })
-            .catch((err) =>
-              console.error("⚠️ فشلت المزامنة مع MongoDB:", err),
-            );
+            .catch((err) => console.error("⚠️ فشلت المزامنة مع MongoDB:", err));
 
           return;
         } else {
@@ -262,7 +254,7 @@ export default function AccountsDashboard() {
     } catch (err) {
       alert(
         err.message ||
-        "حدث خطأ أثناء معالجة الملف. يرجى التأكد من أنه ملف صحيح.",
+          "حدث خطأ أثناء معالجة الملف. يرجى التأكد من أنه ملف صحيح.",
       );
     } finally {
       setLoading(false);
@@ -480,16 +472,19 @@ export default function AccountsDashboard() {
 
         {/* ── Loading Spinner (no data yet) ── */}
         {loading &&
-          data.length === 0 &&
-          !search &&
-          !isTransactionsOnlyActive ? (
+        data.length === 0 &&
+        !search &&
+        !isTransactionsOnlyActive ? (
           <div className="flex flex-col items-center justify-center h-75 md:h-100 mx-4 md:mx-0">
             <div className="w-12 h-12 rounded-full border-4 border-blue-200 dark:border-blue-900/40 border-t-blue-600 animate-spin mb-4" />
             <p className="text-sm font-medium text-slate-500">
               جاري تحميل البيانات...
             </p>
           </div>
-        ) : data.length === 0 && !search && !isTransactionsOnlyActive ? (
+        ) : data.length === 0 &&
+          !search &&
+          !loading &&
+          !isTransactionsOnlyActive ? (
           /* Empty State / Upload Zone */
           <div
             className={cn(
@@ -562,9 +557,16 @@ export default function AccountsDashboard() {
                   />
                   <input
                     type="text"
+                    lang="ar"
+                    dir="rtl"
                     placeholder="ابحث باسم العميل أو الكود..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key.length === 1) {
+                        setIsEnglishKeyboard(/[a-zA-Z]/.test(e.key));
+                      }
+                    }}
                     className="w-full pr-10 pl-10 py-3 md:py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-sm"
                   />
                   {search && (
@@ -576,6 +578,11 @@ export default function AccountsDashboard() {
                     </button>
                   )}
                 </div>
+                {isEnglishKeyboard && (
+                  <p className="text-[11px] text-slate-400 mt-1 mr-1">
+                    حول اللغة
+                  </p>
+                )}
               </div>
 
               {/* Desktop Table View */}
@@ -960,7 +967,7 @@ export default function AccountsDashboard() {
 
             <div className="p-6 max-h-[400px] overflow-y-auto">
               {!selectedAccount.transactions ||
-                selectedAccount.transactions.length === 0 ? (
+              selectedAccount.transactions.length === 0 ? (
                 <div className="text-center py-8 text-slate-400 text-sm italic">
                   لا توجد عمليات مسجلة لهذا الحساب حتى الآن
                 </div>

@@ -33,7 +33,7 @@ export async function isDBEmpty() {
     return count === 0;
   } catch (error) {
     console.error('Error checking if DB is empty:', error);
-    return true; // افترض أنها فارغة في حالة الخطأ
+    return true; 
   }
 }
 
@@ -385,7 +385,7 @@ async function estimateSize() {
 }
 
 /**
- * التحقق من دعم IndexedDB في المتصفح
+ * Check for IndexedDB support in your browser
  * @returns {boolean}
  */
 export function isIndexedDBSupported() {

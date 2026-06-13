@@ -17,20 +17,13 @@ import {
 import Link from "next/link";
 import AdminNav from "@/components/AdminNav";
 
-// ─────────────────────────────────────────────
-// Daily exchange rate — comes from admin (prop or context)
-// This is a default display value
-const DAILY_RATE_FROM_ADMIN = STORAGE_CONFIG.GLOBAL.DEFAULT_EXCHANGE_RATE;
-// ─────────────────────────────────────────────
-
 function fmt(n, dec = 2) {
   return Number(n).toLocaleString("ar-EG", { minimumFractionDigits: dec, maximumFractionDigits: dec });
 }
 
 // ════════════════════════ Component ════════════════════════
-export default function StorageCalculator({
-  adminExchangeRate = DAILY_RATE_FROM_ADMIN,
-}) {
+export default function StorageCalculator({ adminExchangeRate }) {
+  
   // ── Primary state ──
   const [arrDate, setArrDate] = useState(null);
   const [relDate, setRelDate] = useState(new Date());
@@ -40,11 +33,10 @@ export default function StorageCalculator({
   const [cargoType, setCargoType] = useState("FULL");
 
   // ── Exchange rate ──
-  const [dynamicAdminRate, setDynamicAdminRate] = useState(adminExchangeRate);
   const [isEditingRate, setIsEditingRate] = useState(false);
   const [isRateOverridden, setIsRateOverridden] = useState(false);
   const [customRate, setCustomRate] = useState(String(adminExchangeRate));
-  const exchangeRate = isRateOverridden ? (Number(customRate) || dynamicAdminRate) : dynamicAdminRate;
+  const exchangeRate = isRateOverridden ? (Number(customRate) || adminExchangeRate) : adminExchangeRate;
 
   // ── Init state ──
   const [isInitializing, setIsInitializing] = useState(true);
@@ -109,11 +101,11 @@ export default function StorageCalculator({
     }
   }, [hasCargoStorage]);
 
-  // الربط التلقائي: عند تفعيل LCL، يتم تلقائياً تفعيل تفريغ المشمول ونقل بين الساحات
+  // Automatic linking: When LCL is activated, the unloading of the included cargo and transfer between yards is automatically activated.
   useEffect(() => {
     if (isLCLStorage) {
       setHasCargoStripping(true);
-      setServices(prev => ({ ...prev, yard: true }));
+      // setServices(prev => ({ ...prev, yard: true }));
     }
   }, [isLCLStorage]);
 
@@ -459,7 +451,7 @@ export default function StorageCalculator({
             <div>
               <div className="text-xs text-[#8892a4]">{isRateOverridden ? "سعر صرف مخصص" : "سعر الصرف اليوم"}</div>
               <div className="text-xl font-extrabold text-[#f0f2f8]">
-                {fmt(isRateOverridden ? exchangeRate : dynamicAdminRate)}
+                {fmt(isRateOverridden ? exchangeRate : adminExchangeRate)}
                 <span className="text-[13px] font-medium text-[#8892a4]"> ج.م / $</span>
               </div>
               <div className="text-[11px] text-[#4a5568] mt-0.5">{isRateOverridden ? "تم التعديل بواسطة المستخدم" : "مُسجَّل بواسطة الإدارة"}</div>
@@ -471,7 +463,7 @@ export default function StorageCalculator({
               {isRateOverridden && (
                 <button
                   className="flex items-center gap-1.5 text-xs text-[#f87171] bg-[#1a2035] border border-red-500/20 rounded-lg px-3 py-1.5 cursor-pointer transition-all hover:text-[#f87171] hover:border-red-500/30 whitespace-nowrap"
-                  onClick={() => { setIsRateOverridden(false); setCustomRate(String(dynamicAdminRate)); }}>
+                  onClick={() => { setIsRateOverridden(false); setCustomRate(String(adminExchangeRate)); }}>
                   إلغاء المخصص
                 </button>
               )}
@@ -513,7 +505,7 @@ export default function StorageCalculator({
 
                 <button
                   className="bg-transparent border-none cursor-pointer text-[#4a5568] text-lg leading-none px-1 py-0.5 transition-colors hover:text-[#f87171]"
-                  onClick={() => { setIsEditingRate(false); if (!isRateOverridden) setCustomRate(String(dynamicAdminRate)); }}
+                  onClick={() => { setIsEditingRate(false); if (!isRateOverridden) setCustomRate(String(adminExchangeRate)); }}
                   title="إلغاء التعديل">
                   ✕
                 </button>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Icon } from "@/components/Icons";
-import { PROJECT_FILES, ROLES, getRoleInfo, EMPTY_FORM } from "@/lib/adminConstants";
+import { ROLES, getRoleInfo, EMPTY_FORM } from "@/lib/adminConstants";
 import AdminNav from "@/components/AdminNav";
 
 // ─── مكوّن حقل الإدخال ────────────────────────────────────────────────────────
@@ -226,10 +226,8 @@ export default function AdminPage() {
   const [newAttempts, setNewAttempts] = useState("");
   const [dataClearing, setDataClearing] = useState(false);
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState("client");
   const [deleteConfirm, setDeleteConfirm] = useState("");
-  const [structSearch, setStructSearch] = useState("");
-  const [structType, setStructType] = useState("all");
 
   const notify = (text, type = "success") => setToast({ text, type });
 
@@ -386,7 +384,7 @@ export default function AdminPage() {
           {[
             { id: "accounts", icon: <Icon.Users />, label: "إدارة الحسابات" },
             { id: "rate", icon: <Icon.Currency />, label: "سعر الصرف" },
-            { id: "structure", icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="ml-0.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>, label: "هيكل المشروع" },
+            { id: "data", icon: <Icon.Structure className="ml-0.5" />, label: "بيانات المشروع" },
           ].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
               className={`px-5 py-2.5 text-[13.5px] font-semibold border-none cursor-pointer rounded-lg transition-all duration-150 inline-flex items-center gap-1.5
@@ -521,106 +519,31 @@ export default function AdminPage() {
               </div>
             )}
 
-            {/* إدارة البيانات */}
-            <div className="bg-[#1a2035] rounded-2xl border border-white/[0.08] p-5 mt-5 flex flex-col gap-4">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-red-400/[0.12] text-red-400 flex items-center justify-center"><Icon.Trash /></div>
-                <div>
-                  <h3 className="text-base font-bold m-0">إدارة البيانات</h3>
-                  <p className="text-xs text-[#8892a4] mt-0.5">عمليات حساسة لإدارة قاعدة بيانات الحسابات.</p>
-                </div>
-              </div>
-              <div className="p-4 bg-red-400/5 border border-red-400/10 rounded-xl flex items-center justify-between gap-4 flex-wrap">
-                <div className="flex-1 min-w-[200px]">
-                  <p className="text-[13px] font-semibold text-red-400 mb-1">مسح كافة البيانات المالية</p>
-                  <p className="text-[11px] text-[#8892a4] m-0">سيتم حذف جميع الحسابات والمعاملات المالية. هذا الإجراء لا يمكن التراجع عنه.</p>
-                </div>
-                <Btn variant="danger" onClick={clearFinancialData} disabled={dataClearing}>
-                  {dataClearing ? <Spinner /> : <Icon.Trash />}
-                  {dataClearing ? "جاري المسح..." : "مسح كافة البيانات"}
-                </Btn>
-              </div>
-            </div>
           </div>
         )}
 
-        {/* ═══ تبويب: هيكل المشروع ═══ */}
-        {tab === "structure" && (() => {
-          const filteredFiles = PROJECT_FILES.filter((f) => {
-            const matchType = structType === "all" || f.type === structType;
-            const q = structSearch.toLowerCase();
-            return matchType && (!q || f.name.toLowerCase().includes(q) || f.path.toLowerCase().includes(q) || f.desc.toLowerCase().includes(q));
-          });
-          return (
-            <div className="bg-[#1a2035] rounded-2xl border border-white/[0.08] p-5 animate-slide-up">
-              <div className="flex items-center gap-3 mb-2 border-b border-white/[0.07] pb-4">
-                <div className="w-9 h-9 rounded-[10px] bg-blue-400/[0.12] text-blue-400 flex items-center justify-center">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="text-[17px] font-bold m-0 text-[#f0f2f8]">دليل ملفات المشروع والـ APIs</h2>
-                  <p className="text-xs text-[#8892a4] mt-1">مستند تفصيلي يستعرض الصفحات النشطة والـ APIs والمكتبات الأساسية.</p>
-                </div>
+        {/* ═══ تبويب: بيانات المشروع ═══ */}
+        {tab === "data" && (
+          <div className="bg-[#1a2035] rounded-2xl border border-white/[0.08] p-5 flex flex-col gap-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-red-400/[0.12] text-red-400 flex items-center justify-center"><Icon.Trash /></div>
+              <div>
+                <h3 className="text-base font-bold m-0">إدارة البيانات</h3>
+                <p className="text-xs text-[#8892a4] mt-0.5">عمليات حساسة لإدارة قاعدة بيانات الحسابات.</p>
               </div>
-
-              <div className="flex flex-wrap gap-3 items-center justify-between mt-4 mb-5">
-                <div className="relative flex-1 min-w-[200px]">
-                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[13px]">🔍</span>
-                  <input type="text" value={structSearch} onChange={(e) => setStructSearch(e.target.value)}
-                    placeholder="ابحث باسم الملف أو المسار أو الفائدة..."
-                    className={`${inputCls} py-2.5 pr-8 pl-3`} />
-                  {structSearch && (
-                    <button onClick={() => setStructSearch("")} className="absolute left-2.5 top-1/2 -translate-y-1/2 bg-transparent border-none text-[#8892a4] cursor-pointer text-sm">✕</button>
-                  )}
-                </div>
-                <div className="flex gap-1.5 flex-wrap">
-                  {[{ value: "all", label: "الكل" }, { value: "page", label: "الصفحات" }, { value: "api", label: "واجهات الـ API" }, { value: "core", label: "مكتبات ونماذج" }].map((t) => (
-                    <button key={t.value} onClick={() => setStructType(t.value)}
-                      className={`px-3.5 py-2 text-[12.5px] font-semibold border-none cursor-pointer rounded-lg transition-all duration-150
-                        ${structType === t.value ? "bg-sky-500/[0.15] text-sky-400 border border-sky-500/30" : "bg-white/[0.03] text-[#8892a4] border border-white/[0.06]"}`}>
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {filteredFiles.length === 0 ? (
-                <div className="text-center py-10 text-[#8892a4] text-[13.5px]">لا توجد نتائج تطابق بحثك الحالي</div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredFiles.map((file, idx) => (
-                    <div key={idx}
-                      onClick={() => { if (navigator.clipboard) { navigator.clipboard.writeText(file.path); notify("تم نسخ المسار بنجاح"); } }}
-                      className="bg-[#0d1424] rounded-xl p-4 border-[1.5px] border-white/[0.04] flex flex-col justify-between gap-3 transition-all duration-200 cursor-pointer relative overflow-hidden hover:border-blue-400/25 hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)]">
-                      <div className="flex flex-col gap-2.5">
-                        <div className="flex justify-between items-center">
-                          <span className="px-2 py-[3px] rounded-md text-[11px] font-bold text-white"
-                            style={{ background: file.badgeColor, boxShadow: `0 2px 8px ${file.badgeColor}25` }}>
-                            {file.badge}
-                          </span>
-                          <span className="text-lg w-[30px] h-[30px] rounded-full bg-white/[0.04] flex items-center justify-center">{file.icon}</span>
-                        </div>
-                        <h3 className="text-[14.5px] font-bold text-[#f0f2f8] m-0">{file.name}</h3>
-                        <p className="text-xs text-[#8892a4] leading-relaxed m-0 h-12 overflow-hidden"
-                          style={{ display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" }}>
-                          {file.desc}
-                        </p>
-                      </div>
-                      <div className="bg-white/[0.02] border border-white/5 rounded-md px-2.5 py-2 flex items-center justify-between gap-2 mt-1">
-                        <code className={`text-[11px] font-mono ltr whitespace-nowrap overflow-hidden text-ellipsis flex-1 ${file.type === "api" ? "text-emerald-500" : "text-blue-400"}`}>
-                          {file.path}
-                        </code>
-                        <span className="text-[11px] text-[#8892a4] flex items-center" title="نسخ المسار">📋</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
-          );
-        })()}
+            <div className="p-4 bg-red-400/5 border border-red-400/10 rounded-xl flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex-1 min-w-[200px]">
+                <p className="text-[13px] font-semibold text-red-400 mb-1">مسح كافة البيانات المالية</p>
+                <p className="text-[11px] text-[#8892a4] m-0">سيتم حذف جميع الحسابات والمعاملات المالية. هذا الإجراء لا يمكن التراجع عنه.</p>
+              </div>
+              <Btn variant="danger" onClick={clearFinancialData} disabled={dataClearing}>
+                {dataClearing ? <Spinner /> : <Icon.Trash />}
+                {dataClearing ? "جاري المسح..." : "مسح كافة البيانات"}
+              </Btn>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ═══ Modals ═══ */}
