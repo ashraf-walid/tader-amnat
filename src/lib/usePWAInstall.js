@@ -42,7 +42,7 @@ export function usePWAInstall() {
       setCanInstall(false);
       setIsInstalled(true);
       setInstalled(true);
-      setTimeout(() => setInstalled(false), 2000);
+      setTimeout(() => setInstalled(false), 3000);
     };
 
     const handleDisplayModeChange = (e) => {

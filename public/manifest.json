@@ -4,8 +4,8 @@
   "description": "نظام عرض أرصدة العملاء وحساب فواتير الأرضيات",
   "start_url": "/login",
   "display": "standalone",
-  "background_color": "#09090b",
-  "theme_color": "#8b5cf6",
+  "background_color": "#0b1120",
+  "theme_color": "#f0b429",
   "scope": "/",
   "orientation": "any",
   "icons": [

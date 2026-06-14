@@ -9,7 +9,7 @@ import AdminNav from "@/components/AdminNav";
 function Field({ label, icon: IconComp, error, children }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-semibold text-[#8892a4] flex items-center gap-1.5">
+      <label className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
         {IconComp && <span className="text-blue-400"><IconComp /></span>}
         {label}
       </label>
@@ -24,13 +24,13 @@ function Input({ value, onChange, placeholder, type = "text", step, min, suffix,
   return (
     <div className="relative flex items-center">
       <input
-        className={`no-spinner ${focusClass} w-full bg-[#0d1424] border-[1.5px] border-white/10 rounded-lg text-[#f0f2f8] text-sm rtl outline-none transition-colors duration-200 py-2.5 ${suffix ? "pl-11" : "pl-3"} pr-3`}
+        className={`no-spinner ${focusClass} w-full bg-slate-950 border-[1.5px] border-white/10 rounded-lg text-slate-100 text-sm rtl outline-none transition-colors duration-200 py-2.5 ${suffix ? "pl-11" : "pl-3"} pr-3`}
         type={type} step={step} min={min}
         value={value} onChange={onChange} placeholder={placeholder}
         style={extraPadLeft ? { paddingLeft: extraPadLeft } : undefined}
       />
       {suffix && (
-        <span className="absolute left-3 text-xs text-[#8892a4] pointer-events-none">{suffix}</span>
+        <span className="absolute left-3 text-xs text-slate-400 pointer-events-none">{suffix}</span>
       )}
     </div>
   );
@@ -67,10 +67,10 @@ function Modal({ open, onClose, title, children }) {
   return (
     <div onClick={onClose} className="fixed inset-0 z-[999] bg-black/65 backdrop-blur-[4px] flex items-center justify-center p-4">
       <div onClick={(e) => e.stopPropagation()}
-        className="bg-[#1a2035] border border-white/10 rounded-2xl px-6 py-7 w-full max-w-[480px] rtl shadow-[0_24px_60px_rgba(0,0,0,0.5)] animate-slide-up max-h-[90vh] overflow-y-auto">
+        className="bg-slate-900 border border-white/10 rounded-2xl px-6 py-7 w-full max-w-[480px] rtl shadow-[0_24px_60px_rgba(0,0,0,0.5)] animate-slide-up max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-[22px]">
-          <h2 className="text-lg font-bold text-[#f0f2f8] m-0">{title}</h2>
-          <button onClick={onClose} className="bg-transparent border-none text-[#8892a4] cursor-pointer p-1 flex">
+          <h2 className="text-lg font-bold text-slate-100 m-0">{title}</h2>
+          <button onClick={onClose} className="bg-transparent border-none text-slate-400 cursor-pointer p-1 flex">
             <Icon.Close />
           </button>
         </div>
@@ -143,9 +143,9 @@ function AccountForm({ initial, onSubmit, onCancel, isSaving }) {
         <div className="relative">
           <input type={showPass ? "text" : "password"} value={form.password} onChange={set("password")}
             placeholder="••••••••"
-            className="admin-input w-full bg-[#0d1424] border-[1.5px] border-white/10 rounded-lg text-[#f0f2f8] text-sm rtl outline-none py-2.5 px-3 pl-[38px] box-border" />
+            className="admin-input w-full bg-slate-950 border-[1.5px] border-white/10 rounded-lg text-slate-100 text-sm rtl outline-none py-2.5 px-3 pl-[38px] box-border" />
           <button type="button" onClick={() => setShowPass((v) => !v)}
-            className="absolute left-2.5 top-1/2 -translate-y-1/2 bg-transparent border-none text-[#8892a4] cursor-pointer flex">
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 bg-transparent border-none text-slate-400 cursor-pointer flex">
             {showPass ? <Icon.EyeOff /> : <Icon.Eye />}
           </button>
         </div>
@@ -165,7 +165,7 @@ function AccountForm({ initial, onSubmit, onCancel, isSaving }) {
 
       <Field label="الدور" icon={Icon.Shield}>
         <select value={form.role} onChange={set("role")}
-          className="admin-input w-full bg-[#0d1424] border-[1.5px] border-white/10 rounded-lg text-[#f0f2f8] text-sm rtl outline-none py-2.5 px-3 cursor-pointer">
+          className="admin-input w-full bg-slate-950 border-[1.5px] border-white/10 rounded-lg text-slate-100 text-sm rtl outline-none py-2.5 px-3 cursor-pointer">
           {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
         </select>
       </Field>
@@ -326,19 +326,19 @@ export default function AdminPage() {
   };
 
   if (!authLoaded) return (
-    <div className="min-h-screen bg-[#0d1424] flex items-center justify-center"><Spinner size={40} /></div>
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center"><Spinner size={40} /></div>
   );
   if (!isAdmin) return null;
 
-  const inputCls = "admin-input w-full bg-[#0d1424] border-[1.5px] border-white/10 rounded-lg text-[#f0f2f8] text-sm rtl outline-none transition-colors duration-200";
+  const inputCls = "admin-input w-full bg-slate-950 border-[1.5px] border-white/10 rounded-lg text-slate-100 text-sm rtl outline-none transition-colors duration-200";
 
   return (
-    <div dir="rtl" lang="ar" className="min-h-screen bg-[#0d1424] font-sans text-[#f0f2f8]">
+    <div dir="rtl" lang="ar" className="min-h-screen bg-slate-950 font-sans text-slate-100">
       <style>{`
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-        select option { background: #1a2035; }
+        select option { background: #0f172a; }
       `}</style>
 
       <AdminNav />
@@ -352,8 +352,8 @@ export default function AdminPage() {
                 <Icon.Shield />
               </div>
               <div>
-                <h1 className="text-[22px] font-extrabold m-0 text-[#f0f2f8]">لوحة الإدارة</h1>
-                <p className="text-[12.5px] text-[#8892a4] m-0">نظام أرضيات الحاويات الواردة</p>
+                <h1 className="text-[22px] font-extrabold m-0 text-slate-100">لوحة الإدارة</h1>
+                <p className="text-[12.5px] text-slate-400 m-0">نظام أرضيات الحاويات الواردة</p>
               </div>
             </div>
           </div>
@@ -367,10 +367,10 @@ export default function AdminPage() {
             { label: "محاولات متاحة", value: stats.active, color: "#34d399", icon: Icon.Check },
             { label: "محاولات منتهية", value: stats.depleted, color: "#f87171", icon: Icon.Hash },
           ].map((s, i) => (
-            <div key={i} className="bg-[#1a2035] rounded-[10px] px-3.5 py-3 border border-white/[0.07] shadow-[0_2px_12px_rgba(0,0,0,0.2)]">
+            <div key={i} className="bg-slate-900 rounded-[10px] px-3.5 py-3 border border-white/[0.07] shadow-[0_2px_12px_rgba(0,0,0,0.2)]">
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10.5px] text-[#8892a4] mb-1 font-medium leading-tight break-words">{s.label}</p>
+                  <p className="text-[10.5px] text-slate-400 mb-1 font-medium leading-tight break-words">{s.label}</p>
                   <p className="text-2xl font-extrabold m-0 leading-none" style={{ color: s.color }}>{s.value}</p>
                 </div>
                 <div className="opacity-60 shrink-0 scale-[0.85]" style={{ color: s.color }}><s.icon /></div>
@@ -388,7 +388,7 @@ export default function AdminPage() {
           ].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
               className={`px-5 py-2.5 text-[13.5px] font-semibold border-none cursor-pointer rounded-lg transition-all duration-150 inline-flex items-center gap-1.5
-                ${tab === t.id ? "bg-sky-500 text-white shadow-[0_4px_12px_rgba(14,165,233,0.3)]" : "bg-white/5 text-[#8892a4] shadow-none"}`}>
+                ${tab === t.id ? "bg-sky-500 text-white shadow-[0_4px_12px_rgba(14,165,233,0.3)]" : "bg-white/5 text-slate-400 shadow-none"}`}>
               {t.icon} {t.label}
             </button>
           ))}
@@ -396,7 +396,7 @@ export default function AdminPage() {
 
         {/* ═══ تبويب: إدارة الحسابات ═══ */}
         {tab === "accounts" && (
-          <div className="bg-[#1a2035] rounded-2xl border border-white/[0.08] overflow-hidden">
+          <div className="bg-slate-900 rounded-2xl border border-white/[0.08] overflow-hidden">
             <div className="px-5 py-4 border-b border-white/[0.07] flex flex-wrap gap-2.5 items-center">
               <div className="relative flex-1 min-w-[140px]">
                 <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[13px]">🔍</span>
@@ -413,9 +413,9 @@ export default function AdminPage() {
             </div>
 
             {accLoading ? (
-              <div className="text-center py-12 text-[#8892a4]"><Spinner size={28} /><br /><br />جاري التحميل...</div>
+              <div className="text-center py-12 text-slate-400"><Spinner size={28} /><br /><br />جاري التحميل...</div>
             ) : filtered.length === 0 ? (
-              <div className="text-center py-12 text-[#8892a4] text-sm">
+              <div className="text-center py-12 text-slate-400 text-sm">
                 {accounts.length === 0 ? "لا توجد حسابات بعد — أضف حساباً جديداً" : "لا توجد نتائج للبحث"}
               </div>
             ) : (
@@ -424,7 +424,7 @@ export default function AdminPage() {
                   <thead>
                     <tr className="bg-white/[0.03]">
                       {["اسم المستخدم", "رقم الهاتف", "الدور", "المحاولات المتبقية", "الفواتير", "الإجراءات"].map((h) => (
-                        <th key={h} className="px-4 py-3 text-right text-xs font-bold text-[#8892a4] border-b border-white/[0.07] whitespace-nowrap">{h}</th>
+                        <th key={h} className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07] whitespace-nowrap">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -439,7 +439,7 @@ export default function AdminPage() {
                               {acc.username?.[0]?.toUpperCase() || "؟"}
                             </div>
                             <div>
-                              <div className="text-sm font-semibold text-[#f0f2f8]">{acc.username}</div>
+                              <div className="text-sm font-semibold text-slate-100">{acc.username}</div>
                               {(acc.officeName || acc.accountCode) && (
                                 <div className="text-[11.5px] text-blue-400 font-medium mt-0.5">
                                   {acc.officeName || ""}
@@ -486,7 +486,7 @@ export default function AdminPage() {
               </div>
             )}
             {!accLoading && accounts.length > 0 && (
-              <div className="px-5 py-2.5 border-t border-white/[0.07] text-xs text-[#8892a4] text-left">
+              <div className="px-5 py-2.5 border-t border-white/[0.07] text-xs text-slate-400 text-left">
                 عرض {filtered.length} من {accounts.length} حساب
               </div>
             )}
@@ -495,21 +495,21 @@ export default function AdminPage() {
 
         {/* ═══ تبويب: سعر الصرف ═══ */}
         {tab === "rate" && (
-          <div className="bg-[#1a2035] rounded-2xl border border-white/[0.08] p-7 max-w-[480px]">
+          <div className="bg-slate-900 rounded-2xl border border-white/[0.08] p-7 max-w-[480px]">
             <div className="flex items-center gap-2.5 mb-1.5">
               <div className="text-[#f0b429]"><Icon.Currency /></div>
               <h2 className="text-lg font-bold m-0">إدارة سعر الصرف</h2>
             </div>
-            <p className="text-[13px] text-[#8892a4] mb-6 leading-relaxed">
+            <p className="text-[13px] text-slate-400 mb-6 leading-relaxed">
               سعر الصرف الرسمي المستخدم في حساب فواتير أرضيات الحاويات الواردة.
             </p>
-            {rateLoading ? <div className="text-center p-6 text-[#8892a4]"><Spinner /></div> : (
+            {rateLoading ? <div className="text-center p-6 text-slate-400"><Spinner /></div> : (
               <div className="flex flex-col gap-[18px]">
                 <Field label="سعر الصرف الحالي  (ج.م / دولار)" icon={Icon.Currency}>
                   <div className="relative">
                     <input type="number" step="0.0001" min="0.1" value={rate} onChange={(e) => setRate(e.target.value)}
-                      className="admin-input-gold w-full bg-[#0d1424] border-[1.5px] border-white/[0.12] rounded-[10px] text-[#f0b429] text-[22px] font-extrabold tracking-wide rtl outline-none py-3.5 px-4 pl-[52px] box-border" />
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[12.5px] text-[#8892a4] font-semibold pointer-events-none">ج.م / $</span>
+                      className="admin-input-gold w-full bg-slate-950 border-[1.5px] border-white/[0.12] rounded-[10px] text-[#f0b429] text-[22px] font-extrabold tracking-wide rtl outline-none py-3.5 px-4 pl-[52px] box-border" />
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[12.5px] text-slate-400 font-semibold pointer-events-none">ج.م / $</span>
                   </div>
                 </Field>
                 <Btn variant="gold" onClick={saveRate} disabled={rateSaving}>
@@ -524,18 +524,18 @@ export default function AdminPage() {
 
         {/* ═══ تبويب: بيانات المشروع ═══ */}
         {tab === "data" && (
-          <div className="bg-[#1a2035] rounded-2xl border border-white/[0.08] p-5 flex flex-col gap-4">
+          <div className="bg-slate-900 rounded-2xl border border-white/[0.08] p-5 flex flex-col gap-4">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-red-400/[0.12] text-red-400 flex items-center justify-center"><Icon.Trash /></div>
               <div>
                 <h3 className="text-base font-bold m-0">إدارة البيانات</h3>
-                <p className="text-xs text-[#8892a4] mt-0.5">عمليات حساسة لإدارة قاعدة بيانات الحسابات.</p>
+                <p className="text-xs text-slate-400 mt-0.5">عمليات حساسة لإدارة قاعدة بيانات الحسابات.</p>
               </div>
             </div>
             <div className="p-4 bg-red-400/5 border border-red-400/10 rounded-xl flex items-center justify-between gap-4 flex-wrap">
               <div className="flex-1 min-w-[200px]">
                 <p className="text-[13px] font-semibold text-red-400 mb-1">مسح كافة البيانات المالية</p>
-                <p className="text-[11px] text-[#8892a4] m-0">سيتم حذف جميع الحسابات والمعاملات المالية. هذا الإجراء لا يمكن التراجع عنه.</p>
+                <p className="text-[11px] text-slate-400 m-0">سيتم حذف جميع الحسابات والمعاملات المالية. هذا الإجراء لا يمكن التراجع عنه.</p>
               </div>
               <Btn variant="danger" onClick={clearFinancialData} disabled={dataClearing}>
                 {dataClearing ? <Spinner /> : <Icon.Trash />}
@@ -558,15 +558,15 @@ export default function AdminPage() {
           <div>
             <div className="bg-red-400/[0.08] border border-red-400/20 rounded-[10px] px-4 py-3.5 mb-[18px]">
               <p className="m-0 text-sm text-red-400 leading-relaxed">
-                هل أنت متأكد من حذف حساب <strong className="text-[#f0f2f8]">«{selected.username}»</strong>؟<br />
-                <span className="text-[12.5px] text-[#8892a4]">هذا الإجراء لا يمكن التراجع عنه.</span>
+                هل أنت متأكد من حذف حساب <strong className="text-slate-100">«{selected.username}»</strong>؟<br />
+                <span className="text-[12.5px] text-slate-400">هذا الإجراء لا يمكن التراجع عنه.</span>
               </p>
             </div>
-            <p className="text-[13px] text-[#8892a4] mb-2.5">
-              اكتب <strong className="text-[#f0f2f8]">{selected.username}</strong> للتأكيد:
+            <p className="text-[13px] text-slate-400 mb-2.5">
+              اكتب <strong className="text-slate-100">{selected.username}</strong> للتأكيد:
             </p>
             <input type="text" value={deleteConfirm} onChange={(e) => setDeleteConfirm(e.target.value)} placeholder={selected.username}
-              className="admin-input-danger w-full bg-[#0d1424] border-[1.5px] border-red-400/30 rounded-lg text-[#f0f2f8] text-sm rtl outline-none py-2.5 px-3 mb-[18px] box-border" />
+              className="admin-input-danger w-full bg-slate-950 border-[1.5px] border-red-400/30 rounded-lg text-slate-100 text-sm rtl outline-none py-2.5 px-3 mb-[18px] box-border" />
             <div className="flex gap-2.5 justify-end">
               <Btn variant="ghost" onClick={() => setModal(null)}>إلغاء</Btn>
               <Btn variant="danger" disabled={deleteConfirm !== selected.username || isSaving} onClick={deleteAccount}>
@@ -582,11 +582,11 @@ export default function AdminPage() {
           <div>
             <div className="bg-blue-400/[0.07] border border-blue-400/20 rounded-[10px] px-4 py-3.5 mb-5 flex justify-between items-center">
               <div>
-                <p className="m-0 text-sm font-semibold text-[#f0f2f8]">{selected.username}</p>
+                <p className="m-0 text-sm font-semibold text-slate-100">{selected.username}</p>
                 <p className="mt-0.5 m-0"><RoleBadge role={selected.role} /></p>
               </div>
               <div className="text-left">
-                <p className="m-0 text-[11px] text-[#8892a4]">المحاولات الحالية</p>
+                <p className="m-0 text-[11px] text-slate-400">المحاولات الحالية</p>
                 <AttemptsBadge attempts={selected.attempts || 0} />
               </div>
             </div>
@@ -597,7 +597,7 @@ export default function AdminPage() {
               {[5, 10, 20, 50].map((n) => (
                 <button key={n} onClick={() => setNewAttempts(String(n))}
                   className={`px-3 py-[5px] text-xs font-semibold rounded-md cursor-pointer border transition-all duration-150
-                    ${newAttempts == n ? "bg-sky-500/25 text-blue-400 border-sky-500/50" : "bg-white/[0.06] text-[#8892a4] border-white/10"}`}>
+                    ${newAttempts == n ? "bg-sky-500/25 text-blue-400 border-sky-500/50" : "bg-white/[0.06] text-slate-400 border-white/10"}`}>
                   +{n}
                 </button>
               ))}

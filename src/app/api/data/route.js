@@ -7,8 +7,9 @@ import { invalidateCache } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request) {
   try {
+    requireAdmin(request);
     await connectToDatabase();
 
     // fetch all data
@@ -28,6 +29,18 @@ export async function GET() {
     );
   } catch (error) {
     console.error("GET /api/data Error:", error);
+    if (error.name === "AuthError") {
+      return NextResponse.json(
+        { data: [], timestamp: Date.now(), success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+    if (error.name === "ForbiddenError") {
+      return NextResponse.json(
+        { data: [], timestamp: Date.now(), success: false, error: "Forbidden - Admin only" },
+        { status: 403 },
+      );
+    }
     return NextResponse.json(
       { data: [], timestamp: Date.now() },
       { status: 500 },

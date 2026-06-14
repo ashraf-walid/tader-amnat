@@ -1,4 +1,4 @@
-const CACHE_NAME = 'amanat-cache-v2';
+const CACHE_NAME = 'amanat-cache-v3';
 
 self.addEventListener('install', (event) => {
   console.log('[ServiceWorker] Installing new version...');

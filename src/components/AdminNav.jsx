@@ -105,7 +105,7 @@ export default function AdminNav() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const { canInstall, install, installed } = usePWAInstall();
+  const { canInstall, install, installed, isInstalled } = usePWAInstall();
 
   const userMenuRef = useRef(null);
   const prevPathnameRef = useRef(pathname);
@@ -177,7 +177,7 @@ export default function AdminNav() {
         aria-hidden="true"
         className="sticky top-0 z-50 h-14"
         style={{
-          background: 'rgba(13,20,36,0.93)',
+          background: 'rgba(2,6,23,0.93)',
           borderBottom: '1px solid rgba(255,255,255,0.07)',
           boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
         }}
@@ -201,7 +201,7 @@ export default function AdminNav() {
         aria-label="قائمة تنقل المدير"
         className="sticky top-0 z-50 font-sans"
         style={{
-          background: 'rgba(13,20,36,0.93)',
+          background: 'rgba(2,6,23,0.93)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
           borderBottom: '1px solid rgba(255,255,255,0.07)',
@@ -299,7 +299,7 @@ export default function AdminNav() {
 
             {/* ── Dropdown المستخدم ── */}
             {userMenuOpen && (
-              <div className="admin-user-dropdown absolute top-[calc(100%+8px)] left-0 min-w-[210px] bg-[#1a2035] border border-white/10 rounded-[14px] overflow-hidden shadow-[0_16px_48px_rgba(0,0,0,0.45),0_4px_12px_rgba(0,0,0,0.3)] z-[100] animate-nav-dropdown">
+              <div className="admin-user-dropdown absolute top-[calc(100%+8px)] left-0 min-w-[210px] bg-slate-900 border border-white/10 rounded-[14px] overflow-hidden shadow-[0_16px_48px_rgba(0,0,0,0.45),0_4px_12px_rgba(0,0,0,0.3)] z-[100] animate-nav-dropdown">
                 {/* رأس القائمة */}
                 <div className="px-3.5 py-3 border-b border-white/[0.07] bg-white/[0.03]">
                   <p className="m-0 text-[13px] font-semibold text-slate-100">
@@ -332,20 +332,19 @@ export default function AdminNav() {
                   )}
 
                   {/* ── زر تثبيت PWA (ديسكتوب dropdown) ── */}
-                  {canInstall && (
-                    <>
-                      <button
-                        id="pwa-install-btn-desktop"
-                        onClick={async () => { await install(); setUserMenuOpen(false); }}
-                        className="pwa-install-btn admin-dropdown-item flex items-center gap-2.5 px-3.5 py-2 text-[13px] w-full bg-transparent border border-transparent rounded-[8px] cursor-pointer font-[inherit] text-right transition-all"
-                        style={{ color: '#a78bfa' }}
-                      >
-                        <InstallIcon size={14} />
-                        تثبيت التطبيق
-                      </button>
-                      <div className="h-px bg-white/[0.06] my-1" />
-                    </>
-                  )}
+                  <>
+                    <button
+                      id="pwa-install-btn-desktop"
+                      onClick={async () => { await install(); setUserMenuOpen(false); }}
+                      disabled={isInstalled || !canInstall}
+                      className="pwa-install-btn admin-dropdown-item flex items-center gap-2.5 px-3.5 py-2 text-[13px] w-full bg-transparent border border-transparent rounded-[8px] cursor-pointer font-[inherit] text-right transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ color: '#a78bfa' }}
+                    >
+                      <InstallIcon size={14} />
+                      {isInstalled ? 'مثبت' : 'تثبيت التطبيق'}
+                    </button>
+                    <div className="h-px bg-white/[0.06] my-1" />
+                  </>
 
                   <button
                     onClick={handleLogout}
@@ -381,7 +380,7 @@ export default function AdminNav() {
           {/* لوحة القائمة */}
           <div
             dir="rtl"
-            className="admin-mobile-panel fixed top-0 right-0 bottom-0 w-[min(300px,85vw)] z-50 bg-[rgba(13,20,36,0.98)] border-l border-white/[0.09] shadow-[-16px_0_48px_rgba(0,0,0,0.5)] flex flex-col overflow-y-auto animate-mobile-slide-in text-slate-100 font-[inherit]"
+            className="admin-mobile-panel fixed top-0 right-0 bottom-0 w-[min(300px,85vw)] z-50 bg-[rgba(2,6,23,0.98)] border-l border-white/[0.09] shadow-[-16px_0_48px_rgba(0,0,0,0.5)] flex flex-col overflow-y-auto animate-mobile-slide-in text-slate-100 font-[inherit]"
           >
             {/* رأس اللوحة */}
             <div className="px-4 py-3.5 border-b border-white/[0.08] flex items-center justify-between">
@@ -452,20 +451,19 @@ export default function AdminNav() {
             {/* فاصل وتسجيل الخروج */}
             <div className="p-2.5 pb-3 border-t border-white/[0.07] flex flex-col gap-2">
               {/* ── زر تثبيت PWA (موبايل panel) ── */}
-              {canInstall && (
-                <button
-                  id="pwa-install-btn-mobile"
-                  onClick={async () => { await install(); setMobileOpen(false); }}
-                  className="w-full flex items-center gap-2.5 p-2.5 rounded-[10px] text-[#a78bfa] text-sm font-semibold transition-all font-[inherit] pwa-install-btn"
-                  style={{
-                    background: 'rgba(139, 92, 246, 0.09)',
-                    border: '1px solid rgba(139, 92, 246, 0.22)',
-                  }}
-                >
-                  <InstallIcon size={16} />
-                  تثبيت التطبيق
-                </button>
-              )}
+              <button
+                id="pwa-install-btn-mobile"
+                onClick={async () => { await install(); setMobileOpen(false); }}
+                disabled={isInstalled || !canInstall}
+                className="w-full flex items-center gap-2.5 p-2.5 rounded-[10px] text-[#a78bfa] text-sm font-semibold transition-all font-[inherit] pwa-install-btn disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  background: 'rgba(139, 92, 246, 0.09)',
+                  border: '1px solid rgba(139, 92, 246, 0.22)',
+                }}
+              >
+                <InstallIcon size={16} />
+                {isInstalled ? 'مثبت' : 'تثبيت التطبيق'}
+              </button>
 
               <button
                 onClick={handleLogout}

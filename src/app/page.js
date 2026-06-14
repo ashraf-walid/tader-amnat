@@ -1,423 +1,71 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
-import {
-  Upload,
-  Search,
-  X,
-  Check,
-  History,
-  Download,
-  RefreshCw,
-} from "lucide-react";
-import { clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
-import { parseAccountingHTML } from "@/lib/parser";
+import React, { useState } from "react";
+import { Search } from "lucide-react";
 import AdminNav from "@/components/AdminNav";
-import {
-  isDBEmpty,
-  getAllAccounts,
-  saveAllAccounts,
-  updateTransactions,
-  setLastSyncTimestamp,
-  setDateRange as setDateRangeDB,
-  getDateRange as getDateRangeDB,
-  isIndexedDBSupported,
-} from "@/lib/localDB";
-
-function cn(...inputs) {
-  return twMerge(clsx(inputs));
-}
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import SearchBar from "@/components/dashboard/SearchBar";
+import AccountsTable from "@/components/dashboard/AccountsTable";
+import AccountCard from "@/components/dashboard/AccountCard";
+import TransactionModal from "@/components/dashboard/TransactionModal";
+import FileUploadZone from "@/components/dashboard/FileUploadZone";
+import { useAccountData } from "@/hooks/useAccountData";
+import { useSearch } from "@/hooks/useSearch";
+import { usePendingChanges } from "@/hooks/usePendingChanges";
 
 export default function AccountsDashboard() {
-  const [allAccounts, setAllAccounts] = useState([]); // الحالة الرئيسية لجميع الحسابات
-  const [data, setData] = useState([]); // الحسابات المصفوفة/المتبوّضة (التي تُعرض حاليًا)
-  const [dateRange, setDateRange] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState("");
-  const [isEnglishKeyboard, setIsEnglishKeyboard] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState(null);
-  const [errorStatus, setErrorStatus] = useState(null);
-  const [isTransactionsOnlyActive, setIsTransactionsOnlyActive] =
-    useState(false);
+  // Account data hook
+  const {
+    allAccounts,
+    data,
+    setData,
+    dateRange,
+    loading,
+    lastUpdated,
+    errorStatus,
+    isDragging,
+    fetchDataFromMongoDB,
+    handleFileUpload,
+    onDragOver,
+    onDragLeave,
+    onDrop,
+    downloadData,
+    commitTransactionChanges,
+  } = useAccountData();
+
+  // Search hook
+  const {
+    search,
+    setSearch,
+    isEnglishKeyboard,
+    setIsEnglishKeyboard,
+    isTransactionsOnlyActive,
+    setIsTransactionsOnlyActive,
+    searchInputRef,
+  } = useSearch(allAccounts, setData);
+
+  // Pending changes hook
+  const {
+    pendingChanges,
+    updateManualValue,
+    clearPendingChanges,
+  } = usePendingChanges();
+
+  // Modal state
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  
-  // مرجع لحقل البحث
-  const searchInputRef = React.useRef(null);
 
-  // Fetch data and save to IndexedDB
-  const fetchDataFromMongoDB = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/data`, { cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      const result = await res.json();
-      if (result && Array.isArray(result.data)) {
-        // Save data to IndexedDB
-        await saveAllAccounts(result.data);
-        if (result.dateRange) await setDateRangeDB(result.dateRange);
-        await setLastSyncTimestamp(Date.now());
-
-        setAllAccounts(result.data); // تحديث الحالة الرئيسية
-        setData(result.data);
-        if (result.dateRange) setDateRange(result.dateRange);
-        setLastUpdated(new Date(result.timestamp).toLocaleTimeString());
-        setErrorStatus(null);
-      }
-    } catch (err) {
-      console.error("Error fetching data:", err);
-      setErrorStatus(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Load data from IndexedDB First or fallback to MongoDB
-  const loadDataSmart = useCallback(async () => {
-    setLoading(true);
-
-    try {
-      // Check if IndexedDB is supported
-      if (!isIndexedDBSupported()) {
-        console.warn("⚠️ IndexedDB not supported, using MongoDB directly");
-        await fetchDataFromMongoDB();
-        return;
-      }
-
-      // Check if IndexedDB is empty
-      const isEmpty = await isDBEmpty();
-
-      if (isEmpty) {
-        // IndexedDB is empty → Load from MongoDB
-        console.log("📡 IndexedDB is empty, loading from from MongoDB...");
-        await fetchDataFromMongoDB();
-      } else {
-        // IndexedDB is not empty → Load from IndexedDB
-        console.log("⚡ Loading from IndexedDB...");
-        const localData = await getAllAccounts();
-        const localDateRange = await getDateRangeDB();
-
-        setAllAccounts(localData); // تحديث الحالة الرئيسية
-        setData(localData);
-        setDateRange(localDateRange);
-        setLastUpdated(new Date().toLocaleTimeString());
-        setErrorStatus(null);
-      }
-    } catch (err) {
-      console.error("Error loading data:", err);
-      setErrorStatus(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchDataFromMongoDB]);
-
-  // ✨ Load data from IndexedDB or MongoDB
-  React.useEffect(() => {
-    loadDataSmart(); // eslint-disable-line react-hooks/set-state-in-effect
-    // تركيز على حقل البحث عند فتح الصفحة لأول مرة
-    searchInputRef.current?.focus();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // 🔍 Arabic Text Normalization Helper
-  const normalizeArabicText = (text) => {
-    if (!text) return '';
-    return text
-      .toLowerCase()
-      // Normalize Alef forms
-      .replace(/[أإآ]/g, 'ا')
-      // Normalize Yaa forms
-      .replace(/[ى]/g, 'ي')
-      // Normalize Taa Marbuta
-      .replace(/[ة]/g, 'ه')
-      // Normalize Waw forms
-      .replace(/[ؤ]/g, 'و')
-      // Remove tatweel (stretch characters)
-      .replace(/ـ/g, '');
-  };
-
-  // 🔍 Search and filter locally when changing the search or filter
-  React.useEffect(() => {
-    const performLocalSearch = () => {
-      // Start with all accounts from our master state
-      let results = [...allAccounts];
-
-      // Apply search filter (in-memory)
-      if (search) {
-        const normalizedQuery = normalizeArabicText(search);
-        results = results.filter(account => {
-          const normalizedAccountName = normalizeArabicText(account.account || '');
-          const normalizedAccountCode = normalizeArabicText(account.accountCode || '');
-          return normalizedAccountName.includes(normalizedQuery) || normalizedAccountCode.includes(normalizedQuery);
-        });
-      }
-
-      // Apply transactions only filter
-      if (isTransactionsOnlyActive) {
-        results = results.filter(
-          (acc) =>
-            acc.transactions &&
-            Array.isArray(acc.transactions) &&
-            acc.transactions.length > 0,
-        );
-      }
-
-      setData(results);
-    };
-
-    performLocalSearch();
-  }, [search, isTransactionsOnlyActive, allAccounts]);
-
-  const filteredData = data;
-
-  const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    processFile(file);
-  };
-
-  const processFile = async (file) => {
-    setLoading(true);
-    try {
-      const fileName = file.name.toLowerCase();
-
-      // إذا كان الملف نسخة احتياطية (JSON)
-      if (fileName.endsWith(".json")) {
-        const text = await file.text();
-        let backup;
-        try {
-          backup = JSON.parse(text);
-        } catch (e) {
-          throw new Error(
-            "فشل في قراءة محتوى الملف بصيغة JSON. قد يكون الملف تالفاً.",
-          );
-        }
-
-        // التحقق من وجود مصفوفة البيانات (سواء كانت في backup.data أو كانت هي الملف نفسه)
-        const dataToRestore = Array.isArray(backup) ? backup : backup.data;
-        const restoredDateRange = backup.dateRange || "";
-
-        if (Array.isArray(dataToRestore)) {
-          // ✅ 1. حفظ في IndexedDB أولاً (فوري)
-          await saveAllAccounts(dataToRestore);
-          if (restoredDateRange) await setDateRangeDB(restoredDateRange);
-
-          // ✅ 2. تحديث الواجهة فوراً
-          setAllAccounts(dataToRestore); // تحديث الحالة الرئيسية
-          setData(dataToRestore);
-          if (restoredDateRange) setDateRange(restoredDateRange);
-          setSearch("");
-          setIsTransactionsOnlyActive(false);
-
-          // ✅ 3. رفع إلى MongoDB في الخلفية (بدون انتظار)
-          fetch("/api/data", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              data: dataToRestore,
-              dateRange: restoredDateRange,
-            }),
-          })
-            .then(() => {
-              console.log("✅ تمت المزامنة مع MongoDB");
-              setLastSyncTimestamp(Date.now());
-            })
-            .catch((err) => console.error("⚠️ فشلت المزامنة مع MongoDB:", err));
-
-          return;
-        } else {
-          throw new Error(
-            "هيكل ملف النسخة الاحتياطية غير صحيح. لم يتم العثور على مصفوفة بيانات.",
-          );
-        }
-      }
-
-      // إذا كان ملف HTML من النظام المحاسبي
-      const { data: results, dateRange: extractedDateRange } =
-        await parseAccountingHTML(file);
-
-      // الحفاظ على المعاملات السابقة من IndexedDB
-      const existingAccounts = await getAllAccounts();
-      const mergedResults = results.map((newRecord) => {
-        const oldRecord = existingAccounts.find(
-          (r) => r.accountCode === newRecord.accountCode,
-        );
-        return {
-          ...newRecord,
-          transactions: oldRecord?.transactions || [],
-        };
-      });
-
-      // ✅ 1. حفظ في IndexedDB أولاً (فوري)
-      await saveAllAccounts(mergedResults);
-      if (extractedDateRange) await setDateRangeDB(extractedDateRange);
-
-      // ✅ 2. تحديث الواجهة فوراً
-      setAllAccounts(mergedResults); // تحديث الحالة الرئيسية
-      setData(mergedResults);
-      if (extractedDateRange) setDateRange(extractedDateRange);
-      setSearch("");
-      setIsTransactionsOnlyActive(false);
-
-      // ✅ 3. رفع إلى MongoDB في الخلفية (بدون انتظار)
-      fetch("/api/data", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          data: mergedResults,
-          dateRange: extractedDateRange,
-        }),
-      })
-        .then(() => {
-          console.log("✅ تمت المزامنة مع MongoDB");
-          setLastSyncTimestamp(Date.now());
-        })
-        .catch((err) => console.error("⚠️ فشلت المزامنة مع MongoDB:", err));
-    } catch (err) {
-      alert(
-        err.message ||
-          "حدث خطأ أثناء معالجة الملف. يرجى التأكد من أنه ملف صحيح.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const [pendingChanges, setPendingChanges] = useState({});
-
-  const updateManualValue = (accountCode, field, amount) => {
-    setPendingChanges((prev) => ({
-      ...prev,
-      [accountCode]: {
-        ...(prev[accountCode] || {}),
-        [field]: parseFloat(amount) || 0,
-      },
-    }));
-  };
-
+  // Commit changes
   const commitChanges = async (accountCode) => {
     const changes = pendingChanges[accountCode];
     if (!changes) return;
-
-    // Find the account to update
-    const accountToUpdate = data.find(
-      (item) => item.accountCode === accountCode,
-    );
-    if (!accountToUpdate) return;
-
-    // Build new transactions array
-    const newTransactions = [...(accountToUpdate.transactions || [])];
-    if (changes.manualAddition > 0) {
-      newTransactions.push({
-        type: "addition",
-        amount: changes.manualAddition,
-        date: new Date().toISOString(),
-      });
-    }
-    if (changes.manualDeduction > 0) {
-      newTransactions.push({
-        type: "deduction",
-        amount: changes.manualDeduction,
-        date: new Date().toISOString(),
-      });
-    }
-
-    // ✅ 1. حفظ في IndexedDB أولاً (فوري)
-    await updateTransactions(accountCode, newTransactions);
-
-    // ✅ 2. تحديث الواجهة فوراً
-    setAllAccounts((prevAll) =>
-      prevAll.map((item) =>
-        item.accountCode === accountCode
-          ? { ...item, transactions: newTransactions }
-          : item,
-      ),
-    );
-    setData((prevData) =>
-      prevData.map((item) =>
-        item.accountCode === accountCode
-          ? { ...item, transactions: newTransactions }
-          : item,
-      ),
-    );
-
-    // ✅ 3. مسح التغييرات المعلقة
-    setPendingChanges((prev) => {
-      const next = { ...prev };
-      delete next[accountCode];
-      return next;
-    });
-
-    // ✅ 4. مزامنة مع MongoDB في الخلفية (بدون انتظار)
-    fetch(`/api/data/${accountCode}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ transactions: newTransactions }),
-    })
-      .then(async (response) => {
-        const result = await response.json();
-        if (result.success) {
-          console.log(`✅ تمت مزامنة الحساب ${accountCode} مع MongoDB`);
-          await setLastSyncTimestamp(Date.now());
-        } else {
-          console.error(`⚠️ فشلت مزامنة الحساب ${accountCode}:`, result.error);
-        }
-      })
-      .catch((err) => {
-        console.error("⚠️ فشلت المزامنة مع MongoDB:", err);
-      });
+    
+    await commitTransactionChanges(accountCode, data, changes);
+    clearPendingChanges(accountCode);
   };
 
-  const downloadData = async () => {
-    if (
-      !window.confirm(
-        "هل تريد حفظ نسخة احتياطية من البيانات الحالية على جهازك؟",
-      )
-    )
-      return;
-    try {
-      setLoading(true);
-      const res = await fetch("/api/data", { cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      const result = await res.json();
-      const backupData = {
-        timestamp: new Date().toISOString(),
-        data: result.data,
-        dateRange: result.dateRange,
-      };
-      const blob = new Blob([JSON.stringify(backupData, null, 2)], {
-        type: "application/json",
-      });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `amanat_backup_${new Date().toISOString().split("T")[0]}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Error downloading backup:", err);
-      alert("حدث خطأ أثناء تحميل النسخة الاحتياطية");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const onDragOver = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const onDragLeave = () => setIsDragging(false);
-
-  const onDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) processFile(file);
-  };
+  // Filtered data
+  const filteredData = data;
 
   return (
     <div
@@ -426,87 +74,25 @@ export default function AccountsDashboard() {
     >
       <AdminNav />
       <div className="max-w-7xl mx-auto space-y-8 p-4 md:p-8">
-        {/* Header Section */}
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in">
-          <div>
-            <h1 className="text-xl sm:text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
-              أمانات | تحليل حسابات العملاء
-            </h1>
-            {dateRange && (
-              <p className="text-slate-600 dark:text-slate-300 font-medium mt-1">
-                {dateRange}
-              </p>
-            )}
-            <div className="flex flex-wrap items-center gap-4 mt-2">
-              <div className="flex items-center gap-2 max-sm:hidden">
-                <div
-                  className={cn(
-                    "w-2 h-2 rounded-full animate-pulse",
-                    errorStatus ? "bg-red-500" : "bg-green-500",
-                  )}
-                ></div>
-                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-                  {errorStatus
-                    ? `خطأ في الاتصال: ${errorStatus}`
-                    : "⚡  تخزين محلى (متزامن)"}
-                </p>
-              </div>
+        {/* Dashboard Header */}
+        <DashboardHeader
+          dateRange={dateRange}
+          errorStatus={errorStatus}
+          lastUpdated={lastUpdated}
+          loading={loading}
+          fetchDataFromMongoDB={fetchDataFromMongoDB}
+          downloadData={downloadData}
+          data={data}
+          search={search}
+        />
 
-              {lastUpdated && (
-                <span className="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-md text-slate-500 max-sm:hidden">
-                  آخر تحديث: {lastUpdated}
-                </span>
-              )}
-
-              {errorStatus && (
-                <button
-                  onClick={() => fetchDataFromMongoDB(1, "", false)}
-                  className="text-xs p-1 bg-blue-50 text-blue-600 rounded"
-                >
-                  إعادة محاولة
-                </button>
-              )}
-            </div>
-          </div>
-
-          {(data.length > 0 || search) && (
-            <div className="flex flex-wrap items-center gap-2 md:gap-3">
-              <button
-                onClick={() => fetchDataFromMongoDB(1, "", false)}
-                disabled={loading}
-                className={cn(
-                  "flex-1 md:flex-none px-3 py-2 text-xs md:text-sm font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border",
-                  loading
-                    ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
-                    : "bg-white dark:bg-slate-900 text-blue-600 border-blue-100 dark:border-blue-900/30 hover:bg-blue-50",
-                )}
-                title="جلب أحدث البيانات من السيرفر"
-              >
-                <RefreshCw
-                  size={14}
-                  className={cn(loading && "animate-spin")}
-                />
-                تحديث من السيرفر
-              </button>
-
-              <button
-                onClick={downloadData}
-                className="flex-1 md:flex-none px-3 py-2 text-xs md:text-sm font-bold text-slate-600 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
-              >
-                <Download size={14} className="text-blue-500" />
-                نسخة احتياطية
-              </button>
-            </div>
-          )}
-        </header>
-
-        {/* ── Loading Spinner (no data yet) ── */}
+        {/* Loading or Upload or Analysis */}
         {loading &&
-        allAccounts.length === 0 &&
-        !search &&
-        !isTransactionsOnlyActive ? (
+          allAccounts.length === 0 &&
+          !search &&
+          !isTransactionsOnlyActive ? (
           <div className="flex flex-col items-center justify-center h-75 md:h-100 mx-4 md:mx-0">
-            <div className="w-12 h-12 rounded-full border-4 border-blue-200 dark:border-blue-900/40 border-t-blue-600 animate-spin mb-4" />
+            <div className="w-12 h-12 rounded-full border-4 border-blue-200 dark:border-blue-900/40 border-top-blue-600 animate-spin mb-4" />
             <p className="text-sm font-medium text-slate-500">
               جاري تحميل البيانات...
             </p>
@@ -515,439 +101,49 @@ export default function AccountsDashboard() {
           !search &&
           !loading &&
           !isTransactionsOnlyActive ? (
-          /* Empty State / Upload Zone */
-          <div
-            className={cn(
-              "relative group h-75 md:h-100 border-2 border-dashed rounded-3xl flex flex-col items-center justify-center transition-all animate-in duration-700 mx-4 md:mx-0",
-              isDragging
-                ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/10 scale-[0.99]"
-                : "border-slate-200 dark:border-slate-800 hover:border-blue-400",
-            )}
+          /* Empty State - File Upload Zone */
+          <FileUploadZone
+            isDragging={isDragging}
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
             onDrop={onDrop}
-          >
-            <div className="p-4 md:p-6 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 mb-4 md:mb-6 group-hover:scale-110 transition-transform">
-              <Upload strokeWidth={1.5} className="w-8 h-8 md:w-12 md:h-12" />
-            </div>
-            <h2 className="text-lg md:text-xl font-semibold mb-2">
-              اسحب وأفلت الملف هنا
-            </h2>
-            <p className="text-xs md:text-base text-slate-500 mb-6 md:mb-8 text-center px-4">
-              يدعم ملفات HTML المستخرجة من برنامج الحسابات
-            </p>
-
-            <label className="cursor-pointer px-6 md:px-8 py-2 md:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-lg shadow-blue-500/25 transition-all active:scale-95">
-              اختيار الملف من الجهاز
-              <input
-                type="file"
-                className="hidden"
-                accept=".html,.htm,.json"
-                onChange={handleFileUpload}
-              />
-            </label>
-          </div>
+            handleFileUpload={handleFileUpload}
+          />
         ) : (
           /* Analysis View */
           <div className="space-y-6 animate-in">
-            {/* List & Search */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-              <div className="p-4 md:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col gap-4">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex flex-col">
-                    <h3 className="font-semibold text-lg whitespace-nowrap text-center md:text-right">
-                      تفاصيل حسابات العملاء
-                    </h3>
-                    <span className="text-xs text-slate-500 font-medium text-center md:text-right">
-                      إجمالي المعروض: {filteredData.length}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap items-center justify-center md:justify-end gap-2">
-                    <button
-                      onClick={() =>
-                        setIsTransactionsOnlyActive(!isTransactionsOnlyActive)
-                      }
-                      className={cn(
-                        "flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold transition-all",
-                        isTransactionsOnlyActive
-                          ? "bg-orange-600 text-white shadow-lg shadow-orange-500/30"
-                          : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200",
-                      )}
-                    >
-                      <History size={12} />
-                      المعاملات
-                    </button>
-                  </div>
-                </div>
-
-                <div className="relative w-full">
-                  <Search
-                    size={18}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    lang="ar"
-                    dir="rtl"
-                    placeholder="ابحث باسم العميل أو الكود..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key.length === 1) {
-                        setIsEnglishKeyboard(/[a-zA-Z]/.test(e.key));
-                      }
-                    }}
-                    className="w-full pr-10 pl-10 py-3 md:py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-sm"
-                  />
-                  {search && (
-                    <button
-                      onClick={() => {
-                        setSearch("");
-                        // تركيز على الحقل بعد مسح البحث
-                        searchInputRef.current?.focus();
-                      }}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
-                    >
-                      <X size={14} />
-                    </button>
-                  )}
-                </div>
-                {isEnglishKeyboard && (
-                  <p className="text-[11px] text-slate-400 mt-1 mr-1">
-                    حول اللغة
-                  </p>
-                )}
-              </div>
+              {/* Search Bar */}
+              <SearchBar
+                search={search}
+                setSearch={setSearch}
+                searchInputRef={searchInputRef}
+                isEnglishKeyboard={isEnglishKeyboard}
+                setIsEnglishKeyboard={setIsEnglishKeyboard}
+                isTransactionsOnlyActive={isTransactionsOnlyActive}
+                setIsTransactionsOnlyActive={setIsTransactionsOnlyActive}
+                filteredData={filteredData}
+              />
 
               {/* Desktop Table View */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-sm">
-                      <th className="px-6 py-4 text-right font-medium">
-                        العميل / الحساب
-                      </th>
-                      <th className="px-4 py-4 text-center font-medium">
-                        الرصيد الإفتتاحي
-                      </th>
-                      <th className="px-4 py-4 text-center font-medium text-green-600">
-                        دائن
-                      </th>
-                      <th className="px-4 py-4 text-center font-medium text-orange-600">
-                        مدين
-                      </th>
-                      <th className="px-6 py-4 text-center font-medium text-blue-600">
-                        إضافة مبلغ (+)
-                      </th>
-                      <th className="px-6 py-4 text-center font-medium text-red-600">
-                        تخصيم مبلغ (-)
-                      </th>
-                      <th className="px-6 py-4 text-center w-4"></th>
-                      <th className="px-6 py-4 text-left font-medium">
-                        الرصيد النهائي
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {filteredData.map((item, idx) => {
-                      const pending = pendingChanges[item.accountCode] || {};
-                      const historyAddition = (item.transactions || [])
-                        .filter((t) => t.type === "addition")
-                        .reduce((sum, t) => sum + t.amount, 0);
-                      const historyDeduction = (item.transactions || [])
-                        .filter((t) => t.type === "deduction")
-                        .reduce((sum, t) => sum + t.amount, 0);
-                      const addition = pending.manualAddition || 0;
-                      const deduction = pending.manualDeduction || 0;
-                      const baseBalance =
-                        (item.closingBalance?.debit || 0) -
-                        (item.closingBalance?.credit || 0);
-                      const openingBalanceVal =
-                        (item.openingBalance?.debit || 0) -
-                        (item.openingBalance?.credit || 0);
-                      const movementCredit = item.totals?.credit || 0;
-                      const movementDebit = item.totals?.debit || 0;
-
-                      const finalBalance =
-                        baseBalance +
-                        historyAddition +
-                        addition -
-                        (historyDeduction + deduction);
-                      const hasChanges = addition > 0 || deduction > 0;
-                      const transactionCount = (item.transactions || []).length;
-
-                      return (
-                        <tr
-                          key={idx}
-                          className={cn(
-                            "hover:bg-slate-50/50 dark:hover:bg-slate-800/30 border-r-4 transition-all",
-                            hasChanges
-                              ? "border-r-blue-500 bg-blue-50/30 dark:bg-blue-900/5"
-                              : "border-r-transparent",
-                          )}
-                        >
-                          <td
-                            className="px-6 py-4 max-w-80 cursor-pointer group/cell"
-                            onClick={() => {
-                              setSelectedAccount(item);
-                              setIsHistoryOpen(true);
-                            }}
-                          >
-                            <div className="flex flex-col gap-1 overflow-hidden">
-                              <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2 group-hover/cell:text-blue-600 transition-colors">
-                                <span
-                                  className="truncate whitespace-nowrap"
-                                  title={item.account}
-                                >
-                                  {item.account}
-                                </span>
-                                {transactionCount > 0 && (
-                                  <span className="shrink-0 text-[10px] px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 rounded text-blue-600 flex items-center gap-1">
-                                    <History size={10} />
-                                    {transactionCount}
-                                  </span>
-                                )}
-                              </div>
-                              <span className="px-2 py-0.5 w-fit text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 rounded uppercase tracking-wider">
-                                {item.accountCode || "---"}
-                              </span>
-                            </div>
-                          </td>
-
-                          <td className="px-4 py-4 text-center font-mono text-sm whitespace-nowrap">
-                            <span
-                              className={cn(
-                                "px-2 py-0.5 rounded",
-                                openingBalanceVal > 0
-                                  ? "text-slate-600 dark:text-slate-400"
-                                  : "text-red-500 bg-red-50 dark:bg-red-950/20",
-                              )}
-                            >
-                              {openingBalanceVal.toLocaleString()}
-                            </span>
-                          </td>
-
-                          <td className="px-4 py-4 text-center font-mono text-sm whitespace-nowrap">
-                            <span
-                              className={cn(
-                                "px-2 py-0.5 rounded",
-                                movementDebit > 0
-                                  ? "text-green-600 bg-green-50 dark:bg-green-900/20"
-                                  : "text-slate-300 dark:text-slate-700",
-                              )}
-                            >
-                              {movementDebit > 0 ? "+" : ""}
-                              {movementDebit.toLocaleString()}
-                            </span>
-                          </td>
-
-                          <td className="px-4 py-4 text-center font-mono text-sm whitespace-nowrap">
-                            <span
-                              className={cn(
-                                "px-2 py-0.5 rounded",
-                                movementCredit > 0
-                                  ? "text-orange-600 bg-orange-50 dark:bg-orange-950/20"
-                                  : "text-slate-300 dark:text-slate-700",
-                              )}
-                            >
-                              {movementCredit > 0 ? "-" : ""}
-                              {movementCredit.toLocaleString()}
-                            </span>
-                          </td>
-
-                          {/*
-                           */}
-                          <td className="px-6 py-4 text-center">
-                            <input
-                              type="number"
-                              placeholder="0"
-                              value={pending.manualAddition || ""}
-                              onChange={(e) =>
-                                updateManualValue(
-                                  item.accountCode,
-                                  "manualAddition",
-                                  e.target.value,
-                                )
-                              }
-                              className="w-24 px-2 py-1 text-center text-sm font-mono text-blue-600 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 no-spinner"
-                            />
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <input
-                              type="number"
-                              placeholder="0"
-                              value={pending.manualDeduction || ""}
-                              onChange={(e) =>
-                                updateManualValue(
-                                  item.accountCode,
-                                  "manualDeduction",
-                                  e.target.value,
-                                )
-                              }
-                              className="w-24 px-2 py-1 text-center text-sm font-mono text-red-600 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 no-spinner"
-                            />
-                          </td>
-                          <td className="w-28 text-center">
-                            {hasChanges && (
-                              <button
-                                onClick={() => commitChanges(item.accountCode)}
-                                className="px-2 py-1 bg-green-600 text-white rounded-lg shadow-sm flex items-center gap-1 mx-auto text-xs"
-                              >
-                                <Check size={12} /> حفظ
-                              </button>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 text-left font-bold font-mono whitespace-nowrap">
-                            <div
-                              className={cn(
-                                "inline-block px-3 py-1 rounded-lg text-lg",
-                                finalBalance > 0
-                                  ? "bg-green-600 text-white"
-                                  : "bg-red-600 text-white shadow-lg",
-                              )}
-                            >
-                              {finalBalance.toLocaleString()}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <AccountsTable
+                filteredData={filteredData}
+                pendingChanges={pendingChanges}
+                updateManualValue={updateManualValue}
+                commitChanges={commitChanges}
+                setSelectedAccount={setSelectedAccount}
+                setIsHistoryOpen={setIsHistoryOpen}
+              />
 
               {/* Mobile Card View */}
-              <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
-                {filteredData.map((item, idx) => {
-                  const pending = pendingChanges[item.accountCode] || {};
-                  const historyAddition = (item.transactions || [])
-                    .filter((t) => t.type === "addition")
-                    .reduce((sum, t) => sum + t.amount, 0);
-                  const historyDeduction = (item.transactions || [])
-                    .filter((t) => t.type === "deduction")
-                    .reduce((sum, t) => sum + t.amount, 0);
-                  const addition = pending.manualAddition || 0;
-                  const deduction = pending.manualDeduction || 0;
-                  const baseBalance =
-                    (item.closingBalance?.debit || 0) -
-                    (item.closingBalance?.credit || 0);
-                  const openingBalanceVal =
-                    (item.openingBalance?.debit || 0) -
-                    (item.openingBalance?.credit || 0);
-                  const movementCredit = item.totals?.credit || 0;
-                  const movementDebit = item.totals?.debit || 0;
-
-                  const finalBalance =
-                    baseBalance +
-                    historyAddition +
-                    addition -
-                    (historyDeduction + deduction);
-                  const hasChanges = addition > 0 || deduction > 0;
-                  const transactionCount = (item.transactions || []).length;
-
-                  return (
-                    <div
-                      key={idx}
-                      className={cn(
-                        "p-4 space-y-4",
-                        hasChanges && "bg-blue-50/20 dark:bg-blue-900/5",
-                      )}
-                    >
-                      <div
-                        className="flex justify-between items-start"
-                        onClick={() => {
-                          setSelectedAccount(item);
-                          setIsHistoryOpen(true);
-                        }}
-                      >
-                        <div className="space-y-1">
-                          <h4 className="font-bold text-slate-900 dark:text-white leading-tight">
-                            {item.account}
-                          </h4>
-                          <div className="flex flex-wrap items-center gap-2 pt-1">
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded border border-slate-200 dark:border-slate-700">
-                              سابق: {openingBalanceVal.toLocaleString()}
-                            </span>
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 bg-green-50 dark:bg-green-900/10 text-green-600 rounded border border-green-100 dark:border-green-900/20">
-                              إيداع: +{movementDebit.toLocaleString()}
-                            </span>
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 bg-orange-50 dark:bg-orange-900/10 text-orange-600 rounded border border-orange-100 dark:border-orange-900/20">
-                              سحب: -{movementCredit.toLocaleString()}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {transactionCount > 0 && (
-                            <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
-                              <History size={10} />
-                              {transactionCount}
-                            </span>
-                          )}
-                          <div
-                            className={cn(
-                              "px-3 py-1 rounded text-lg font-bold font-mono",
-                              finalBalance > 0
-                                ? "text-green-600"
-                                : "text-red-500",
-                            )}
-                          >
-                            {finalBalance.toLocaleString()}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3 items-end">
-                        <div className="space-y-1">
-                          <span className="text-[10px] font-bold text-blue-600 uppercase">
-                            إضافة (+)
-                          </span>
-                          <input
-                            type="number"
-                            placeholder="0"
-                            value={pending.manualAddition || ""}
-                            onChange={(e) =>
-                              updateManualValue(
-                                item.accountCode,
-                                "manualAddition",
-                                e.target.value,
-                              )
-                            }
-                            className="w-full p-2 text-center text-sm font-mono text-blue-600 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-xl focus:outline-none"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <span className="text-[10px] font-bold text-red-600 uppercase">
-                            خصم (-)
-                          </span>
-                          <input
-                            type="number"
-                            placeholder="0"
-                            value={pending.manualDeduction || ""}
-                            onChange={(e) =>
-                              updateManualValue(
-                                item.accountCode,
-                                "manualDeduction",
-                                e.target.value,
-                              )
-                            }
-                            className="w-full p-2 text-center text-sm font-mono text-red-600 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-xl focus:outline-none"
-                          />
-                        </div>
-                      </div>
-
-                      {hasChanges && (
-                        <button
-                          onClick={() => commitChanges(item.accountCode)}
-                          className="w-full py-2.5 bg-green-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-green-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-                        >
-                          <Check size={16} /> حفظ التعديلات
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+              <AccountCard
+                filteredData={filteredData}
+                pendingChanges={pendingChanges}
+                updateManualValue={updateManualValue}
+                commitChanges={commitChanges}
+                setSelectedAccount={setSelectedAccount}
+                setIsHistoryOpen={setIsHistoryOpen}
+              />
 
               {/* No Search Results */}
               {filteredData.length === 0 && search && (
@@ -959,13 +155,13 @@ export default function AccountsDashboard() {
                     لا توجد نتائج مطابقة
                   </h3>
                   <p className="text-sm text-slate-500 mb-4">
-                    لم يتم العثور على حسابات تطابق &ldquo;{search}&rdquo;
+                    لم يتم العثور على حسابات تطابق "{search}"
                   </p>
                   <button
                     onClick={() => setSearch("")}
                     className="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 rounded-xl hover:bg-blue-100 transition-colors"
                   >
-                    <X size={14} /> مسح البحث
+                    <Search size={14} /> مسح البحث
                   </button>
                 </div>
               )}
@@ -974,93 +170,12 @@ export default function AccountsDashboard() {
         )}
       </div>
 
-      {/* History Modal */}
-      {isHistoryOpen && selectedAccount && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-in zoom-in duration-300">
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-xl">
-                  <History size={20} />
-                </div>
-                <div>
-                  <h3 className="font-bold text-slate-900 dark:text-white">
-                    سجل العمليات
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    {selectedAccount.account}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsHistoryOpen(false)}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-              >
-                <X size={20} className="text-slate-400" />
-              </button>
-            </div>
-
-            <div className="p-6 max-h-[400px] overflow-y-auto">
-              {!selectedAccount.transactions ||
-              selectedAccount.transactions.length === 0 ? (
-                <div className="text-center py-8 text-slate-400 text-sm italic">
-                  لا توجد عمليات مسجلة لهذا الحساب حتى الآن
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {[...selectedAccount.transactions].reverse().map((t, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={cn(
-                            "w-2 h-2 rounded-full",
-                            t.type === "addition"
-                              ? "bg-green-500"
-                              : "bg-red-500",
-                          )}
-                        ></div>
-                        <div>
-                          <p className="text-sm font-bold text-slate-900 dark:text-white">
-                            {t.type === "addition"
-                              ? "إضافة رصيد"
-                              : "تخصيم رصيد"}
-                          </p>
-                          <p className="text-[10px] text-slate-500">
-                            {new Date(t.date).toLocaleString("ar-EG")}
-                          </p>
-                        </div>
-                      </div>
-                      <div
-                        className={cn(
-                          "font-mono font-bold",
-                          t.type === "addition"
-                            ? "text-green-600"
-                            : "text-red-600",
-                        )}
-                      >
-                        {t.type === "addition" ? "+" : "-"}
-                        {t.amount.toLocaleString()}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="p-6 bg-slate-50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800">
-              <button
-                onClick={() => setIsHistoryOpen(false)}
-                className="w-full py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors"
-              >
-                إغلاق
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Transaction History Modal */}
+      <TransactionModal
+        isOpen={isHistoryOpen}
+        selectedAccount={selectedAccount}
+        onClose={() => setIsHistoryOpen(false)}
+      />
 
       <footer className="mt-12 text-center text-slate-400 text-sm">
         نظام أمانات لعرض حسابات العملاء &copy; 2026
