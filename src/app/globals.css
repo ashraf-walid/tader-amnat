@@ -238,3 +238,51 @@ input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+/* ════════════════════════ PWA Install Toast ════════════════════════ */
+
+@keyframes pwaToastIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pwaToastOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+}
+
+.pwa-toast-enter {
+  animation: pwaToastIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.pwa-toast-exit {
+  animation: pwaToastOut 0.22s ease-in forwards;
+}
+
+@keyframes pwaCheckPop {
+  0%   { transform: scale(0.5); opacity: 0; }
+  60%  { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.pwa-check-pop {
+  animation: pwaCheckPop 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+/* زر تثبيت PWA في الـ dropdown */
+.pwa-install-btn:hover {
+  background: rgba(139, 92, 246, 0.18) !important;
+  border-color: rgba(139, 92, 246, 0.4) !important;
+}

@@ -12,7 +12,73 @@ import {
   LogOutIcon,
   MenuIcon,
   CloseIcon,
+  InstallIcon,
 } from '@/components/Icons';
+import { usePWAInstall } from '@/lib/usePWAInstall';
+
+// ── Toast نجاح التثبيت ──────────────────────────────────────
+function InstallSuccessToast({ visible }) {
+  const [phase, setPhase] = useState('enter');
+
+  useEffect(() => {
+    if (!visible) return;
+    setPhase('enter');
+    const t = setTimeout(() => setPhase('exit'), 1650);
+    return () => clearTimeout(t);
+  }, [visible]);
+
+  if (!visible) return null;
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className={`fixed bottom-5 left-1/2 z-[9999] -translate-x-1/2 ${
+        phase === 'enter' ? 'pwa-toast-enter' : 'pwa-toast-exit'
+      }`}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          padding: '11px 20px',
+          borderRadius: '14px',
+          background: 'rgba(15, 23, 42, 0.97)',
+          border: '1px solid rgba(139, 92, 246, 0.45)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.45), 0 0 0 1px rgba(139,92,246,0.15)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          direction: 'rtl',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        <span
+          className="pwa-check-pop"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 26,
+            height: 26,
+            borderRadius: '50%',
+            background: 'rgba(139, 92, 246, 0.2)',
+            border: '1.5px solid rgba(139, 92, 246, 0.55)',
+            color: '#a78bfa',
+            flexShrink: 0,
+          }}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </span>
+        <span style={{ fontSize: 13.5, fontWeight: 600, color: '#e2e8f0', letterSpacing: '-0.01em' }}>
+          ✅ تم تثبيت التطبيق بنجاح!
+        </span>
+      </div>
+    </div>
+  );
+}
 
 const NAV_ITEMS = [
   { href: '/', label: 'الحسابات', icon: NavChartIcon, exactMatch: true, roles: ['owner', 'admin', 'employee'] },
@@ -38,6 +104,8 @@ export default function AdminNav() {
   const [logging, setLogging] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const { canInstall, install, installed } = usePWAInstall();
 
   const userMenuRef = useRef(null);
   const prevPathnameRef = useRef(pathname);
@@ -126,6 +194,7 @@ export default function AdminNav() {
 
   return (
     <>
+      <InstallSuccessToast visible={installed} />
       <nav
         dir="rtl"
         role="navigation"
@@ -262,6 +331,22 @@ export default function AdminNav() {
                     </>
                   )}
 
+                  {/* ── زر تثبيت PWA (ديسكتوب dropdown) ── */}
+                  {canInstall && (
+                    <>
+                      <button
+                        id="pwa-install-btn-desktop"
+                        onClick={async () => { await install(); setUserMenuOpen(false); }}
+                        className="pwa-install-btn admin-dropdown-item flex items-center gap-2.5 px-3.5 py-2 text-[13px] w-full bg-transparent border border-transparent rounded-[8px] cursor-pointer font-[inherit] text-right transition-all"
+                        style={{ color: '#a78bfa' }}
+                      >
+                        <InstallIcon size={14} />
+                        تثبيت التطبيق
+                      </button>
+                      <div className="h-px bg-white/[0.06] my-1" />
+                    </>
+                  )}
+
                   <button
                     onClick={handleLogout}
                     disabled={logging}
@@ -365,7 +450,23 @@ export default function AdminNav() {
             </div>
 
             {/* فاصل وتسجيل الخروج */}
-            <div className="p-2.5 pb-3 border-t border-white/[0.07]">
+            <div className="p-2.5 pb-3 border-t border-white/[0.07] flex flex-col gap-2">
+              {/* ── زر تثبيت PWA (موبايل panel) ── */}
+              {canInstall && (
+                <button
+                  id="pwa-install-btn-mobile"
+                  onClick={async () => { await install(); setMobileOpen(false); }}
+                  className="w-full flex items-center gap-2.5 p-2.5 rounded-[10px] text-[#a78bfa] text-sm font-semibold transition-all font-[inherit] pwa-install-btn"
+                  style={{
+                    background: 'rgba(139, 92, 246, 0.09)',
+                    border: '1px solid rgba(139, 92, 246, 0.22)',
+                  }}
+                >
+                  <InstallIcon size={16} />
+                  تثبيت التطبيق
+                </button>
+              )}
+
               <button
                 onClick={handleLogout}
                 disabled={logging}

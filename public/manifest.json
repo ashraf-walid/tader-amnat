@@ -1,0 +1,38 @@
+{
+  "name": "أمانات - الأرضيات",
+  "short_name": "أمانات",
+  "description": "نظام عرض أرصدة العملاء وحساب فواتير الأرضيات",
+  "start_url": "/login",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#8b5cf6",
+  "scope": "/",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icons/tader192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/tader512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/icons/screenshot-wide.png",
+      "sizes": "1888x855",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/icons/screenshot-mobile.png",
+      "sizes": "341x728",
+      "type": "image/png"
+    }
+  ]
+}

@@ -16,6 +16,7 @@ const alexandria = Alexandria({
 export const metadata = {
   title: "أمانات - تحليل الحسابات",
   description: "نظام ذكي لتحليل موازين المراجعة واستخراج بيانات العملاء",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({ children }) {
