@@ -35,7 +35,7 @@ const UserSchema = new mongoose.Schema(
     },
     attempts: {
       type: Number,
-      default: 5,
+      default: null,
       min: 0,
     },
     calculationsCount: {

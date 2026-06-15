@@ -14,7 +14,6 @@ export default function SearchBar({
   setSearch,
   searchInputRef,
   isEnglishKeyboard,
-  setIsEnglishKeyboard,
   isTransactionsOnlyActive,
   setIsTransactionsOnlyActive,
   filteredData,
@@ -61,11 +60,6 @@ export default function SearchBar({
           placeholder="ابحث باسم العميل أو الكود..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key.length === 1) {
-              setIsEnglishKeyboard(/[a-zA-Z]/.test(e.key));
-            }
-          }}
           className="w-full pr-10 pl-10 py-3 md:py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-sm"
         />
         {search && (
@@ -80,9 +74,9 @@ export default function SearchBar({
           </button>
         )}
       </div>
-      {isEnglishKeyboard && (
-        <p className="text-[11px] text-slate-400 mt-1 mr-1">
-          حول اللغة
+      {isEnglishKeyboard && search && (
+        <p className="text-[11px] text-blue-400 mt-1 mr-1">
+          يتم البحث تلقائياً بالغة العربية
         </p>
       )}
     </div>

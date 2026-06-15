@@ -66,16 +66,6 @@ export default function AccountCard({
                   {item.account}
                 </h4>
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigator.clipboard.writeText(item.accountCode || "");
-                    }}
-                    className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                    title="انقر لنسخ كود العميل"
-                  >
-                    {item.accountCode || "---"}
-                  </button>
                   <span className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded border border-slate-200 dark:border-slate-700">
                     سابق: {openingBalanceVal.toLocaleString()}
                   </span>

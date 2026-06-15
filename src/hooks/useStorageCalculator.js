@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { STORAGE_CONFIG, SERVICES_LIST } from '@/lib/storageConstants';
 import { calculateMultiContainerInvoice, calculateStorageFee } from '@/lib/storageCalculator';
+import { useCalculatorStore } from '@/store/useCalculatorStore';
 
 function formatNumber(n, dec = 2) {
   return Number(n).toLocaleString('ar-EG', { minimumFractionDigits: dec, maximumFractionDigits: dec });
@@ -67,8 +68,10 @@ export function useStorageCalculator(adminExchangeRate) {
   const [services, setServices] = useState({});
   const [serviceQuantities, setServiceQuantities] = useState({});
 
-  // ── Result ──
-  const [result, setResult] = useState(null);
+  // ── Result from Store ──
+  const result = useCalculatorStore((state) => state.result);
+  const setResult = useCalculatorStore((state) => state.setResult);
+  const clearResult = useCalculatorStore((state) => state.clearResult);
   const [error, setError] = useState("");
 
   // Derived state
@@ -122,7 +125,7 @@ export function useStorageCalculator(adminExchangeRate) {
 
   // Reset form
   function resetForm() {
-    setResult(null);
+    clearResult();
     setArrDate(null);
     setRelDate(new Date());
     setTwentyCount(1);

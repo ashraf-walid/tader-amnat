@@ -228,8 +228,23 @@ export default function AdminPage() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("client");
   const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [sortBy, setSortBy] = useState("calculationsCount");
+  const [sortDir, setSortDir] = useState("desc");
 
   const notify = (text, type = "success") => setToast({ text, type });
+
+  const handleSort = (key) => {
+    if (sortBy === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortBy(key); setSortDir("desc"); }
+  };
+
+  const COLUMNS = [
+    { key: "username", label: "اسم المستخدم", sortable: true },
+    { key: "role", label: "الدور", sortable: true },
+    { key: "calculationsCount", label: "الفواتير", sortable: true },
+    { key: "lastLogin", label: "آخر دخول", sortable: true },
+    { key: "actions", label: "الإجراءات", sortable: false },
+  ];
 
   useEffect(() => {
     fetch("/api/auth/me").then((res) => res.json()).then((data) => {
@@ -316,6 +331,17 @@ export default function AdminPage() {
     const q = search.toLowerCase();
     const matchSearch = !q || a.username.toLowerCase().includes(q) || (a.phone || "").includes(q) || (a.officeName || "").toLowerCase().includes(q);
     return matchRole && matchSearch;
+  }).sort((a, b) => {
+    let va, vb;
+    switch (sortBy) {
+      case "username": va = a.username || ""; vb = b.username || ""; break;
+      case "role": va = a.role || ""; vb = b.role || ""; break;
+      case "calculationsCount": va = a.calculationsCount || 0; vb = b.calculationsCount || 0; break;
+      case "lastLogin": va = a.lastLogin ? new Date(a.lastLogin).getTime() : 0; vb = b.lastLogin ? new Date(b.lastLogin).getTime() : 0; break;
+      default: return 0;
+    }
+    if (typeof va === "string") return sortDir === "asc" ? va.localeCompare(vb, "ar") : vb.localeCompare(va, "ar");
+    return sortDir === "asc" ? va - vb : vb - va;
   });
 
   const stats = {
@@ -420,11 +446,20 @@ export default function AdminPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse rtl min-w-[640px]">
+                <table className="w-full border-collapse rtl min-w-[700px]">
                   <thead>
                     <tr className="bg-white/[0.03]">
-                      {["اسم المستخدم", "رقم الهاتف", "الدور", "المحاولات المتبقية", "الفواتير", "الإجراءات"].map((h) => (
-                        <th key={h} className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07] whitespace-nowrap">{h}</th>
+                      {COLUMNS.map((col) => (
+                        <th key={col.key}
+                          onClick={col.sortable ? () => handleSort(col.key) : undefined}
+                          className={`px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07] whitespace-nowrap select-none ${col.sortable ? "cursor-pointer hover:text-slate-200 transition-colors duration-150" : ""}`}>
+                          <span className="inline-flex items-center gap-1">
+                            {col.label}
+                            {col.sortable && sortBy === col.key && (
+                              <span className="text-sky-400 text-[10px]">{sortDir === "asc" ? "▲" : "▼"}</span>
+                            )}
+                          </span>
+                        </th>
                       ))}
                     </tr>
                   </thead>
@@ -447,12 +482,14 @@ export default function AdminPage() {
                                   {acc.accountCode ? `كود: ${acc.accountCode}` : ""}
                                 </div>
                               )}
+                              {acc.phone && (
+                                <div className="text-[11px] text-slate-500 mt-0.5 ltr text-right" dir="ltr">{acc.phone}</div>
+                              )}
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3.5 text-[13px] text-slate-400 ltr text-right">{acc.phone || "—"}</td>
                         <td className="px-4 py-3.5"><RoleBadge role={acc.role} /></td>
-                        <td className="px-4 py-3.5">
+                        {/* <td className="px-4 py-3.5">
                           <div className="flex items-center gap-2">
                             <AttemptsBadge attempts={acc.attempts || 0} />
                             <button title="تجديد المحاولات"
@@ -461,11 +498,23 @@ export default function AdminPage() {
                               <Icon.Refresh />
                             </button>
                           </div>
-                        </td>
+                        </td> */}
                         <td className="px-4 py-3.5">
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full text-[11.5px] font-bold text-[#f0b429] bg-[#f0b429]/10 border border-[#f0b429]/25 whitespace-nowrap">
                             {acc.calculationsCount || 0} فاتورة
                           </span>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          {acc.lastLogin ? (
+                            <span className="text-[12px] text-slate-400 whitespace-nowrap">
+                              {new Date(acc.lastLogin).toLocaleDateString("ar-EG", { year: "numeric", month: "short", day: "numeric" })}
+                              <span className="text-slate-500 mr-1">
+                                {new Date(acc.lastLogin).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="text-[11.5px] text-slate-500">لم يدخل بعد</span>
+                          )}
                         </td>
                         <td className="px-4 py-3.5">
                           <div className="flex gap-1.5">

@@ -28,17 +28,18 @@ export async function POST(request) {
       );
     }
 
-    if (user.attempts <= 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "لقد استنفدت جميع المحاولات المتاحة. يرجى الاتصال بالإدارة لتجديد المحاولات.",
-          remainingAttempts: 0,
-        },
-        { status: 403 },
-      );
-    }
+    // I will rerun the code if needed.
+    // if (user.attempts <= 0) {
+    //   return NextResponse.json(
+    //     {
+    //       success: false,
+    //       error:
+    //         "لقد استنفدت جميع المحاولات المتاحة. يرجى الاتصال بالإدارة لتجديد المحاولات.",
+    //       remainingAttempts: 0,
+    //     },
+    //     { status: 403 },
+    //   );
+    // }
 
     // Perform both operations in one update (atomic as much as possible)
     const updated = await User.findByIdAndUpdate(
