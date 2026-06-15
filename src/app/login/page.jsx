@@ -12,6 +12,7 @@ import {
   LogInIcon,
   WhatsAppIcon,
 } from "@/components/Icons";
+// import ThemeToggle from "@/components/ThemeToggle";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -92,6 +93,11 @@ export default function LoginPage() {
       {/* ── المحتوى الرئيسي ── */}
       <main className="relative z-10 w-full max-w-[460px] px-4 py-6 flex flex-col items-center">
 
+        {/* ── زر تبديل الثيم ── */}
+        {/* <div className="absolute top-4 left-4">
+          <ThemeToggle />
+        </div> */}
+
         {/* ── رأس العلامة التجارية ── */}
         <div className="text-center mb-7">
           <h1 className="text-[22px] font-bold text-[var(--foreground,#171717)] tracking-tight leading-tight m-0">
@@ -103,7 +109,14 @@ export default function LoginPage() {
         </div>
 
         {/* ── البطاقة ── */}
-        <div className="w-full bg-white/[0.82] backdrop-blur-[20px] border border-white/[0.65] rounded-[20px] px-8 pt-9 pb-8 shadow-[0_4px_32px_rgba(37,99,235,0.08),0_1px_4px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.9)]">
+        <div
+          className="w-full backdrop-blur-[20px] rounded-[20px] px-8 pt-9 pb-8"
+          style={{
+            background: "var(--card-bg)",
+            border: "1px solid var(--card-border)",
+            boxShadow: "var(--card-shadow)",
+          }}
+        >
 
           {/* شارة الأمان */}
           <div className="flex justify-center mb-4">
@@ -245,13 +258,19 @@ export default function LoginPage() {
         </div>
 
         {/* رابط إنشاء حساب */}
-        <div className="mt-4 text-center px-5 py-3.5 bg-white/70 backdrop-blur-xl border border-white/50 rounded-[14px]">
+        <div
+          className="mt-4 text-center px-5 py-3.5 backdrop-blur-xl rounded-[14px]"
+          style={{
+            background: "var(--footer-card-bg)",
+            border: "1px solid var(--footer-card-border)",
+          }}
+        >
           <div className="flex items-center justify-center gap-2 flex-wrap">
             <span className="text-[13px] text-[var(--muted,#64748b)]">
               ليس لديك حساب؟
             </span>
             <a
-              href="https://wa.me/201000980788?text=السلام%20عليكم%20اعملى%20حساب%20على%20برنامج%20الارضيات%20باسم ...."
+              href="https://wa.me/201000980788?text=السلام%20عليكم%20اعملى%20حساب%20على%20برنامج%20الارضيات%20.."
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#25D366] no-underline px-3 py-1.5 bg-[#25D366]/[0.08] border border-[#25D366]/20 rounded-lg transition-all duration-200 hover:bg-[#25D366]/[0.15] hover:-translate-y-px"

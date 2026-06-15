@@ -4,8 +4,10 @@
   --font-mono: var(--font-geist-mono);
 }
 
-:root {
-  --background: #ffffff;
+/* ═══ Light Theme (default) ═══ */
+:root,
+html[data-theme="light"] {
+  --background: #f0f6ff;
   --foreground: #171717;
   --primary: #2563eb;
   --primary-foreground: #ffffff;
@@ -19,17 +21,39 @@
   --input: #e2e8f0;
   --ring: #3b82f6;
   --radius: 0.75rem;
+  --muted: #64748b;
+  /* Card variables — used in login & other cards */
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --card-border: rgba(255, 255, 255, 0.65);
+  --card-shadow: 0 4px 32px rgba(37, 99, 235, 0.08), 0 1px 4px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --footer-card-bg: rgba(255, 255, 255, 0.70);
+  --footer-card-border: rgba(255, 255, 255, 0.50);
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #020617;
-    --foreground: #f8fafc;
-    --secondary: #1e293b;
-    --secondary-foreground: #f8fafc;
-    --border: #334155;
-    --input: #334155;
-  }
+/* ═══ Dark Theme — controlled by JS, not browser ═══ */
+html[data-theme="dark"] {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #1e293b;
+  --secondary-foreground: #f1f5f9;
+  --accent: #60a5fa;
+  --accent-foreground: #ffffff;
+  --destructive: #f87171;
+  --destructive-foreground: #ffffff;
+  --border: #334155;
+  --input: #334155;
+  --ring: #60a5fa;
+  --muted: #94a3b8;
+  /* Card variables for dark mode */
+  --card-bg: rgba(30, 41, 59, 0.85);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-shadow: 0 4px 32px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --footer-card-bg: rgba(30, 41, 59, 0.70);
+  --footer-card-border: rgba(255, 255, 255, 0.08);
+  color-scheme: dark;
 }
 
 body {
