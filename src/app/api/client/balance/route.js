@@ -16,11 +16,13 @@ export async function GET(request) {
     const decoded = requireAuth(request);
     
     // التأكد من وجود accountCode داخل الـ Token
+    // إذا لم يكن موجوداً: العميل ليس لديه كود بعد وسيُضاف لاحقاً بواسطة المدير
     if (!decoded.accountCode) {
-      return NextResponse.json(
-        { success: false, error: "لا يوجد كود حساب مرتبط بجلسة الدخول الحالية. يرجى تسجيل الخروج والدخول مجدداً." },
-        { status: 400 }
-      );
+      return NextResponse.json({
+        success: true,
+        hasAccountCode: false,
+        message: "لا يوجد كود حساب مرتبط بحسابك حالياً. سيتم تفعيل الصفحة بمجرد إضافة كود الحساب بواسطة الإدارة.",
+      });
     }
 
     await connectToDatabase();
@@ -47,6 +49,7 @@ export async function GET(request) {
     // 3. إرجاع كافة البيانات المالية والعمليات
     return NextResponse.json({
       success: true,
+      hasAccountCode: true,
       accountCode: decoded.accountCode,
       accountName: account.account,
       dateRange: dateRangeSetting?.value || "",

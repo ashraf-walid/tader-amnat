@@ -28,7 +28,12 @@ export default function ClientBalance() {
       const res = await fetch('/api/client/balance');
       const result = await res.json();
       if (result.success) {
-        setData(result);
+        // العميل ليس لديه كود حساب بعد
+        if (result.hasAccountCode === false) {
+          setData({ hasAccountCode: false, message: result.message });
+        } else {
+          setData(result);
+        }
       } else {
         setError(result.error || 'فشل في جلب بيانات الحساب');
       }
@@ -69,6 +74,30 @@ export default function ClientBalance() {
           >
             <RefreshIcon size={18} />
             إعادة المحاولة
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── حالة: لا يوجد كود حساب مرتبط ─────────────────────────────────────────────
+  if (data?.hasAccountCode === false) {
+    return (
+      <div className="max-w-lg mx-auto p-6 mt-16">
+        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-2xl p-8 flex flex-col items-center text-center space-y-4">
+          <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/20 rounded-full flex items-center justify-center text-amber-500">
+            <InfoIcon size={32} />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-amber-800 dark:text-amber-300 font-bold text-lg">صفحة الرصيد غير مفعّلة بعد</h3>
+            <p className="text-amber-700 dark:text-amber-400 text-sm leading-relaxed">{data.message}</p>
+          </div>
+          <button 
+            onClick={fetchBalance}
+            className="flex items-center gap-2 px-5 py-2 bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-800/30 text-amber-700 dark:text-amber-400 rounded-xl hover:bg-amber-50 dark:hover:bg-slate-700 transition-colors font-medium text-sm"
+          >
+            <RefreshIcon size={16} />
+            إعادة التحميل
           </button>
         </div>
       </div>
