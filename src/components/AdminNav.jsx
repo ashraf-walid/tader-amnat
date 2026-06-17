@@ -85,6 +85,7 @@ const NAV_ITEMS = [
   { href: '/admin', label: 'لوحة الإدارة', icon: NavSettingsIcon, exactMatch: true, roles: ['owner', 'admin'] },
   { href: '/Storagecalculator', label: 'أرضيات', icon: NavMonitorIcon, exactMatch: true, roles: ['owner', 'admin', 'employee', 'client'] },
   { href: '/client/balance', label: 'رصيد الحساب', icon: NavChartIcon, exactMatch: true, roles: ['owner', 'client'] },
+  { href: '/employees', label: 'الموظفين المتاحين', icon: NavFileTextIcon, exactMatch: true, roles: ['owner', 'admin', 'employee', 'client'] },
   { href: '/Storagecalculator/rates', label: 'التعريفه', icon: NavFileTextIcon, exactMatch: true, roles: ['owner', 'admin', 'employee'] },
 ];
 

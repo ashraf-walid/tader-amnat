@@ -230,6 +230,14 @@ export default function AdminPage() {
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [sortBy, setSortBy] = useState("calculationsCount");
   const [sortDir, setSortDir] = useState("desc");
+  // ─── Employee Availability State ────────────────────────────────────────────
+  const [empList, setEmpList] = useState([]);
+  const [empLoading, setEmpLoading] = useState(false);
+  const [empForm, setEmpForm] = useState({ name: "", phone: "", role: "", isActive: true, sortOrder: 0 });
+  const [empModal, setEmpModal] = useState(null); // "addEmp" | "editEmp" | "deleteEmp" | null
+  const [empSelected, setEmpSelected] = useState(null);
+  const [empDeleteConfirm, setEmpDeleteConfirm] = useState("");
+  const [empSaving, setEmpSaving] = useState(false);
 
   const notify = (text, type = "success") => setToast({ text, type });
 
@@ -264,6 +272,56 @@ export default function AdminPage() {
       .catch(() => {}).finally(() => setAL(false));
   };
   useEffect(loadAccounts, []);
+
+  // ─── Employee CRUD ─────────────────────────────────────────────────────────
+  const loadEmployees = () => {
+    setEmpLoading(true);
+    fetch("/api/employees").then(r => r.json()).then(d => { if (d.success) setEmpList(d.employees); })
+      .catch(() => {}).finally(() => setEmpLoading(false));
+  };
+
+  const addEmployee = async () => {
+    if (!empForm.name.trim()) return notify("اسم الموظف مطلوب", "error");
+    if (!empForm.phone.trim() || !/^01[0-9]{9}$/.test(empForm.phone.trim())) return notify("رقم الهاتف غير صحيح", "error");
+    if (!empForm.role.trim()) return notify("المسمى الوظيفي مطلوب", "error");
+    setEmpSaving(true);
+    try {
+      const res = await fetch("/api/employees", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(empForm) });
+      const d = await res.json();
+      d.success ? (notify("تم إضافة الموظف بنجاح"), setEmpModal(null), setEmpForm({ name: "", phone: "", role: "", isActive: true, sortOrder: 0 }), loadEmployees()) : notify(d.error || "خطأ", "error");
+    } catch { notify("فشل الاتصال", "error"); } finally { setEmpSaving(false); }
+  };
+
+  const editEmployee = async () => {
+    if (!empForm.name.trim()) return notify("اسم الموظف مطلوب", "error");
+    if (!empForm.phone.trim() || !/^01[0-9]{9}$/.test(empForm.phone.trim())) return notify("رقم الهاتف غير صحيح", "error");
+    if (!empForm.role.trim()) return notify("المسمى الوظيفي مطلوب", "error");
+    setEmpSaving(true);
+    try {
+      const res = await fetch(`/api/employees/${empSelected._id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(empForm) });
+      const d = await res.json();
+      d.success ? (notify("تم تحديث بيانات الموظف"), setEmpModal(null), loadEmployees()) : notify(d.error || "خطأ", "error");
+    } catch { notify("فشل الاتصال", "error"); } finally { setEmpSaving(false); }
+  };
+
+  const deleteEmployee = async () => {
+    setEmpSaving(true);
+    try {
+      const res = await fetch(`/api/employees/${empSelected._id}`, { method: "DELETE" });
+      const d = await res.json();
+      d.success ? (notify("تم حذف الموظف بنجاح"), setEmpModal(null), setEmpDeleteConfirm(""), loadEmployees()) : notify(d.error || "خطأ", "error");
+    } catch { notify("فشل الاتصال", "error"); } finally { setEmpSaving(false); }
+  };
+
+  const toggleEmployeeActive = async (emp) => {
+    try {
+      const res = await fetch(`/api/employees/${emp._id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isActive: !emp.isActive }) });
+      const d = await res.json();
+      d.success ? (notify(emp.isActive ? `تم إلغاء تفعيل ${emp.name}` : `تم تفعيل ${emp.name}`), loadEmployees()) : notify(d.error || "خطأ", "error");
+    } catch { notify("فشل الاتصال", "error"); }
+  };
+
+  useEffect(loadEmployees, []);
 
   const saveRate = async () => {
     setRS(true);
@@ -409,6 +467,7 @@ export default function AdminPage() {
         <div className="flex gap-2 mb-5 flex-wrap">
           {[
             { id: "accounts", icon: <Icon.Users />, label: "إدارة الحسابات" },
+            { id: "employees", icon: <Icon.Users />, label: "الموظفين" },
             { id: "rate", icon: <Icon.Currency />, label: "سعر الصرف" },
             { id: "data", icon: <Icon.Structure className="ml-0.5" />, label: "بيانات المشروع" },
           ].map(t => (
@@ -571,6 +630,82 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* ═══ تبويب: الموظفين المتاحين ═══ */}
+        {tab === "employees" && (
+          <div className="bg-slate-900 rounded-2xl border border-white/[0.08] overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/[0.07] flex flex-wrap gap-2.5 items-center">
+              <div className="flex-1 min-w-[140px]">
+                <p className="text-sm font-semibold text-slate-300 m-0">إدارة قائمة الموظفين الظاهرين للعملاء</p>
+                <p className="text-[11px] text-slate-500 m-0 mt-0.5">فعّل الموظف المتاح اليوم وألغِ تفعيل غير المتاح</p>
+              </div>
+              <Btn variant="ghost" size="sm" onClick={loadEmployees}><Icon.Refresh /> تحديث</Btn>
+              <Btn variant="primary" size="sm" onClick={() => { setEmpForm({ name: "", phone: "", role: "", isActive: true, sortOrder: 0 }); setEmpModal("addEmp"); }}><Icon.Plus /> إضافة موظف</Btn>
+            </div>
+
+            {empLoading ? (
+              <div className="text-center py-12 text-slate-400"><Spinner size={28} /><br /><br />جاري التحميل...</div>
+            ) : empList.length === 0 ? (
+              <div className="text-center py-12 text-slate-400 text-sm">
+                لا يوجد موظفين — أضف موظفاً جديداً
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse rtl min-w-[600px]">
+                  <thead>
+                    <tr className="bg-white/[0.03]">
+                      <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">الاسم</th>
+                      <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">الهاتف</th>
+                      <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">المسمى</th>
+                      <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">الحالة</th>
+                      <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">الترتيب</th>
+                      <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">الإجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {empList.map((emp, idx) => (
+                      <tr key={emp._id} className={`border-b border-white/5 transition-colors duration-150 hover:bg-blue-500/[0.06] ${idx % 2 ? "bg-white/[0.015]" : ""}`}>
+                        <td className="px-4 py-3.5">
+                          <span className="text-sm font-semibold text-slate-100">{emp.name}</span>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <span className="text-[12px] text-slate-400 ltr text-right block" dir="ltr">{emp.phone}</span>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <span className="text-[12px] text-blue-400 font-medium">{emp.role}</span>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <button onClick={() => toggleEmployeeActive(emp)}
+                            className={`px-2.5 py-[3px] rounded-full text-[11.5px] font-bold cursor-pointer border transition-all duration-150 ${emp.isActive ? "text-emerald-400 bg-emerald-400/10 border-emerald-400/25 hover:bg-emerald-400/20" : "text-red-400 bg-red-400/10 border-red-400/25 hover:bg-red-400/20"}`}>
+                            {emp.isActive ? "● متاح" : "○ غير متاح"}
+                          </button>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <span className="text-[12px] text-slate-400">{emp.sortOrder}</span>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <div className="flex gap-1.5">
+                            <Btn size="xs" variant="ghost" title="تعديل" onClick={() => { setEmpSelected(emp); setEmpForm({ name: emp.name, phone: emp.phone, role: emp.role, isActive: emp.isActive, sortOrder: emp.sortOrder || 0 }); setEmpModal("editEmp"); }}>
+                              <Icon.Edit /> تعديل
+                            </Btn>
+                            <Btn size="xs" variant="danger" title="حذف" onClick={() => { setEmpSelected(emp); setEmpDeleteConfirm(""); setEmpModal("deleteEmp"); }}>
+                              <Icon.Trash /> حذف
+                            </Btn>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {!empLoading && empList.length > 0 && (
+              <div className="px-5 py-2.5 border-t border-white/[0.07] text-xs text-slate-400 text-left">
+                {empList.filter(e => e.isActive).length} متاح من {empList.length} موظف
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ═══ تبويب: بيانات المشروع ═══ */}
         {tab === "data" && (
           <div className="bg-slate-900 rounded-2xl border border-white/[0.08] p-5 flex flex-col gap-4">
@@ -656,6 +791,62 @@ export default function AdminPage() {
               <Btn variant="success" onClick={renewAttempts} disabled={isSaving || !newAttempts}>
                 {isSaving ? <Spinner /> : <Icon.Check />}
                 {isSaving ? "جاري المنح..." : "منح المحاولات"}
+              </Btn>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* ═══ Employee Modals ═══ */}
+      <Modal open={empModal === "addEmp" || empModal === "editEmp"} onClose={() => setEmpModal(null)} title={empModal === "addEmp" ? "إضافة موظف جديد" : "تعديل بيانات الموظف"}>
+        <div className="flex flex-col gap-3.5">
+          <Field label="اسم الموظف" icon={Icon.User}>
+            <Input value={empForm.name} onChange={(e) => setEmpForm(f => ({ ...f, name: e.target.value }))} placeholder="أدخل اسم الموظف" />
+          </Field>
+          <Field label="رقم الهاتف" icon={Icon.Phone}>
+            <Input value={empForm.phone} onChange={(e) => setEmpForm(f => ({ ...f, phone: e.target.value }))} placeholder="01xxxxxxxxx" />
+          </Field>
+          <Field label="المسمى الوظيفي" icon={Icon.Briefcase}>
+            <Input value={empForm.role} onChange={(e) => setEmpForm(f => ({ ...f, role: e.target.value }))} placeholder="مثال: خدمة عملاء، محاسب" />
+          </Field>
+          <Field label="ترتيب الظهور (اختياري)" icon={Icon.Hash}>
+            <Input type="number" min="0" step="1" value={empForm.sortOrder} onChange={(e) => setEmpForm(f => ({ ...f, sortOrder: Number(e.target.value) }))} placeholder="0" suffix="ترتيب" />
+          </Field>
+          <div className="flex items-center justify-between bg-white/[0.04] rounded-lg px-3 py-2.5 border border-white/[0.08]">
+            <span className="text-xs font-semibold text-slate-400">متاح حالياً (يظهر للعملاء)</span>
+            <button onClick={() => setEmpForm(f => ({ ...f, isActive: !f.isActive }))}
+              className={`relative w-11 h-6 rounded-full cursor-pointer border-none transition-colors duration-200 ${empForm.isActive ? "bg-emerald-500" : "bg-slate-600"}`}>
+              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all duration-200 ${empForm.isActive ? "right-0.5" : "right-[22px]"}`} />
+            </button>
+          </div>
+          <div className="flex gap-2.5 mt-1.5 justify-end">
+            <Btn variant="ghost" onClick={() => setEmpModal(null)}>إلغاء</Btn>
+            <Btn variant="primary" onClick={empModal === "addEmp" ? addEmployee : editEmployee} disabled={empSaving}>
+              {empSaving ? <Spinner /> : <Icon.Check />}
+              {empSaving ? "جاري الحفظ..." : empModal === "addEmp" ? "إضافة الموظف" : "حفظ التعديلات"}
+            </Btn>
+          </div>
+        </div>
+      </Modal>
+      <Modal open={empModal === "deleteEmp"} onClose={() => setEmpModal(null)} title="تأكيد حذف الموظف">
+        {empSelected && (
+          <div>
+            <div className="bg-red-400/[0.08] border border-red-400/20 rounded-[10px] px-4 py-3.5 mb-[18px]">
+              <p className="m-0 text-sm text-red-400 leading-relaxed">
+                هل أنت متأكد من حذف الموظف <strong className="text-slate-100">«{empSelected.name}»</strong>؟<br />
+                <span className="text-[12.5px] text-slate-400">هذا الإجراء لا يمكن التراجع عنه.</span>
+              </p>
+            </div>
+            <p className="text-[13px] text-slate-400 mb-2.5">
+              اكتب <strong className="text-slate-100">{empSelected.name}</strong> للتأكيد:
+            </p>
+            <input type="text" value={empDeleteConfirm} onChange={(e) => setEmpDeleteConfirm(e.target.value)} placeholder={empSelected.name}
+              className="admin-input-danger w-full bg-slate-950 border-[1.5px] border-red-400/30 rounded-lg text-slate-100 text-sm rtl outline-none py-2.5 px-3 mb-[18px] box-border" />
+            <div className="flex gap-2.5 justify-end">
+              <Btn variant="ghost" onClick={() => setEmpModal(null)}>إلغاء</Btn>
+              <Btn variant="danger" disabled={empDeleteConfirm !== empSelected.name || empSaving} onClick={deleteEmployee}>
+                {empSaving ? <Spinner /> : <Icon.Trash />}
+                {empSaving ? "جاري الحذف..." : "تأكيد الحذف"}
               </Btn>
             </div>
           </div>
