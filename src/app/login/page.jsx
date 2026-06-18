@@ -34,7 +34,7 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: username.trim(), password }),
+        body: JSON.stringify({ username: username.trim(), password, remember }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
@@ -225,7 +225,7 @@ export default function LoginPage() {
               />
               تذكّرني
             </label>
-            <a href="#" className="text-[13px] text-[var(--primary,#2563eb)] no-underline font-medium">
+            <a href="https://wa.me/201000980788?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%D8%8C%20%D8%A3%D8%B1%D9%8A%D8%AF%20%D8%A7%D8%B3%D8%AA%D8%B9%D8%A7%D8%AF%D8%A9%20%D9%83%D9%84%D9%85%D8%A9%20%D8%A7%D9%84%D9%85%D8%B1%D9%88%D8%B1" target="_blank" rel="noopener noreferrer" className="text-[13px] text-[var(--primary,#2563eb)] no-underline font-medium hover:underline">
               نسيت كلمة المرور؟
             </a>
           </div>

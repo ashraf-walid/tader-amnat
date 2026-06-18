@@ -13,7 +13,11 @@ export const dynamic = "force-dynamic";
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { username, password } = body;
+    const { username, password, remember } = body;
+
+    // Session duration: 14 days if "remember me", otherwise 7 days
+    const sessionDays = remember ? 14 : 7;
+    const sessionSeconds = sessionDays * 24 * 60 * 60;
 
     // Validation
     if (!username || !password) {
@@ -22,7 +26,7 @@ export async function POST(request) {
           success: false,
           error: "اسم المستخدم وكلمة المرور مطلوبان",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -39,7 +43,7 @@ export async function POST(request) {
           success: false,
           error: "اسم المستخدم أو كلمة المرور غير صحيحة",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -50,7 +54,7 @@ export async function POST(request) {
           success: false,
           error: "هذا الحساب غير نشط",
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -67,7 +71,7 @@ export async function POST(request) {
           error: "اسم المستخدم أو كلمة المرور غير صحيحة",
           remainingAttempts: user.attempts,
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -84,7 +88,7 @@ export async function POST(request) {
         accountCode: user.accountCode,
       },
       JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: `${sessionDays}d` },
     );
 
     // Return success with user data
@@ -112,7 +116,7 @@ export async function POST(request) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      maxAge: sessionSeconds, // 7 or 14 days based on "remember me"
       path: "/",
     });
 
@@ -125,7 +129,7 @@ export async function POST(request) {
         error: "حدث خطأ أثناء تسجيل الدخول",
         message: error.message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

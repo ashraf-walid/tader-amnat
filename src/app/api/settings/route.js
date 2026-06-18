@@ -36,7 +36,12 @@ export async function GET(req) {
     console.log("📦 Exchange rate cached:", rateValue);
 
     return NextResponse.json(
-      { success: true, exchangeRate: rateValue, fromCache: false },
+      {
+        success: true,
+        exchangeRate: rateValue,
+        updatedAt: rateSetting?.updatedAt || null,
+        fromCache: false,
+      },
       {
         headers: {
           "Cache-Control": "public, max-age=300, stale-while-revalidate=60",
@@ -80,11 +85,16 @@ export async function PUT(req) {
     console.log("🗑️ Exchange rate cache invalidated");
 
     // حفظ القيمة الجديدة في الذاكرة
-    cache.set(CacheKeys.EXCHANGE_RATE, rateSetting.value, CacheTTL.EXCHANGE_RATE);
+    cache.set(
+      CacheKeys.EXCHANGE_RATE,
+      rateSetting.value,
+      CacheTTL.EXCHANGE_RATE,
+    );
 
     return NextResponse.json({
       success: true,
       exchangeRate: rateSetting.value,
+      updatedAt: rateSetting.updatedAt,
     });
   } catch (error) {
     if (error.name === "AuthError") {

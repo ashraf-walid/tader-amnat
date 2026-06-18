@@ -25,9 +25,11 @@ html[data-theme="light"] {
   /* Card variables — used in login & other cards */
   --card-bg: rgba(255, 255, 255, 0.85);
   --card-border: rgba(255, 255, 255, 0.65);
-  --card-shadow: 0 4px 32px rgba(37, 99, 235, 0.08), 0 1px 4px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  --footer-card-bg: rgba(255, 255, 255, 0.70);
-  --footer-card-border: rgba(255, 255, 255, 0.50);
+  --card-shadow:
+    0 4px 32px rgba(37, 99, 235, 0.08), 0 1px 4px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --footer-card-bg: rgba(255, 255, 255, 0.7);
+  --footer-card-border: rgba(255, 255, 255, 0.5);
   color-scheme: light;
 }
 
@@ -50,8 +52,10 @@ html[data-theme="dark"] {
   /* Card variables for dark mode */
   --card-bg: rgba(30, 41, 59, 0.85);
   --card-border: rgba(255, 255, 255, 0.08);
-  --card-shadow: 0 4px 32px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  --footer-card-bg: rgba(30, 41, 59, 0.70);
+  --card-shadow:
+    0 4px 32px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --footer-card-bg: rgba(30, 41, 59, 0.7);
   --footer-card-border: rgba(255, 255, 255, 0.08);
   color-scheme: dark;
 }
@@ -296,9 +300,18 @@ input[type="number"] {
 }
 
 @keyframes pwaCheckPop {
-  0%   { transform: scale(0.5); opacity: 0; }
-  60%  { transform: scale(1.2); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .pwa-check-pop {
@@ -309,4 +322,13 @@ input[type="number"] {
 .pwa-install-btn:hover {
   background: rgba(139, 92, 246, 0.18) !important;
   border-color: rgba(139, 92, 246, 0.4) !important;
-}
+}
+
+/* إخفاء شريط التمرير الأفقي في شريط التنقل */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

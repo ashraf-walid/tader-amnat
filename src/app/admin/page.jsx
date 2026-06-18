@@ -151,6 +151,10 @@ function AccountForm({ initial, onSubmit, onCancel, isSaving }) {
         </div>
       </Field>
 
+      <p className="text-[11px] text-amber-400/80 bg-amber-400/[0.06] border border-amber-400/15 rounded-lg px-3 py-2 leading-relaxed -mt-1">
+        ⚠️ سجّل كلمة المرور بدقة — يجب على المستخدم إدخالها مطابقة تماماً (حرفاً حرفاً) عند تسجيل الدخول.
+      </p>
+
       <Field label="رقم الهاتف" icon={Icon.Phone} error={errors.phone}>
         <Input value={form.phone} onChange={set("phone")} placeholder="01xxxxxxxxx" />
       </Field>
@@ -212,8 +216,10 @@ function Toast({ msg, onDone }) {
 // ─── الصفحة الرئيسية ──────────────────────────────────────────────────────────
 export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userRole, setUserRole] = useState(null);
   const [authLoaded, setAuthLoaded] = useState(false);
   const [rate, setRate] = useState("");
+  const [rateUpdatedAt, setRateUpdatedAt] = useState(null);
   const [rateLoading, setRL] = useState(true);
   const [rateSaving, setRS] = useState(false);
   const [accounts, setAccounts] = useState([]);
@@ -256,13 +262,13 @@ export default function AdminPage() {
 
   useEffect(() => {
     fetch("/api/auth/me").then((res) => res.json()).then((data) => {
-      if (data.success && (data.user.role === "admin" || data.user.role === "owner")) setIsAdmin(true);
+      if (data.success && (data.user.role === "admin" || data.user.role === "owner")) { setIsAdmin(true); setUserRole(data.user.role); }
       else window.location.href = "/login";
     }).catch(() => { window.location.href = "/login"; }).finally(() => setAuthLoaded(true));
   }, []);
 
   useEffect(() => {
-    fetch("/api/settings").then((r) => r.json()).then((d) => { if (d.success) setRate(d.exchangeRate); })
+    fetch("/api/settings").then((r) => r.json()).then((d) => { if (d.success) { setRate(d.exchangeRate); setRateUpdatedAt(d.updatedAt || null); } })
       .catch(() => {}).finally(() => setRL(false));
   }, []);
 
@@ -328,7 +334,7 @@ export default function AdminPage() {
     try {
       const res = await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ exchangeRate: Number(rate) }) });
       const d = await res.json();
-      d.success ? notify("تم حفظ سعر الصرف بنجاح") : notify(d.error || "خطأ", "error");
+      d.success ? (notify("تم حفظ سعر الصرف بنجاح"), setRateUpdatedAt(d.updatedAt || null)) : notify(d.error || "خطأ", "error");
     } catch { notify("فشل الاتصال بالخادم", "error"); } finally { setRS(false); }
   };
 
@@ -578,11 +584,11 @@ export default function AdminPage() {
                         <td className="px-4 py-3.5">
                           <div className="flex gap-1.5">
                             <Btn size="xs" variant="ghost" title="تعديل" onClick={() => { setSelected(acc); setModal("edit"); }}>
-                              <Icon.Edit /> تعديل
+                              <Icon.Edit />
                             </Btn>
-                            {acc.role !== "owner" && (
+                            {userRole === "owner" && acc.role !== "owner" && (
                               <Btn size="xs" variant="danger" title="حذف" onClick={() => { setSelected(acc); setDeleteConfirm(""); setModal("delete"); }}>
-                                <Icon.Trash /> حذف
+                                <Icon.Trash />
                               </Btn>
                             )}
                           </div>
@@ -608,9 +614,14 @@ export default function AdminPage() {
               <div className="text-[#f0b429]"><Icon.Currency /></div>
               <h2 className="text-lg font-bold m-0">إدارة سعر الصرف</h2>
             </div>
-            <p className="text-[13px] text-slate-400 mb-6 leading-relaxed">
+            <p className="text-[13px] text-slate-400 mb-3 leading-relaxed">
               سعر الصرف الرسمي المستخدم في حساب فواتير أرضيات الحاويات الواردة.
             </p>
+            <a href="https://www.cbe.org.eg/ar/economic-research/statistics/cbe-exchange-rates" target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-2 text-[11.5px] text-sky-400 hover:text-sky-300 bg-sky-400/[0.06] hover:bg-sky-400/10 border border-sky-400/15 rounded-lg px-3 py-2 mb-6 transition-colors duration-150 no-underline">
+              <span className="text-[13px]">🏦</span>
+              <span>رابط صفحة: البنك المركزي</span>
+            </a>
             {rateLoading ? <div className="text-center p-6 text-slate-400"><Spinner /></div> : (
               <div className="flex flex-col gap-[18px]">
                 <Field label="سعر الصرف الحالي  (ج.م / دولار)" icon={Icon.Currency}>
@@ -624,6 +635,11 @@ export default function AdminPage() {
                   {rateSaving ? <Spinner /> : <Icon.Check />}
                   {rateSaving ? "جاري الحفظ..." : "حفظ سعر الصرف"}
                 </Btn>
+                {rateUpdatedAt && (
+                  <p className="text-[11.5px] text-slate-500 text-center m-0">
+                    آخر تعديل: {new Date(rateUpdatedAt).toLocaleDateString("ar-EG", { weekday: "long", year: "numeric", month: "2-digit", day: "2-digit" })} — {new Date(rateUpdatedAt).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                )}
               </div>
             )}
 
@@ -687,9 +703,11 @@ export default function AdminPage() {
                             <Btn size="xs" variant="ghost" title="تعديل" onClick={() => { setEmpSelected(emp); setEmpForm({ name: emp.name, phone: emp.phone, role: emp.role, isActive: emp.isActive, sortOrder: emp.sortOrder || 0 }); setEmpModal("editEmp"); }}>
                               <Icon.Edit /> تعديل
                             </Btn>
-                            <Btn size="xs" variant="danger" title="حذف" onClick={() => { setEmpSelected(emp); setEmpDeleteConfirm(""); setEmpModal("deleteEmp"); }}>
-                              <Icon.Trash /> حذف
-                            </Btn>
+                            {userRole === "owner" && (
+                              <Btn size="xs" variant="danger" title="حذف" onClick={() => { setEmpSelected(emp); setEmpDeleteConfirm(""); setEmpModal("deleteEmp"); }}>
+                                <Icon.Trash /> حذف
+                              </Btn>
+                            )}
                           </div>
                         </td>
                       </tr>

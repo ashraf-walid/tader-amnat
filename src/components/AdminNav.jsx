@@ -81,8 +81,8 @@ function InstallSuccessToast({ visible }) {
 }
 
 const NAV_ITEMS = [
-  { href: '/', label: 'الحسابات', icon: NavChartIcon, exactMatch: true, roles: ['owner', 'admin', 'employee'] },
   { href: '/admin', label: 'لوحة الإدارة', icon: NavSettingsIcon, exactMatch: true, roles: ['owner', 'admin'] },
+  { href: '/', label: 'الحسابات', icon: NavChartIcon, exactMatch: true, roles: ['owner', 'admin', 'employee'] },
   { href: '/Storagecalculator', label: 'أرضيات', icon: NavMonitorIcon, exactMatch: true, roles: ['owner', 'admin', 'employee', 'client'] },
   { href: '/client/balance', label: 'رصيد الحساب', icon: NavChartIcon, exactMatch: true, roles: ['owner', 'client'] },
   { href: '/employees', label: 'الموظفين المتاحين', icon: NavFileTextIcon, exactMatch: true, roles: ['owner', 'admin', 'employee', 'client'] },
@@ -227,7 +227,7 @@ export default function AdminNav() {
           </button>
 
           {/* ── روابط التنقل (ديسكتوب) ── */}
-          <div className="hidden md:flex items-center gap-0.5 flex-1 overflow-hidden">
+          <div className="hidden md:flex items-center gap-0.5 flex-1 min-w-0 overflow-x-auto scrollbar-hide">
             {NAV_ITEMS.filter(item => item.roles.includes(user.role)).map(item => {
               const active = isActive(item);
               const IconComp = item.icon;
@@ -256,10 +256,10 @@ export default function AdminNav() {
             })}
           </div>
 
-          {/* مساحة مرنة */}
-          <div className="flex-1" />
+          {/* فاصل مرن — يدفع زر المستخدم لليمين على الجوال فقط */}
+          <div className="flex-1 md:hidden" />
 
-          {/* ── زر معلومات المستخدم + dropdown (ديسكتوب) ── */}
+          {/* ── زر معلومات المستخدم + dropdown ── */}
           <div ref={userMenuRef} className="relative shrink-0">
             <button
               onClick={() => setUserMenuOpen(v => !v)}
