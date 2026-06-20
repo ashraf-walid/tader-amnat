@@ -1,12 +1,24 @@
 'use client';
 
-export default function CargoTypeSelector({ cargoType, setCargoType }) {
+/**
+ * CargoTypeSelector
+ * Props:
+ *   sizeLabel       — e.g. "٢٠ قدم" | "٤٠ قدم"
+ *   cargoType       — current cargo type value
+ *   setCargoType    — setter
+ *   count           — number of containers for this size (hides when 0)
+ */
+export default function CargoTypeSelector({ sizeLabel, cargoType, setCargoType, count }) {
+  // Hide entirely when no containers of this size
+  if (count === 0) return null;
+
   return (
     <div className="bg-[#111827] border border-white/[0.12] rounded-[20px] p-6 mb-4">
       <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-[#4a5568] mb-2">
         <span className="w-0.5 h-3.5 bg-[#f0b429] rounded-sm" />
-        نوع البضاعة
+        نوع بضاعة {sizeLabel}
       </div>
+
       <div className="flex gap-2 flex-wrap mb-2">
         {[
           ["FULL", "عادية"],
@@ -26,6 +38,7 @@ export default function CargoTypeSelector({ cargoType, setCargoType }) {
           </button>
         ))}
       </div>
+
       {cargoType === "DANGEROUS" && (
         <p className="text-[11px] text-amber-400/80 mt-1 mb-1 flex items-center gap-1.5">
           <span>⚠</span>

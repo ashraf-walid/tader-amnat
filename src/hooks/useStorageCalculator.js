@@ -19,10 +19,10 @@ function calculateLiveDays(arrDate, relDate) {
   return d > 0 ? d : null;
 }
 
-// Calculate ns multiplier
-function calculateNsMultiplier(cargoType, nonStdType) {
+// Calculate ns multiplier for a given size
+function calculateNsMultiplier(cargoType, nonStdType, sizeCfg) {
   if (cargoType === "NON_STANDARD") {
-    return STORAGE_CONFIG.IMPORT.TWENTY_FT.NON_STANDARD[nonStdType]?.RATE_MULTIPLIER || 1;
+    return sizeCfg?.NON_STANDARD?.[nonStdType]?.RATE_MULTIPLIER || 1;
   }
   return 1;
 }
@@ -34,7 +34,14 @@ export function useStorageCalculator(adminExchangeRate) {
   const [billingType, setBillingType] = useState("INITIAL");
   const [twentyCount, setTwentyCount] = useState(1);
   const [fortyCount, setFortyCount] = useState(0);
-  const [cargoType, setCargoType] = useState("FULL");
+
+  // ── Per-size cargo type ──
+  const [twentyCargoType, setTwentyCargoType] = useState("FULL");
+  const [fortyCargoType, setFortyCargoType] = useState("FULL");
+
+  // ── Per-size non-standard sub-type ──
+  const [nonStdType20, setNonStdType20] = useState("OOG");
+  const [nonStdType40, setNonStdType40] = useState("OOG");
 
   // ── Exchange rate ──
   const [isEditingRate, setIsEditingRate] = useState(false);
@@ -53,13 +60,15 @@ export function useStorageCalculator(adminExchangeRate) {
   // ── Advanced / secondary state ──
   const [advOpen, setAdvOpen] = useState(false);
   const [prevDays, setPrevDays] = useState(0);
-  const [nonStdType, setNonStdType] = useState("OOG");
-  const [isDangerous, setIsDangerous] = useState(false);
 
   // ── New Appended Features ──
   const [isHolidayRelease, setIsHolidayRelease] = useState(false);
   const [hasCargoStripping, setHasCargoStripping] = useState(false);
-  const [hasDangerYard, setHasDangerYard] = useState(false);
+
+  // ── Per-size danger yard ──
+  const [hasDangerYard20, setHasDangerYard20] = useState(false);
+  const [hasDangerYard40, setHasDangerYard40] = useState(false);
+
   const [hasCargoStorage, setHasCargoStorage] = useState(false);
   const [cargoExitDate, setCargoExitDate] = useState(null);
   const [isExternalStorage, setIsExternalStorage] = useState(false);
@@ -76,14 +85,26 @@ export function useStorageCalculator(adminExchangeRate) {
 
   // Derived state
   const days = calculateLiveDays(arrDate, relDate);
-  const nsMultiplier = calculateNsMultiplier(cargoType, nonStdType);
+
+  // Per-size multipliers (using respective size config)
+  const nsMultiplier20 = calculateNsMultiplier(
+    twentyCargoType, nonStdType20, STORAGE_CONFIG.IMPORT.TWENTY_FT
+  );
+  const nsMultiplier40 = calculateNsMultiplier(
+    fortyCargoType, nonStdType40, STORAGE_CONFIG.IMPORT.FORTY_FT
+  );
+
+  // For backward compat in AdvancedOptions — use 20ft as primary for shared services display
+  const nsMultiplier = nsMultiplier20;
+
   const hasAdvanced =
     billingType === "RENEWAL" ||
-    cargoType !== "FULL" ||
-    isDangerous ||
+    twentyCargoType !== "FULL" ||
+    fortyCargoType !== "FULL" ||
     hasCargoStripping ||
     hasCargoStorage ||
-    hasDangerYard ||
+    hasDangerYard20 ||
+    hasDangerYard40 ||
     isHolidayRelease ||
     isExternalStorage ||
     isLCLStorage ||
@@ -130,7 +151,10 @@ export function useStorageCalculator(adminExchangeRate) {
     setRelDate(new Date());
     setTwentyCount(1);
     setFortyCount(0);
-    setCargoType("FULL");
+    setTwentyCargoType("FULL");
+    setFortyCargoType("FULL");
+    setNonStdType20("OOG");
+    setNonStdType40("OOG");
     setPrevDays(0);
     setCargoExitDate(null);
     setIsLCLStorage(false);
@@ -138,25 +162,25 @@ export function useStorageCalculator(adminExchangeRate) {
     setHasCargoStorage(false);
     setIsExternalStorage(false);
     setIsHolidayRelease(false);
-    setHasDangerYard(false);
-    setNonStdType("OOG");
+    setHasDangerYard20(false);
+    setHasDangerYard40(false);
     setServices({});
     setServiceQuantities({});
   }
 
   // Calculate invoice
   const calculate = useCallback(async () => {
-    setError(""); 
+    setError("");
     setResult(null);
-    
-    if (!arrDate || !relDate) { 
-      setError("الرجاء إدخال تاريخ الوصول والصرف."); 
-      return; 
+
+    if (!arrDate || !relDate) {
+      setError("الرجاء إدخال تاريخ الوصول والصرف.");
+      return;
     }
-    
-    if (twentyCount <= 0 && fortyCount <= 0) { 
-      setError("الرجاء إدخال عدد الحاويات (20 أو 40 قدم)."); 
-      return; 
+
+    if (twentyCount <= 0 && fortyCount <= 0) {
+      setError("الرجاء إدخال عدد الحاويات (20 أو 40 قدم).");
+      return;
     }
 
     // التحقق من تاريخ خروج المشمول
@@ -193,10 +217,9 @@ export function useStorageCalculator(adminExchangeRate) {
       const arrStr = format(arrDate, 'yyyy-MM-dd');
       const relStr = format(relDate, 'yyyy-MM-dd');
 
-      // حساب أيام تخزين الحاوية (من arrivalDate إلى releaseDate)
       const daysCalc = maxDays;
 
-      // حساب أيام تخزين المشمول (من cargoExitDate إلى releaseDate)
+      // حساب أيام تخزين المشمول
       let cargoDays = 0;
       if (hasCargoStorage && cargoExitDate) {
         const cargoExit = new Date(cargoExitDate);
@@ -208,16 +231,14 @@ export function useStorageCalculator(adminExchangeRate) {
       }
 
       const containerGroups = [];
-      const isDangerousCargo = cargoType === "DANGEROUS";
       const totalConts = twentyCount + fortyCount;
 
       // Extract quantities for special services
       const strippedQty = serviceQuantities['stripping'] !== undefined ? Number(serviceQuantities['stripping']) : totalConts;
       const holidayQty = serviceQuantities['holiday'] !== undefined ? Number(serviceQuantities['holiday']) : totalConts;
-      const dangerYardQty = serviceQuantities['dangeryard'] !== undefined ? Number(serviceQuantities['dangeryard']) : totalConts;
       const cargoStorageQty = serviceQuantities['cargostorage'] !== undefined ? Number(serviceQuantities['cargostorage']) : totalConts;
 
-      // Distribute stripping qty (prioritize 40ft as standard, then 20ft)
+      // Distribute stripping qty (prioritize 40ft, then 20ft)
       let remStripped = strippedQty;
       const stripping40 = fortyCount > 0 ? Math.min(remStripped, fortyCount) : 0;
       remStripped -= stripping40;
@@ -229,26 +250,26 @@ export function useStorageCalculator(adminExchangeRate) {
       remCargoStorage -= cargoStorage40;
       const cargoStorage20 = twentyCount > 0 ? Math.min(remCargoStorage, twentyCount) + Math.max(0, remCargoStorage - twentyCount) : remCargoStorage;
 
-      // Prepare 20-foot container data
+      // ── 20-foot container group ──
       if (twentyCount > 0) {
         const baseConfig = STORAGE_CONFIG.IMPORT.TWENTY_FT;
         let surchargeConfig = null;
         let rateMultiplier = 1;
 
-        if (cargoType === "REEFER") {
+        if (twentyCargoType === "REEFER") {
           surchargeConfig = baseConfig.REEFER;
-        } else if (cargoType === "NON_STANDARD") {
-          rateMultiplier = baseConfig.NON_STANDARD[nonStdType].RATE_MULTIPLIER;
+        } else if (twentyCargoType === "NON_STANDARD") {
+          rateMultiplier = baseConfig.NON_STANDARD[nonStdType20]?.RATE_MULTIPLIER || 1;
         }
 
         containerGroups.push({
           sizeLabel: "٢٠ قدم",
           count: twentyCount,
-          config: { ...baseConfig.FULL, CARGO_SERVICE_FEE: baseConfig.CARGO_SERVICE_FEE * nsMultiplier },
-          dangerousConfig: { ...baseConfig.DANGEROUS, CARGO_SERVICE_FEE: baseConfig.CARGO_SERVICE_FEE * nsMultiplier },
+          config: { ...baseConfig.FULL, CARGO_SERVICE_FEE: baseConfig.CARGO_SERVICE_FEE * nsMultiplier20 },
+          dangerousConfig: { ...baseConfig.DANGEROUS, CARGO_SERVICE_FEE: baseConfig.CARGO_SERVICE_FEE * nsMultiplier20 },
           surchargeConfig,
           rateMultiplier,
-          isDangerous: isDangerousCargo,
+          isDangerous: twentyCargoType === "DANGEROUS",
           hasCargoService: hasCargoStripping && stripping20 > 0,
           cargoServiceCount: stripping20,
           hasCargoStorage: hasCargoStorage && cargoStorage20 > 0,
@@ -256,26 +277,26 @@ export function useStorageCalculator(adminExchangeRate) {
         });
       }
 
-      // Prepare 40-foot container data
+      // ── 40-foot container group ──
       if (fortyCount > 0) {
         const baseConfig = STORAGE_CONFIG.IMPORT.FORTY_FT;
         let surchargeConfig = null;
         let rateMultiplier = 1;
 
-        if (cargoType === "REEFER") {
+        if (fortyCargoType === "REEFER") {
           surchargeConfig = baseConfig.REEFER;
-        } else if (cargoType === "NON_STANDARD") {
-          rateMultiplier = baseConfig.NON_STANDARD[nonStdType].RATE_MULTIPLIER;
+        } else if (fortyCargoType === "NON_STANDARD") {
+          rateMultiplier = baseConfig.NON_STANDARD[nonStdType40]?.RATE_MULTIPLIER || 1;
         }
 
         containerGroups.push({
           sizeLabel: "٤٠ قدم",
           count: fortyCount,
-          config: { ...baseConfig.FULL, CARGO_SERVICE_FEE: baseConfig.CARGO_SERVICE_FEE * nsMultiplier },
-          dangerousConfig: { ...baseConfig.DANGEROUS, CARGO_SERVICE_FEE: baseConfig.CARGO_SERVICE_FEE * nsMultiplier },
+          config: { ...baseConfig.FULL, CARGO_SERVICE_FEE: baseConfig.CARGO_SERVICE_FEE * nsMultiplier40 },
+          dangerousConfig: { ...baseConfig.DANGEROUS, CARGO_SERVICE_FEE: baseConfig.CARGO_SERVICE_FEE * nsMultiplier40 },
           surchargeConfig,
           rateMultiplier,
-          isDangerous: isDangerousCargo,
+          isDangerous: fortyCargoType === "DANGEROUS",
           hasCargoService: hasCargoStripping && stripping40 > 0,
           cargoServiceCount: stripping40,
           hasCargoStorage: hasCargoStorage && cargoStorage40 > 0,
@@ -283,24 +304,21 @@ export function useStorageCalculator(adminExchangeRate) {
         });
       }
 
-      // Apply special service rules if holiday release is selected
+      // Build selected services list
       const selectedServices = SERVICES_LIST.filter(s => services[s.id]).map(s => {
-        let finalRate = s.rate * nsMultiplier;
+        let finalRate = s.rate * nsMultiplier20; // use 20ft multiplier as baseline for shared services
 
-        // Calculate variable transport rate based on size
         if (s.id === 'yard') {
           const shiftCfg = STORAGE_CONFIG.SERVICES.SHIFTING.YARD_TO_YARD;
           const totalC = twentyCount + fortyCount;
           if (totalC > 0) {
-            // Weighted rate based on policy size distribution with non-standard multiplier applied
-            finalRate = ((shiftCfg.rate20 * twentyCount + shiftCfg.rate40 * fortyCount) / totalC) * nsMultiplier;
+            finalRate = (
+              (shiftCfg.rate20 * twentyCount * nsMultiplier20 + shiftCfg.rate40 * fortyCount * nsMultiplier40) / totalC
+            );
           } else {
-            finalRate = shiftCfg.rate40 * nsMultiplier; // default
+            finalRate = shiftCfg.rate40 * nsMultiplier40;
           }
-
-          if (isHolidayRelease) {
-            finalRate = finalRate * 1.5;
-          }
+          if (isHolidayRelease) finalRate *= 1.5;
         }
 
         return {
@@ -308,7 +326,7 @@ export function useStorageCalculator(adminExchangeRate) {
           rate: finalRate,
           quantity: serviceQuantities[s.id] !== undefined && serviceQuantities[s.id] !== ""
             ? Number(serviceQuantities[s.id])
-            : (twentyCount + fortyCount)
+            : totalConts
         };
       });
 
@@ -321,13 +339,27 @@ export function useStorageCalculator(adminExchangeRate) {
         });
       }
 
-      // Calculate danger yard storage (tiered) if enabled
+      // ── Per-size danger yard calculation ──
       let dangerYardUSD = 0;
       let dangerYardBreakdown = [];
-      if (hasDangerYard) {
+
+      const hasDangerYardAny = hasDangerYard20 || hasDangerYard40;
+
+      if (hasDangerYardAny) {
         const dyConfig = STORAGE_CONFIG.SERVICES.DANGER_YARD;
         const dyRes = calculateStorageFee(daysCalc, dyConfig, {});
-        dangerYardUSD = dyRes.storageFeeUSD * dangerYardQty;
+
+        const dangerYardQty20 = serviceQuantities['dangeryard20'] !== undefined
+          ? Number(serviceQuantities['dangeryard20'])
+          : (hasDangerYard20 ? twentyCount : 0);
+
+        const dangerYardQty40 = serviceQuantities['dangeryard40'] !== undefined
+          ? Number(serviceQuantities['dangeryard40'])
+          : (hasDangerYard40 ? fortyCount : 0);
+
+        const totalDangerQty = dangerYardQty20 + dangerYardQty40;
+
+        dangerYardUSD = dyRes.storageFeeUSD * totalDangerQty;
         dangerYardBreakdown = dyRes.breakdown;
       }
 
@@ -340,13 +372,13 @@ export function useStorageCalculator(adminExchangeRate) {
           isExternalStorage,
           isLCLStorage,
           additionalServices: selectedServices,
-          isDangerous: isDangerousCargo,
+          isDangerous: twentyCargoType === "DANGEROUS" || fortyCargoType === "DANGEROUS",
           isHolidayRelease,
           cargoStorageDays: cargoDays
         }
       );
 
-      // Override cargo stripping cost if we're on a holiday release (+50%)
+      // Override cargo stripping cost if holiday release (+50%)
       if (isHolidayRelease && hasCargoStripping) {
         invoice.usd.cargoServiceFee = invoice.usd.cargoServiceFee * 1.5;
         invoice.usd.subtotal =
@@ -368,10 +400,9 @@ export function useStorageCalculator(adminExchangeRate) {
       }
 
       // Merge danger yard cost into final invoice
-      if (hasDangerYard && dangerYardUSD > 0) {
-        const dyFee = dangerYardUSD;
-        invoice.usd.dangerYardFee = dyFee;
-        invoice.usd.subtotal += dyFee;
+      if (hasDangerYardAny && dangerYardUSD > 0) {
+        invoice.usd.dangerYardFee = dangerYardUSD;
+        invoice.usd.subtotal += dangerYardUSD;
         if (dangerYardBreakdown.length) {
           invoice.details.dangerYardBreakdown = dangerYardBreakdown;
         }
@@ -383,16 +414,18 @@ export function useStorageCalculator(adminExchangeRate) {
         invoice.egp.vatAmount = vatAmount2;
         invoice.egp.total = Math.ceil(newEgpSubtotal2 + vatAmount2 + martyrStamp2);
       }
-      
+
       setResult(invoice);
     } catch (err) {
       setError(err.message);
     }
   }, [
-    arrDate, relDate, billingType, twentyCount, fortyCount, cargoType,
+    arrDate, relDate, billingType, twentyCount, fortyCount,
+    twentyCargoType, fortyCargoType, nonStdType20, nonStdType40,
     hasCargoStripping, hasCargoStorage, isExternalStorage, isLCLStorage,
-    isHolidayRelease, hasDangerYard, services, serviceQuantities,
-    exchangeRate, days, prevDays, nonStdType, nsMultiplier, cargoExitDate
+    isHolidayRelease, hasDangerYard20, hasDangerYard40,
+    services, serviceQuantities,
+    exchangeRate, days, prevDays, nsMultiplier20, nsMultiplier40, cargoExitDate
   ]);
 
   // Auto effects
@@ -408,6 +441,15 @@ export function useStorageCalculator(adminExchangeRate) {
     }
   }, [isLCLStorage]);
 
+  // Reset danger yard if cargo type changes away from a compatible type
+  useEffect(() => {
+    if (twentyCargoType === "NON_STANDARD") setHasDangerYard20(false);
+  }, [twentyCargoType]);
+
+  useEffect(() => {
+    if (fortyCargoType === "NON_STANDARD") setHasDangerYard40(false);
+  }, [fortyCargoType]);
+
   return {
     // Primary
     arrDate, setArrDate,
@@ -415,7 +457,14 @@ export function useStorageCalculator(adminExchangeRate) {
     billingType, setBillingType,
     twentyCount, setTwentyCount,
     fortyCount, setFortyCount,
-    cargoType, setCargoType,
+
+    // Per-size cargo type
+    twentyCargoType, setTwentyCargoType,
+    fortyCargoType, setFortyCargoType,
+
+    // Per-size non-standard type
+    nonStdType20, setNonStdType20,
+    nonStdType40, setNonStdType40,
 
     // Exchange rate
     isEditingRate, setIsEditingRate,
@@ -435,13 +484,12 @@ export function useStorageCalculator(adminExchangeRate) {
     // Advanced
     advOpen, setAdvOpen,
     prevDays, setPrevDays,
-    nonStdType, setNonStdType,
-    isDangerous, setIsDangerous,
 
     // Features
     isHolidayRelease, setIsHolidayRelease,
     hasCargoStripping, setHasCargoStripping,
-    hasDangerYard, setHasDangerYard,
+    hasDangerYard20, setHasDangerYard20,
+    hasDangerYard40, setHasDangerYard40,
     hasCargoStorage, setHasCargoStorage,
     cargoExitDate, setCargoExitDate,
     isExternalStorage, setIsExternalStorage,
@@ -455,7 +503,8 @@ export function useStorageCalculator(adminExchangeRate) {
 
     // Derived
     days,
-    nsMultiplier,
+    nsMultiplier20, nsMultiplier40,
+    nsMultiplier, // backward compat alias for shared services display
     hasAdvanced,
 
     // Methods

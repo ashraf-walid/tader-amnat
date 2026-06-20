@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Icon } from "@/components/Icons";
 import { ROLES, getRoleInfo, EMPTY_FORM } from "@/lib/adminConstants";
 import AdminNav from "@/components/AdminNav";
+import { useAccountsStore } from "@/store/useAccountsStore";
 
 // ─── مكوّن حقل الإدخال ────────────────────────────────────────────────────────
 function Field({ label, icon: IconComp, error, children }) {
@@ -222,8 +223,9 @@ export default function AdminPage() {
   const [rateUpdatedAt, setRateUpdatedAt] = useState(null);
   const [rateLoading, setRL] = useState(true);
   const [rateSaving, setRS] = useState(false);
-  const [accounts, setAccounts] = useState([]);
-  const [accLoading, setAL] = useState(true);
+  const accounts = useAccountsStore((s) => s.accounts);
+  const accLoading = useAccountsStore((s) => s.accLoading);
+  const fetchAccounts = useAccountsStore((s) => s.loadAccounts);
   const [tab, setTab] = useState("accounts");
   const [modal, setModal] = useState(null);
   const [selected, setSelected] = useState(null);
@@ -272,12 +274,7 @@ export default function AdminPage() {
       .catch(() => {}).finally(() => setRL(false));
   }, []);
 
-  const loadAccounts = () => {
-    setAL(true);
-    fetch("/api/accounts").then((r) => r.json()).then((d) => { if (d.success) setAccounts(d.accounts); })
-      .catch(() => {}).finally(() => setAL(false));
-  };
-  useEffect(loadAccounts, []);
+  useEffect(() => { if (accounts.length === 0) fetchAccounts(); }, []); // يجلب فقط عند عدم وجود بيانات مخزّنة
 
   // ─── Employee CRUD ─────────────────────────────────────────────────────────
   const loadEmployees = () => {
@@ -327,7 +324,17 @@ export default function AdminPage() {
     } catch { notify("فشل الاتصال", "error"); }
   };
 
-  useEffect(loadEmployees, []);
+  useEffect(() => {
+    (async () => {
+      setEmpLoading(true);
+      try {
+        const res = await fetch("/api/employees");
+        const d = await res.json();
+        if (d.success) setEmpList(d.employees);
+      } catch { /* ignore */ }
+      finally { setEmpLoading(false); }
+    })();
+  }, []);
 
   const saveRate = async () => {
     setRS(true);
@@ -343,7 +350,7 @@ export default function AdminPage() {
     try {
       const res = await fetch("/api/accounts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
       const d = await res.json();
-      if (d.success) { notify("تم إضافة الحساب بنجاح"); setModal(null); loadAccounts(); }
+      if (d.success) { notify("تم إضافة الحساب بنجاح"); setModal(null); fetchAccounts(); }
       else notify(d.error || "خطأ في الإضافة", "error");
     } catch { notify("فشل الاتصال", "error"); } finally { setIsSaving(false); }
   };
@@ -353,7 +360,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(`/api/accounts/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
       const d = await res.json();
-      if (d.success) { notify("تم تحديث الحساب"); setModal(null); loadAccounts(); }
+      if (d.success) { notify("تم تحديث الحساب"); setModal(null); fetchAccounts(); }
       else notify(d.error || "خطأ", "error");
     } catch { notify("فشل الاتصال", "error"); } finally { setIsSaving(false); }
   };
@@ -363,7 +370,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(`/api/accounts/${selected.id}`, { method: "DELETE" });
       const d = await res.json();
-      if (d.success) { notify("تم حذف الحساب"); setModal(null); setDeleteConfirm(""); loadAccounts(); }
+      if (d.success) { notify("تم حذف الحساب"); setModal(null); setDeleteConfirm(""); fetchAccounts(); }
       else notify(d.error || "خطأ", "error");
     } catch { notify("فشل الاتصال", "error"); } finally { setIsSaving(false); }
   };
@@ -375,7 +382,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(`/api/accounts/${selected.id}/attempts`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ attempts: n }) });
       const d = await res.json();
-      if (d.success) { notify(`تم منح ${n} محاولات للمستخدم ${selected.username}`); setModal(null); setNewAttempts(""); loadAccounts(); }
+      if (d.success) { notify(`تم منح ${n} محاولات للمستخدم ${selected.username}`); setModal(null); setNewAttempts(""); fetchAccounts(); }
       else notify(d.error || "خطأ", "error");
     } catch { notify("فشل الاتصال", "error"); } finally { setIsSaving(false); }
   };
@@ -499,7 +506,7 @@ export default function AdminPage() {
                 <option value="all">كل الأدوار</option>
                 {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
               </select>
-              <Btn variant="ghost" size="sm" onClick={loadAccounts}><Icon.Refresh /> تحديث</Btn>
+              <Btn variant="ghost" size="sm" onClick={() => fetchAccounts()}><Icon.Refresh /> تحديث</Btn>
               <Btn variant="primary" size="sm" onClick={() => setModal("add")}><Icon.Plus /> إضافة حساب</Btn>
             </div>
 
@@ -691,8 +698,11 @@ export default function AdminPage() {
                         </td>
                         <td className="px-4 py-3.5">
                           <button onClick={() => toggleEmployeeActive(emp)}
-                            className={`px-2.5 py-[3px] rounded-full text-[11.5px] font-bold cursor-pointer border transition-all duration-150 ${emp.isActive ? "text-emerald-400 bg-emerald-400/10 border-emerald-400/25 hover:bg-emerald-400/20" : "text-red-400 bg-red-400/10 border-red-400/25 hover:bg-red-400/20"}`}>
-                            {emp.isActive ? "● متاح" : "○ غير متاح"}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11.5px] font-semibold cursor-pointer border transition-all duration-200 ${emp.isActive ? "text-emerald-300 bg-emerald-500/15 border-emerald-500/30 hover:bg-emerald-500/25" : "text-slate-400 bg-white/[0.04] border-white/10 hover:bg-white/[0.08]"}`}>
+                            <span className={`relative inline-flex w-7 h-4 rounded-full transition-colors duration-200 shrink-0 ${emp.isActive ? "bg-emerald-500/60" : "bg-slate-600"}`}>
+                              <span className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-all duration-200 ${emp.isActive ? "right-0.5" : "right-[15px]"}`} />
+                            </span>
+                            {emp.isActive ? "متاح" : "غير متاح"}
                           </button>
                         </td>
                         <td className="px-4 py-3.5">

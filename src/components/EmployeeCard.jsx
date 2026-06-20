@@ -13,9 +13,9 @@ function maskPhone(phone) {
 // ─── WhatsApp URL builder ─────────────────────────────────────────────────────
 function buildWhatsAppUrl(phone) {
   // Remove leading 0 and prepend Egypt country code 20
-  const intl = "2" + phone.replace(/^0/, "");
+  const intl = "20" + phone.replace(/^0/, "");
   const greeting = encodeURIComponent(
-    "السلام عليكم، أنا عميل لدى أمانات وأحتاج مساعدة"
+    "السلام عليكم"
   );
   return `https://wa.me/${intl}?text=${greeting}`;
 }
@@ -86,13 +86,11 @@ export default function EmployeeCard({ employee }) {
         {/* Call button */}
         <a
           href={`tel:${phone}`}
-          onClick={handleCopyPhone}
           className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-[13px] font-semibold bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-500/20 no-underline transition-all hover:bg-sky-100 dark:hover:bg-sky-500/20 active:scale-[0.97]"
         >
           <PhoneIcon size={16} />
-          {copied ? "تم النسخ!" : "اتصال"}
+          اتصال
         </a>
-
         {/* WhatsApp button */}
         <a
           href={buildWhatsAppUrl(phone)}

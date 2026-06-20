@@ -22,7 +22,14 @@ export default function StorageCalculator({ adminExchangeRate }) {
     billingType, setBillingType,
     twentyCount, setTwentyCount,
     fortyCount, setFortyCount,
-    cargoType, setCargoType,
+
+    // Per-size cargo type
+    twentyCargoType, setTwentyCargoType,
+    fortyCargoType, setFortyCargoType,
+
+    // Per-size non-standard type
+    nonStdType20, setNonStdType20,
+    nonStdType40, setNonStdType40,
 
     // Exchange rate
     isEditingRate, setIsEditingRate,
@@ -42,12 +49,12 @@ export default function StorageCalculator({ adminExchangeRate }) {
     // Advanced
     advOpen, setAdvOpen,
     prevDays, setPrevDays,
-    nonStdType, setNonStdType,
 
     // Features
     isHolidayRelease, setIsHolidayRelease,
     hasCargoStripping, setHasCargoStripping,
-    hasDangerYard, setHasDangerYard,
+    hasDangerYard20, setHasDangerYard20,
+    hasDangerYard40, setHasDangerYard40,
     hasCargoStorage, setHasCargoStorage,
     cargoExitDate, setCargoExitDate,
     isExternalStorage, setIsExternalStorage,
@@ -61,6 +68,7 @@ export default function StorageCalculator({ adminExchangeRate }) {
 
     // Derived
     days,
+    nsMultiplier20, nsMultiplier40,
     nsMultiplier,
     hasAdvanced,
 
@@ -138,7 +146,7 @@ export default function StorageCalculator({ adminExchangeRate }) {
               days={days}
             />
 
-            {/* Billing Type and Container Counts */}
+            {/* Billing Type */}
             <BillingTypeSelector
               billingType={billingType}
               setBillingType={setBillingType}
@@ -147,6 +155,7 @@ export default function StorageCalculator({ adminExchangeRate }) {
               days={days}
             />
 
+            {/* Container Counts */}
             <div className="bg-[#111827] border border-white/[0.12] rounded-[20px] p-6 mb-4">
               <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-[#4a5568] mb-3">
                 <span className="w-0.5 h-3.5 bg-[#f0b429] rounded-sm" />
@@ -158,15 +167,34 @@ export default function StorageCalculator({ adminExchangeRate }) {
               </div>
             </div>
 
-            <CargoTypeSelector cargoType={cargoType} setCargoType={setCargoType} />
+            {/* Per-size Cargo Type Selectors */}
+            <CargoTypeSelector
+              sizeLabel="٢٠ قدم"
+              cargoType={twentyCargoType}
+              setCargoType={setTwentyCargoType}
+              count={twentyCount}
+            />
+            <CargoTypeSelector
+              sizeLabel="٤٠ قدم"
+              cargoType={fortyCargoType}
+              setCargoType={setFortyCargoType}
+              count={fortyCount}
+            />
 
             <AdvancedOptions
               advOpen={advOpen}
               setAdvOpen={setAdvOpen}
               hasAdvanced={hasAdvanced}
-              cargoType={cargoType}
-              nonStdType={nonStdType}
-              setNonStdType={setNonStdType}
+              twentyCargoType={twentyCargoType}
+              fortyCargoType={fortyCargoType}
+              nonStdType20={nonStdType20}
+              setNonStdType20={setNonStdType20}
+              nonStdType40={nonStdType40}
+              setNonStdType40={setNonStdType40}
+              hasDangerYard20={hasDangerYard20}
+              setHasDangerYard20={setHasDangerYard20}
+              hasDangerYard40={hasDangerYard40}
+              setHasDangerYard40={setHasDangerYard40}
               hasCargoStripping={hasCargoStripping}
               setHasCargoStripping={setHasCargoStripping}
               hasCargoStorage={hasCargoStorage}
@@ -181,15 +209,14 @@ export default function StorageCalculator({ adminExchangeRate }) {
               setIsLCLStorage={setIsLCLStorage}
               isHolidayRelease={isHolidayRelease}
               setIsHolidayRelease={setIsHolidayRelease}
-              hasDangerYard={hasDangerYard}
-              setHasDangerYard={setHasDangerYard}
               services={services}
               toggleService={toggleService}
               serviceQuantities={serviceQuantities}
               setServiceQuantities={setServiceQuantities}
               twentyCount={twentyCount}
               fortyCount={fortyCount}
-              nsMultiplier={nsMultiplier}
+              nsMultiplier20={nsMultiplier20}
+              nsMultiplier40={nsMultiplier40}
             />
 
             <CalculateButton
@@ -208,8 +235,10 @@ export default function StorageCalculator({ adminExchangeRate }) {
             {result && (
               <ResultSection
                 result={result}
-                cargoType={cargoType}
-                nonStdType={nonStdType}
+                twentyCargoType={twentyCargoType}
+                fortyCargoType={fortyCargoType}
+                nonStdType20={nonStdType20}
+                nonStdType40={nonStdType40}
                 formatNumber={formatNumber}
                 resetForm={resetForm}
                 billingType={billingType}

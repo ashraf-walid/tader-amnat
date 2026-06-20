@@ -2,7 +2,48 @@
 
 import { SummaryIcon } from '@/components/Icons';
 
-export default function ResultSection({ result, cargoType, nonStdType, formatNumber, resetForm, billingType }) {
+const CARGO_LABELS = {
+  FULL: "عادية",
+  REEFER: "ثلاجة ❄️",
+  DANGEROUS: "خطرة ⚠️",
+  NON_STANDARD: "غير منتظمة",
+};
+
+const NON_STD_LABELS = {
+  OOG: "سعر مضاعف ×٢",
+  LASHING: "سعر مضاعف ×٤",
+};
+
+export default function ResultSection({
+  result,
+  twentyCargoType, fortyCargoType,
+  nonStdType20, nonStdType40,
+  formatNumber, resetForm, billingType
+}) {
+  // Build a human-readable cargo label for each size
+  function buildCargoLabel(cargoType, nonStdType, sizeLabel, count) {
+    if (count === 0) return null;
+    if (cargoType === "NON_STANDARD") {
+      return `${sizeLabel}: ${CARGO_LABELS[cargoType]} (${NON_STD_LABELS[nonStdType] || nonStdType})`;
+    }
+    return `${sizeLabel}: ${CARGO_LABELS[cargoType] || cargoType}`;
+  }
+
+  const label20 = buildCargoLabel(twentyCargoType, nonStdType20, "٢٠ قدم", result.summary.groups.find(g => g.sizeLabel === "٢٠ قدم")?.count ?? 0);
+  const label40 = buildCargoLabel(fortyCargoType, nonStdType40, "٤٠ قدم", result.summary.groups.find(g => g.sizeLabel === "٤٠ قدم")?.count ?? 0);
+
+  // Check if cargo types differ (mixed shipment)
+  const isMixed = label20 && label40 && twentyCargoType !== fortyCargoType;
+
+  // For storage fee label (non-standard note)
+  function storageFeeLabel() {
+    const labels = [];
+    if (twentyCargoType === "NON_STANDARD") labels.push(`٢٠ق ${NON_STD_LABELS[nonStdType20] || ''}`);
+    if (fortyCargoType === "NON_STANDARD") labels.push(`٤٠ق ${NON_STD_LABELS[nonStdType40] || ''}`);
+    if (labels.length > 0) return `رسوم التخزين (${labels.join(' / ')})`;
+    return "رسوم التخزين";
+  }
+
   return (
     <div className="mt-6 animate-[fadeup_0.35s_ease]" id="result-section">
       <div className="bg-[#111827] border border-white/[0.12] rounded-[20px] overflow-hidden">
@@ -26,15 +67,32 @@ export default function ResultSection({ result, cargoType, nonStdType, formatNum
           ))}
         </div>
 
+        {/* نوع البضاعة — يظهر فقط عند الحاجة */}
+        {(label20 || label40) && (
+          <div className="px-5 py-3 border-b border-white/[0.07] flex flex-col gap-1">
+            {isMixed && (
+              <div className="text-[10px] font-bold tracking-widest uppercase text-amber-400/70 mb-1 flex items-center gap-1.5">
+                <span>⚠</span> بوليصة مختلطة الأنواع
+              </div>
+            )}
+            {label20 && (
+              <div className="flex items-center justify-between text-[12px]">
+                <span className="text-[#4a5568]">نوع البضاعة</span>
+                <span className="text-[#f0f2f8] font-semibold">{label20}</span>
+              </div>
+            )}
+            {label40 && (
+              <div className="flex items-center justify-between text-[12px]">
+                <span className="text-[#4a5568]">نوع البضاعة</span>
+                <span className="text-[#f0f2f8] font-semibold">{label40}</span>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Rows */}
         {[
-          [
-            cargoType === "NON_STANDARD"
-              ? `رسوم التخزين (${nonStdType === "OOG" ? "سعر مضاعف ×٢" : "سعر مضاعف ×٤"})`
-              : "رسوم التخزين",
-            `${formatNumber(result.usd.storageFee + (result.usd.surchargeFee || 0))}`,
-            false
-          ],
+          [storageFeeLabel(), `${formatNumber(result.usd.storageFee + (result.usd.surchargeFee || 0))}`, false],
           ["رسوم الخدمات الثابتة", `${formatNumber(result.usd.fixedFees)}`, false],
           ...(result.usd.additionalServices > 0
             ? [["الخدمات الإضافية", `${formatNumber(result.usd.additionalServices)}`, false]]
@@ -54,7 +112,7 @@ export default function ResultSection({ result, cargoType, nonStdType, formatNum
           ["طابع الشهيد", `${result.egp.martyrStamp} ج.م`, false],
         ].map(([label, value, isSubtotal]) => (
           <div key={label} className={`flex justify-between items-center py-3 px-5 border-b border-white/[0.07] text-sm last:border-b-0 ${isSubtotal ? 'bg-[#1a2035]' : ''}`}>
-            <span className={isSubtotal ? 'text-[#8892a4]' : 'text-[#8892a4]'}>{label}</span>
+            <span className="text-[#8892a4]">{label}</span>
             <span className={`font-bold ${isSubtotal ? 'text-[#f0b429]' : 'text-[#f0f2f8]'}`}>{value}</span>
           </div>
         ))}
