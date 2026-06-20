@@ -107,7 +107,7 @@ function AttemptsBadge({ attempts }) {
 }
 
 // ─── نموذج الحساب ─────────────────────────────────────────────────────────────
-function AccountForm({ initial, onSubmit, onCancel, isSaving }) {
+function AccountForm({ initial, onSubmit, onCancel, isSaving, visibleRoles }) {
   const [form, setForm] = useState(() => {
     if (initial) {
       return { ...EMPTY_FORM, ...initial };
@@ -171,7 +171,7 @@ function AccountForm({ initial, onSubmit, onCancel, isSaving }) {
       <Field label="الدور" icon={Icon.Shield}>
         <select value={form.role} onChange={set("role")}
           className="admin-input w-full bg-slate-950 border-[1.5px] border-white/10 rounded-lg text-slate-100 text-sm rtl outline-none py-2.5 px-3 cursor-pointer">
-          {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+          {(visibleRoles || ROLES).map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
         </select>
       </Field>
 
@@ -398,6 +398,7 @@ export default function AdminPage() {
   };
 
   const filtered = accounts.filter((a) => {
+    if (userRole !== "owner" && a.role === "owner") return false;
     const matchRole = roleFilter === "all" || a.role === roleFilter;
     const q = search.toLowerCase();
     const matchSearch = !q || a.username.toLowerCase().includes(q) || (a.phone || "").includes(q) || (a.officeName || "").toLowerCase().includes(q);
@@ -504,7 +505,7 @@ export default function AdminPage() {
               <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}
                 className={`${inputCls} py-2 px-3 flex-none cursor-pointer w-auto`}>
                 <option value="all">كل الأدوار</option>
-                {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+                {(userRole === "owner" ? ROLES : ROLES.filter(r => r.value !== "owner")).map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
               </select>
               <Btn variant="ghost" size="sm" onClick={() => fetchAccounts()}><Icon.Refresh /> تحديث</Btn>
               <Btn variant="primary" size="sm" onClick={() => setModal("add")}><Icon.Plus /> إضافة حساب</Btn>
@@ -760,10 +761,10 @@ export default function AdminPage() {
 
       {/* ═══ Modals ═══ */}
       <Modal open={modal === "add"} onClose={() => setModal(null)} title="إضافة حساب جديد">
-        <AccountForm onSubmit={addAccount} onCancel={() => setModal(null)} isSaving={isSaving} />
+        <AccountForm onSubmit={addAccount} onCancel={() => setModal(null)} isSaving={isSaving} visibleRoles={userRole === "owner" ? ROLES : ROLES.filter(r => r.value !== "owner")} />
       </Modal>
       <Modal open={modal === "edit"} onClose={() => setModal(null)} title="تعديل الحساب">
-        {selected && <AccountForm initial={{ ...selected, password: "" }} onSubmit={editAccount} onCancel={() => setModal(null)} isSaving={isSaving} />}
+        {selected && <AccountForm initial={{ ...selected, password: "" }} onSubmit={editAccount} onCancel={() => setModal(null)} isSaving={isSaving} visibleRoles={userRole === "owner" ? ROLES : ROLES.filter(r => r.value !== "owner")} />}
       </Modal>
       <Modal open={modal === "delete"} onClose={() => setModal(null)} title="تأكيد الحذف">
         {selected && (

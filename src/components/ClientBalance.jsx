@@ -153,67 +153,86 @@ export default function ClientBalance() {
         </button>
       </div>
 
-      {/* Balance Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Opening Balance */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-slate-500 dark:text-slate-400 font-medium text-sm">الرصيد الإفتتاحي</span>
-            <div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-lg">
-              <SummaryIcon size={20} />
+      {/* Prominent Closing Balance */}
+      <div className="bg-linear-to-br from-blue-600 to-blue-800 dark:from-blue-700 dark:to-blue-900 rounded-3xl p-8 md:p-10 shadow-xl border border-blue-500/50 flex flex-col items-center justify-center text-white relative overflow-hidden">
+        {/* Background Decoration */}
+        <div className="absolute -top-10 -right-10 opacity-10 rotate-12 pointer-events-none">
+          <NavChartIcon size={180} />
+        </div>
+        
+        <div className="relative z-10 flex flex-col items-center">
+          <span className="bg-white/20 px-4 py-1.5 rounded-full text-blue-50 font-medium text-sm mb-6 backdrop-blur-sm border border-white/10 flex items-center gap-2">
+            <NavChartIcon size={16} />
+            الرصيد النهائي
+          </span>
+          
+          <div className="flex flex-col items-center gap-4 w-full">
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl md:text-6xl font-black tracking-tight">{fmt(adjustedClosingDebit)}</span>
+              <span className="text-blue-200 text-lg font-medium">مدين</span>
             </div>
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between items-end">
-              <span className="text-slate-400 text-xs">مدين</span>
-              <span className="text-2xl font-bold text-slate-900 dark:text-white">{fmt(openingBalance.debit)}</span>
-            </div>
-            <div className="flex justify-between items-end">
-              <span className="text-slate-400 text-xs">دائن</span>
-              <span className="text-lg font-semibold text-slate-600 dark:text-slate-300">{fmt(openingBalance.credit)}</span>
+            <div className="flex items-baseline gap-2 opacity-80 bg-black/10 px-4 py-1.5 rounded-2xl">
+              <span className="text-xl md:text-2xl font-bold">{fmt(closingBalance?.credit)}</span>
+              <span className="text-blue-200 text-sm">دائن</span>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Totals (Movement) */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-slate-500 dark:text-slate-400 font-medium text-sm">إجمالي الحركة</span>
-            <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-lg">
-              <PlusIcon size={20} />
+      {/* Secondary Balance Details */}
+      <div className="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-2 border border-slate-200 dark:border-slate-700/50">
+        <details className="group">
+          <summary className="flex items-center justify-between cursor-pointer list-none text-slate-600 dark:text-slate-300 font-medium text-sm p-4 hover:bg-slate-100 dark:hover:bg-slate-800/60 rounded-xl transition-colors select-none">
+            <div className="flex items-center gap-2">
+              <InfoIcon size={18} className="text-blue-500" />
+              تفاصيل حركة الحساب والرصيد الافتتاحي
             </div>
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between items-end">
-              <span className="text-slate-400 text-xs">إجمالي مدين</span>
-              <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{fmt(adjustedTotalsDebit)}</span>
+            <div className="transition-transform duration-300 group-open:rotate-180 text-slate-400 bg-white dark:bg-slate-800 rounded-full p-1 shadow-sm">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
             </div>
-            <div className="flex justify-between items-end">
-              <span className="text-slate-400 text-xs">إجمالي دائن</span>
-              <span className="text-lg font-semibold text-rose-600 dark:text-rose-400">{fmt(adjustedTotalsCredit)}</span>
+          </summary>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 p-2 pt-4 border-t border-slate-200 dark:border-slate-700">
+            {/* Opening Balance */}
+            <div className="bg-white dark:bg-slate-800/80 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-slate-500 dark:text-slate-400 font-bold text-xs">الرصيد الإفتتاحي</span>
+                <div className="p-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-lg">
+                  <SummaryIcon size={16} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between items-end">
+                  <span className="text-slate-400 text-[11px] font-medium">مدين</span>
+                  <span className="text-lg font-black text-slate-800 dark:text-slate-200">{fmt(openingBalance.debit)}</span>
+                </div>
+                <div className="flex justify-between items-end">
+                  <span className="text-slate-400 text-[11px] font-medium">دائن</span>
+                  <span className="text-sm font-bold text-slate-600 dark:text-slate-400">{fmt(openingBalance.credit)}</span>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Closing Balance */}
-        <div className="bg-blue-600 dark:bg-blue-700 rounded-2xl p-6 shadow-lg border border-blue-500 flex flex-col justify-between text-white">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-blue-100 font-medium text-sm">الرصيد النهائي</span>
-            <div className="p-2 bg-white/20 text-white rounded-lg">
-              <NavChartIcon size={20} />
+            {/* Totals (Movement) */}
+            <div className="bg-white dark:bg-slate-800/80 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-slate-500 dark:text-slate-400 font-bold text-xs">إجمالي الحركة</span>
+                <div className="p-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-lg">
+                  <PlusIcon size={16} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between items-end">
+                  <span className="text-slate-400 text-[11px] font-medium">إجمالي مدين</span>
+                  <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">{fmt(adjustedTotalsDebit)}</span>
+                </div>
+                <div className="flex justify-between items-end">
+                  <span className="text-slate-400 text-[11px] font-medium">إجمالي دائن</span>
+                  <span className="text-sm font-bold text-rose-600 dark:text-rose-400">{fmt(adjustedTotalsCredit)}</span>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="space-y-2">
-            <div className="flex justify-between items-end">
-              <span className="text-blue-200 text-xs">مدين</span>
-              <span className="text-3xl font-black">{fmt(adjustedClosingDebit)}</span>
-            </div>
-            <div className="flex justify-between items-end">
-              <span className="text-blue-200 text-xs">دائن</span>
-              <span className="text-xl font-bold opacity-80">{fmt(closingBalance?.credit)}</span>
-            </div>
-          </div>
-        </div>
+        </details>
       </div>
 
       {/* Transactions Section */}

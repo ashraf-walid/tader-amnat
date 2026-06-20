@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { Check, History } from "lucide-react";
+import React, { useState } from "react";
+import { Check, History, Copy } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -17,6 +17,15 @@ export default function AccountsTable({
   setSelectedAccount,
   setIsHistoryOpen,
 }) {
+  const [copiedCode, setCopiedCode] = useState(null);
+
+  const handleCopyCode = (e, code) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(code || "");
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 1800);
+  };
+
   return (
     <div className="hidden md:block overflow-x-auto">
       <table className="w-full">
@@ -107,14 +116,26 @@ export default function AccountsTable({
                       )}
                     </div>
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigator.clipboard.writeText(item.accountCode || "");
-                      }}
-                      className="px-2 py-0.5 w-fit text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 rounded uppercase tracking-wider cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                      onClick={(e) => handleCopyCode(e, item.accountCode)}
+                      className={cn(
+                        "group/btn relative px-2 py-0.5 w-fit text-[10px] font-bold rounded uppercase tracking-wider cursor-pointer transition-all duration-200 flex items-center gap-1",
+                        copiedCode === item.accountCode
+                          ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 scale-[1.05]"
+                          : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-sky-50 dark:hover:bg-sky-900/20 hover:text-sky-600 dark:hover:text-sky-400"
+                      )}
                       title="انقر لنسخ كود العميل"
                     >
-                      {item.accountCode || "---"}
+                      {copiedCode === item.accountCode ? (
+                        <>
+                          <Check size={10} className="text-emerald-500" />
+                          <span>تم</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>{item.accountCode || "---"}</span>
+                          <Copy size={9} className="opacity-80 group-hover/btn:opacity-70 transition-opacity duration-150" />
+                        </>
+                      )}
                     </button>
                   </div>
                 </td>

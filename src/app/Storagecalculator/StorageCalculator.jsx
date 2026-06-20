@@ -167,18 +167,14 @@ export default function StorageCalculator({ adminExchangeRate }) {
               </div>
             </div>
 
-            {/* Per-size Cargo Type Selectors */}
+            {/* Unified Cargo Type Selector */}
             <CargoTypeSelector
-              sizeLabel="٢٠ قدم"
-              cargoType={twentyCargoType}
-              setCargoType={setTwentyCargoType}
-              count={twentyCount}
-            />
-            <CargoTypeSelector
-              sizeLabel="٤٠ قدم"
-              cargoType={fortyCargoType}
-              setCargoType={setFortyCargoType}
-              count={fortyCount}
+              twentyCount={twentyCount}
+              fortyCount={fortyCount}
+              twentyCargoType={twentyCargoType}
+              setTwentyCargoType={setTwentyCargoType}
+              fortyCargoType={fortyCargoType}
+              setFortyCargoType={setFortyCargoType}
             />
 
             <AdvancedOptions

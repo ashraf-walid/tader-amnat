@@ -1,8 +1,12 @@
-const CACHE_NAME = 'amanat-cache-v9';
+const CACHE_NAME = 'amanat-cache-v11';
 
 self.addEventListener('install', (event) => {
   console.log('[ServiceWorker] Installing new version...');
-  event.waitUntil(self.skipWaiting());
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(['/offline.html']))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (event) => {
@@ -107,7 +111,19 @@ self.addEventListener('fetch', (event) => {
         .catch(() => {
           return caches.open(CACHE_NAME)
             .then((cache) => {
-              return cache.match('/');
+              return cache.match('/')
+                .then((rootMatch) => {
+                  if (rootMatch) return rootMatch;
+                  return cache.match('/offline.html')
+                    .then((offlineMatch) => {
+                      if (offlineMatch) return offlineMatch;
+                      // Last resort: inline minimal HTML
+                      return new Response(
+                        '<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>غير متصل</title><style>body{font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0f172a;color:#f1f5f9;text-align:center;padding:1rem}h1{font-size:1.2rem}button{margin-top:1rem;padding:.6rem 1.5rem;border:none;border-radius:.5rem;background:#3b82f6;color:#fff;font-size:1rem;cursor:pointer;font-family:inherit}</style></head><body><div><h1>لا يوجد اتصال بالإنترنت</h1><button onclick="location.reload()">إعادة المحاولة</button></div></body></html>',
+                        { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+                      );
+                    });
+                });
             });
         })
     );

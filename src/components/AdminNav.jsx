@@ -8,6 +8,7 @@ import {
   NavSettingsIcon,
   NavMonitorIcon,
   NavFileTextIcon,
+  NavBankIcon,
   ChevronDownIcon,
   LogOutIcon,
   MenuIcon,
@@ -86,10 +87,11 @@ const NAV_ITEMS = [
   { href: '/Storagecalculator', label: 'أرضيات', icon: NavMonitorIcon, exactMatch: true, roles: ['owner', 'admin', 'employee', 'client'] },
   { href: '/client/balance', label: 'رصيد الحساب', icon: NavChartIcon, exactMatch: true, roles: ['owner', 'client'] },
   { href: '/employees', label: 'الموظفين المتاحين', icon: NavFileTextIcon, exactMatch: true, roles: ['owner', 'admin', 'employee', 'client'] },
+  { href: '/bank-accounts', label: 'الحسابات البنكية', icon: NavBankIcon, exactMatch: true, roles: ['owner', 'admin', 'employee', 'client'] },
   { href: '/Storagecalculator/rates', label: 'التعريفه', icon: NavFileTextIcon, exactMatch: true, roles: ['owner', 'admin', 'employee'] },
 ];
 
-const roleLabels = { owner: 'المالك', admin: 'مدير', employee: 'قائد', client: 'مُستخلص' };
+const roleLabels = { owner: '𝔸', admin: 'مدير', employee: 'قائد', client: 'مُستخلص' };
 const roleColors = { owner: '#f0b429', admin: '#818cf8', employee: '#34d399', client: '#60a5fa' };
 
 // ذاكرة تخزين مؤقت لتجنب تأخير التحميل عند الانتقال بين الصفحات (SPA Navigation)
@@ -283,7 +285,7 @@ export default function AdminNav() {
               {/* الاسم والدور */}
               <div className="text-right leading-tight flex flex-col">
                 <span className="text-[12.5px] font-semibold text-slate-100 whitespace-nowrap">
-                  {user?.username}
+                  {user?.username.toUpperCase()}
                 </span>
                 <span className="text-[10.5px] font-medium" style={{ color: roleColor }}>
                   {roleLabels[user?.role] || user?.role}
@@ -304,7 +306,7 @@ export default function AdminNav() {
                 {/* رأس القائمة */}
                 <div className="px-3.5 py-3 border-b border-white/[0.07] bg-white/[0.03]">
                   <p className="m-0 text-[13px] font-semibold text-slate-100">
-                    {user?.username}
+                    {user?.username.toUpperCase()}
                   </p>
                   {user?.officeName && (
                     <p className="mt-0.5 mb-0 text-[11px] text-blue-500 font-medium">
@@ -398,7 +400,7 @@ export default function AdminNav() {
                 </div>
                 <div>
                   <p className="m-0 text-[13.5px] font-semibold text-slate-100">
-                    {user?.username}
+                    {user?.username.toUpperCase()}
                   </p>
                   <p className="m-0 text-[11px] font-medium" style={{ color: roleColor }}>
                     {roleLabels[user?.role] || user?.role}

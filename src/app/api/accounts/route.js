@@ -13,17 +13,19 @@ export const dynamic = "force-dynamic";
 export async function GET(request) {
   try {
     // 🔒 تحقق من صلاحيات المدير
-    requireAdmin(request);
+    const decoded = requireAdmin(request);
+    const isOwner = decoded.role === "owner";
 
     // 1️⃣ محاولة القراءة من الذاكرة
     const cachedAccounts = cache.get(CacheKeys.ALL_ACCOUNTS);
     if (cachedAccounts !== null) {
-      console.log("✅ Accounts from cache:", cachedAccounts.length);
+      const visible = isOwner ? cachedAccounts : cachedAccounts.filter(a => a.role !== "owner");
+      console.log("✅ Accounts from cache:", visible.length);
       return NextResponse.json(
         {
           success: true,
-          accounts: cachedAccounts,
-          count: cachedAccounts.length,
+          accounts: visible,
+          count: visible.length,
           timestamp: Date.now(),
           fromCache: true,
         },
@@ -63,11 +65,13 @@ export async function GET(request) {
     cache.set(CacheKeys.ALL_ACCOUNTS, accounts, CacheTTL.ACCOUNTS_LIST);
     console.log("📦 Accounts cached:", accounts.length);
 
+    const visible = isOwner ? accounts : accounts.filter(a => a.role !== "owner");
+
     return NextResponse.json(
       {
         success: true,
-        accounts,
-        count: accounts.length,
+        accounts: visible,
+        count: visible.length,
         timestamp: Date.now(),
         fromCache: false,
       },
