@@ -147,25 +147,19 @@ export function useAccountData() {
       const { data: results, dateRange: extractedDateRange } =
         await parseAccountingHTML(file);
 
-      // الحفاظ على المعاملات السابقة من IndexedDB
-      const existingAccounts = await getAllAccounts();
-      const mergedResults = results.map((newRecord) => {
-        const oldRecord = existingAccounts.find(
-          (r) => r.accountCode === newRecord.accountCode,
-        );
-        return {
-          ...newRecord,
-          transactions: oldRecord?.transactions || [],
-        };
-      });
+      // تهيئة الحسابات المستخرجة بدون دمج المعاملات القديمة
+      const preparedResults = results.map((newRecord) => ({
+        ...newRecord,
+        transactions: [],
+      }));
 
       // ✅ 1. حفظ في IndexedDB أولاً (فوري)
-      await saveAllAccounts(mergedResults);
+      await saveAllAccounts(preparedResults);
       if (extractedDateRange) await setDateRangeDB(extractedDateRange);
 
       // ✅ 2. تحديث الواجهة فوراً
-      setAllAccounts(mergedResults); // تحديث الحالة الرئيسية
-      setData(mergedResults);
+      setAllAccounts(preparedResults); // تحديث الحالة الرئيسية
+      setData(preparedResults);
       if (extractedDateRange) setDateRange(extractedDateRange);
 
       // ✅ 3. رفع إلى MongoDB في الخلفية (بدون انتظار)
@@ -173,7 +167,7 @@ export function useAccountData() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          data: mergedResults,
+          data: preparedResults,
           dateRange: extractedDateRange,
         }),
       })

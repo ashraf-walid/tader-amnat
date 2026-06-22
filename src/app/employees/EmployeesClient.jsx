@@ -13,10 +13,10 @@ export default function EmployeesClient({ employees }) {
             <UsersIcon size={20} />
           </div>
           <div>
-            <h1 className="text-[22px] font-extrabold text-slate-800 dark:text-slate-100 m-0">
+            <h1 className="text-[22px] font-extrabold text-slate-100 m-0">
               الموظفين المتاحين
             </h1>
-            <p className="text-[13px] text-slate-500 dark:text-slate-400 m-0">
+            <p className="text-[13px] text-slate-400 m-0">
               تواصل مع فريق الأمانات المتاح الآن
             </p>
           </div>
@@ -26,13 +26,13 @@ export default function EmployeesClient({ employees }) {
       {/* Employee Grid or Empty State */}
       {employees.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 px-4">
-          <div className="w-20 h-20 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-5">
+          <div className="w-20 h-20 rounded-full bg-slate-800 flex items-center justify-center mb-5">
             <UsersIcon size={32} className="text-slate-400" />
           </div>
-          <h2 className="text-lg font-bold text-slate-700 dark:text-slate-300 mb-2">
+          <h2 className="text-lg font-bold text-slate-300 mb-2">
             لا يوجد موظفين متاحين حالياً
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 text-center max-w-md">
+          <p className="text-sm text-slate-400 text-center max-w-md">
             لا يتوفر موظفين في الوقت الحالي، يرجى المحاولة لاحقاً أو التواصل عبر الواتساب العام.
           </p>
         </div>

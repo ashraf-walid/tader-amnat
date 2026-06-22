@@ -56,27 +56,27 @@ export default function EmployeeCard({ employee }) {
   return (
     <div
       dir="rtl"
-      className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-shadow hover:shadow-md"
+      className="bg-slate-900 rounded-2xl border border-slate-800 shadow-sm overflow-hidden transition-shadow hover:shadow-md"
     >
       {/* Header with status */}
       <div className="px-5 pt-4 pb-3">
         <div className="flex items-center justify-between mb-3">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             متاح
           </span>
-          <span className="text-[11.5px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full">
+          <span className="text-[11.5px] font-medium text-slate-400 bg-slate-800 px-2.5 py-1 rounded-full">
             {role}
           </span>
         </div>
 
         {/* Name */}
-        <h3 className="text-[17px] font-bold text-slate-800 dark:text-slate-100 mb-1">
+        <h3 className="text-[17px] font-bold text-slate-100 mb-1">
           {name}
         </h3>
 
         {/* Masked phone */}
-        <p className="text-[13px] text-slate-400 dark:text-slate-500 ltr text-right" dir="ltr">
+        <p className="text-[13px] text-slate-500 ltr text-right" dir="ltr">
           {maskPhone(phone)}
         </p>
       </div>
@@ -86,7 +86,7 @@ export default function EmployeeCard({ employee }) {
         {/* Call button */}
         <a
           href={`tel:${phone}`}
-          className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-[13px] font-semibold bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-500/20 no-underline transition-all hover:bg-sky-100 dark:hover:bg-sky-500/20 active:scale-[0.97]"
+          className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-[13px] font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20 no-underline transition-all hover:bg-sky-500/20 active:scale-[0.97]"
         >
           <PhoneIcon size={16} />
           اتصال
@@ -96,7 +96,7 @@ export default function EmployeeCard({ employee }) {
           href={buildWhatsAppUrl(phone)}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-[13px] font-semibold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 no-underline transition-all hover:bg-emerald-100 dark:hover:bg-emerald-500/20 active:scale-[0.97]"
+          className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-[13px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 no-underline transition-all hover:bg-emerald-500/20 active:scale-[0.97]"
         >
           <WhatsAppIcon size={16} />
           واتساب
@@ -106,7 +106,7 @@ export default function EmployeeCard({ employee }) {
         <button
           onClick={handleCopyPhone}
           title="نسخ رقم الهاتف"
-          className="flex items-center justify-center w-[46px] h-[46px] rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 cursor-pointer transition-all hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-[0.97] shrink-0"
+          className="flex items-center justify-center w-[46px] h-[46px] rounded-xl bg-slate-800 text-slate-400 border border-slate-700 cursor-pointer transition-all hover:bg-slate-700 active:scale-[0.97] shrink-0"
         >
           {copied ? (
             <span className="text-emerald-500 text-sm font-bold">✓</span>

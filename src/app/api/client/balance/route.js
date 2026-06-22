@@ -15,13 +15,24 @@ export async function GET(request) {
     // 1. التوثيق والتحقق من هوية المستخدم واستخراج كود الحساب من الـ Token
     const decoded = requireAuth(request);
     
-    // التأكد من وجود accountCode داخل الـ Token
-    // إذا لم يكن موجوداً: العميل ليس لديه كود بعد وسيُضاف لاحقاً بواسطة المدير
     if (!decoded.accountCode) {
+      const roleLower = String(decoded.role || "").toLowerCase();
+      const isStaff = ["admin", "owner", "employee"].includes(roleLower);
+      
+      let message = "لا يوجد كود حساب مرتبط بحسابك حالياً. يرجى مراجعة الإدارة لربط كود العميل الخاص بك.";
+      if (roleLower === "owner") {
+        message = "حسابك مسجل كمالك للتطبيق. صفحة كشف الحساب هذه مخصصة للعملاء فقط.";
+      } else if (roleLower === "admin") {
+        message = "حسابك مسجل كمدير للنظام (Admin). صفحة كشف الحساب هذه مخصصة للعملاء فقط.";
+      } else if (roleLower === "employee") {
+        message = "حسابك مسجل كموظف في النظام. صفحة كشف الحساب هذه مخصصة للعملاء فقط.";
+      }
+
       return NextResponse.json({
         success: true,
         hasAccountCode: false,
-        message: "لا يوجد كود حساب مرتبط بحسابك حالياً. سيتم تفعيل الصفحة بمجرد إضافة كود الحساب بواسطة الإدارة.",
+        isStaff,
+        message,
       });
     }
 

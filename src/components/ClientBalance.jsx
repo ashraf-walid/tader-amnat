@@ -51,8 +51,8 @@ export default function ClientBalance() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-slate-500 font-medium">جاري تحميل بيانات الحساب...</p>
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-slate-400 font-medium">جاري تحميل بيانات الحساب...</p>
       </div>
     );
   }
@@ -60,17 +60,17 @@ export default function ClientBalance() {
   if (error) {
     return (
       <div className="max-w-4xl mx-auto p-6">
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-6 flex flex-col items-center text-center space-y-4">
-          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-600">
+        <div className="bg-red-950/20 border border-red-900/30 rounded-2xl p-6 flex flex-col items-center text-center space-y-4">
+          <div className="w-12 h-12 bg-red-900/20 rounded-full flex items-center justify-center text-red-400">
             <InfoIcon size={24} />
           </div>
           <div className="space-y-1">
-            <h3 className="text-red-800 font-bold text-lg">خطأ في جلب البيانات</h3>
-            <p className="text-red-600">{error}</p>
+            <h3 className="text-red-200 font-bold text-lg">خطأ في جلب البيانات</h3>
+            <p className="text-red-400">{error}</p>
           </div>
           <button 
             onClick={fetchBalance}
-            className="flex items-center gap-2 px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium"
+            className="flex items-center gap-2 px-6 py-2 bg-red-700 text-white rounded-xl hover:bg-red-600 transition-colors font-medium cursor-pointer"
           >
             <RefreshIcon size={18} />
             إعادة المحاولة
@@ -82,19 +82,41 @@ export default function ClientBalance() {
 
   // ─── حالة: لا يوجد كود حساب مرتبط ─────────────────────────────────────────────
   if (data?.hasAccountCode === false) {
+    if (data?.isStaff) {
+      return (
+        <div className="max-w-lg mx-auto p-6 mt-16">
+          <div className="bg-blue-950/20 border border-blue-900/30 rounded-2xl p-8 flex flex-col items-center text-center space-y-4">
+            <div className="w-16 h-16 bg-blue-900/20 rounded-full flex items-center justify-center text-blue-400">
+              <InfoIcon size={32} />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-blue-300 font-bold text-lg">لوحة تحكم الإدارة</h3>
+              <p className="text-blue-400 text-sm leading-relaxed">{data.message}</p>
+            </div>
+            <a 
+              href="/"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-500 transition-colors font-medium text-sm no-underline cursor-pointer"
+            >
+              الانتقال إلى لوحة التحكم
+            </a>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="max-w-lg mx-auto p-6 mt-16">
-        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-2xl p-8 flex flex-col items-center text-center space-y-4">
-          <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/20 rounded-full flex items-center justify-center text-amber-500">
+        <div className="bg-amber-900/10 border border-amber-800/30 rounded-2xl p-8 flex flex-col items-center text-center space-y-4">
+          <div className="w-16 h-16 bg-amber-900/20 rounded-full flex items-center justify-center text-amber-500">
             <InfoIcon size={32} />
           </div>
           <div className="space-y-2">
-            <h3 className="text-amber-800 dark:text-amber-300 font-bold text-lg">صفحة الرصيد غير مفعّلة بعد</h3>
-            <p className="text-amber-700 dark:text-amber-400 text-sm leading-relaxed">{data.message}</p>
+            <h3 className="text-amber-300 font-bold text-lg">صفحة الرصيد غير مفعّلة بعد</h3>
+            <p className="text-amber-400 text-sm leading-relaxed">{data.message}</p>
           </div>
           <button 
             onClick={fetchBalance}
-            className="flex items-center gap-2 px-5 py-2 bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-800/30 text-amber-700 dark:text-amber-400 rounded-xl hover:bg-amber-50 dark:hover:bg-slate-700 transition-colors font-medium text-sm"
+            className="flex items-center gap-2 px-5 py-2 bg-slate-800 border border-amber-800/30 text-amber-400 rounded-xl hover:bg-slate-700 transition-colors font-medium text-sm cursor-pointer"
           >
             <RefreshIcon size={16} />
             إعادة التحميل
@@ -127,18 +149,18 @@ export default function ClientBalance() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl">
+          <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
+            <div className="p-2 bg-blue-900/30 text-blue-400 rounded-xl">
               <NavChartIcon size={28} />
             </div>
             رصيد الحساب
           </h1>
           <div className="mt-1 space-y-1">
-            <p className="text-slate-500 dark:text-slate-400 font-medium">
+            <p className="text-slate-400 font-medium">
               {accountName}
             </p>
             {dateRange && (
-              <p className="text-blue-600 dark:text-blue-400 text-sm font-bold">
+              <p className="text-blue-400 text-sm font-bold">
                 {dateRange}
               </p>
             )}
@@ -146,7 +168,7 @@ export default function ClientBalance() {
         </div>
         <button 
           onClick={fetchBalance}
-          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-slate-700 dark:text-slate-200 font-medium shadow-sm"
+          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl hover:bg-slate-700 transition-all text-slate-200 font-medium shadow-sm cursor-pointer"
         >
           <RefreshIcon size={18} />
           تحديث البيانات
@@ -154,7 +176,7 @@ export default function ClientBalance() {
       </div>
 
       {/* Prominent Closing Balance */}
-      <div className="bg-linear-to-br from-blue-600 to-blue-800 dark:from-blue-700 dark:to-blue-900 rounded-3xl p-8 md:p-10 shadow-xl border border-blue-500/50 flex flex-col items-center justify-center text-white relative overflow-hidden">
+      <div className="bg-linear-to-br from-blue-700 to-blue-900 rounded-3xl p-8 md:p-10 shadow-xl border border-blue-500/50 flex flex-col items-center justify-center text-white relative overflow-hidden">
         {/* Background Decoration */}
         <div className="absolute -top-10 -right-10 opacity-10 rotate-12 pointer-events-none">
           <NavChartIcon size={180} />
@@ -180,54 +202,54 @@ export default function ClientBalance() {
       </div>
 
       {/* Secondary Balance Details */}
-      <div className="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-2 border border-slate-200 dark:border-slate-700/50">
+      <div className="bg-slate-800/40 rounded-2xl p-2 border border-slate-700/50">
         <details className="group">
-          <summary className="flex items-center justify-between cursor-pointer list-none text-slate-600 dark:text-slate-300 font-medium text-sm p-4 hover:bg-slate-100 dark:hover:bg-slate-800/60 rounded-xl transition-colors select-none">
+          <summary className="flex items-center justify-between cursor-pointer list-none text-slate-300 font-medium text-sm p-4 hover:bg-slate-800/60 rounded-xl transition-colors select-none">
             <div className="flex items-center gap-2">
               <InfoIcon size={18} className="text-blue-500" />
               تفاصيل حركة الحساب والرصيد الافتتاحي
             </div>
-            <div className="transition-transform duration-300 group-open:rotate-180 text-slate-400 bg-white dark:bg-slate-800 rounded-full p-1 shadow-sm">
+            <div className="transition-transform duration-300 group-open:rotate-180 text-slate-400 bg-slate-800 rounded-full p-1 shadow-sm">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
             </div>
           </summary>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 p-2 pt-4 border-t border-slate-200 dark:border-slate-700">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 p-2 pt-4 border-t border-slate-700">
             {/* Opening Balance */}
-            <div className="bg-white dark:bg-slate-800/80 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div className="bg-slate-800/80 rounded-xl p-5 shadow-sm border border-slate-700 flex flex-col justify-between hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-slate-500 dark:text-slate-400 font-bold text-xs">الرصيد الإفتتاحي</span>
-                <div className="p-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-lg">
+                <span className="text-slate-400 font-bold text-xs">الرصيد الإفتتاحي</span>
+                <div className="p-1.5 bg-indigo-900/20 text-indigo-400 rounded-lg">
                   <SummaryIcon size={16} />
                 </div>
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between items-end">
                   <span className="text-slate-400 text-[11px] font-medium">مدين</span>
-                  <span className="text-lg font-black text-slate-800 dark:text-slate-200">{fmt(openingBalance.debit)}</span>
+                  <span className="text-lg font-black text-slate-200">{fmt(openingBalance.debit)}</span>
                 </div>
                 <div className="flex justify-between items-end">
                   <span className="text-slate-400 text-[11px] font-medium">دائن</span>
-                  <span className="text-sm font-bold text-slate-600 dark:text-slate-400">{fmt(openingBalance.credit)}</span>
+                  <span className="text-sm font-bold text-slate-400">{fmt(openingBalance.credit)}</span>
                 </div>
               </div>
             </div>
 
             {/* Totals (Movement) */}
-            <div className="bg-white dark:bg-slate-800/80 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div className="bg-slate-800/80 rounded-xl p-5 shadow-sm border border-slate-700 flex flex-col justify-between hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-slate-500 dark:text-slate-400 font-bold text-xs">إجمالي الحركة</span>
-                <div className="p-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-lg">
+                <span className="text-slate-400 font-bold text-xs">إجمالي الحركة</span>
+                <div className="p-1.5 bg-emerald-900/20 text-emerald-400 rounded-lg">
                   <PlusIcon size={16} />
                 </div>
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between items-end">
                   <span className="text-slate-400 text-[11px] font-medium">إجمالي مدين</span>
-                  <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">{fmt(adjustedTotalsDebit)}</span>
+                  <span className="text-lg font-black text-emerald-400">{fmt(adjustedTotalsDebit)}</span>
                 </div>
                 <div className="flex justify-between items-end">
                   <span className="text-slate-400 text-[11px] font-medium">إجمالي دائن</span>
-                  <span className="text-sm font-bold text-rose-600 dark:text-rose-400">{fmt(adjustedTotalsCredit)}</span>
+                  <span className="text-sm font-bold text-rose-400">{fmt(adjustedTotalsCredit)}</span>
                 </div>
               </div>
             </div>
@@ -236,11 +258,11 @@ export default function ClientBalance() {
       </div>
 
       {/* Transactions Section */}
-      <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+      <div className="bg-slate-800 rounded-3xl shadow-sm border border-slate-700 overflow-hidden">
+        <div className="p-6 border-b border-slate-700 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
             أحدث العمليات
-            <span className="text-xs font-normal text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full">
+            <span className="text-xs font-normal text-slate-400 bg-slate-700 px-2 py-0.5 rounded-full">
               {transactions.length} عملية
             </span>
           </h2>
@@ -250,29 +272,29 @@ export default function ClientBalance() {
           <div className="overflow-x-auto">
             <table className="w-full text-right border-collapse">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-sm font-bold">
+                <tr className="bg-slate-900/50 text-slate-400 text-sm font-bold">
                   <th className="px-6 py-4">التاريخ</th>
                   <th className="px-6 py-4">النوع</th>
                   <th className="px-6 py-4 text-left">المبلغ</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
+              <tbody className="divide-y divide-slate-700/50">
                 {transactions.map((tx, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                    <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
+                  <tr key={idx} className="hover:bg-slate-700/30 transition-colors">
+                    <td className="px-6 py-4 text-sm text-slate-300">
                       {tx.date ? format(new Date(tx.date), 'yyyy/MM/dd HH:mm', { locale: ar }) : 'غير محدد'}
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
                         tx.type === 'addition' 
-                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' 
-                          : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                          ? 'bg-emerald-900/30 text-emerald-400' 
+                          : 'bg-rose-900/30 text-rose-400'
                       }`}>
                         {tx.type === 'addition' ? 'إضافة' : 'خصم'}
                       </span>
                     </td>
                     <td className={`px-6 py-4 font-bold text-left ${
-                      tx.type === 'addition' ? 'text-emerald-600' : 'text-rose-600'
+                      tx.type === 'addition' ? 'text-emerald-400' : 'text-rose-450'
                     }`}>
                       {tx.type === 'addition' ? '+' : '-'}{fmt(tx.amount)}
                     </td>
@@ -283,20 +305,20 @@ export default function ClientBalance() {
           </div>
         ) : (
           <div className="p-12 flex flex-col items-center justify-center text-center space-y-3">
-            <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-full text-slate-300 dark:text-slate-600">
+            <div className="p-4 bg-slate-900/50 rounded-full text-slate-600">
               <SummaryIcon size={40} />
             </div>
-            <p className="text-slate-500 dark:text-slate-400 font-medium">لا توجد عمليات مسجلة حالياً</p>
+            <p className="text-slate-400 font-medium">لا توجد عمليات مسجلة حالياً</p>
           </div>
         )}
       </div>
 
       {/* Footer Info */}
-      <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 rounded-2xl p-4 flex gap-3">
-        <div className="text-amber-600 dark:text-amber-500 shrink-0">
+      <div className="bg-amber-900/10 border border-amber-900/20 rounded-2xl p-4 flex gap-3">
+        <div className="text-amber-500 shrink-0">
           <InfoIcon size={20} />
         </div>
-        <p className="text-sm text-amber-800 dark:text-amber-400 leading-relaxed">
+        <p className="text-sm text-amber-400 leading-relaxed">
           هذه البيانات مستخرجة من النظام المحاسبي وتخضع للمراجعة. في حال وجود أي استفسار يرجى مراجعة إدارة الحسابات.
         </p>
       </div>

@@ -39,7 +39,7 @@ export default async function EmployeesPage() {
 
   return (
     <div
-      className="min-h-screen bg-slate-50 dark:bg-slate-950 dir-rtl"
+      className="min-h-screen bg-slate-950"
       dir="rtl"
     >
       <AdminNav />

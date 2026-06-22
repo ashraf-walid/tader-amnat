@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function ClientBalancePage() {
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 dir-rtl" dir="rtl">
+    <div className="min-h-screen bg-slate-950" dir="rtl">
       <AdminNav />
       <main className="animate-in fade-in slide-in-from-bottom-4 duration-700">
         <ClientBalance />
