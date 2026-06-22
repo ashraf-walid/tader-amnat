@@ -1,0 +1,537 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Icon } from "@/components/Icons";
+import { getRoleInfo } from "@/lib/adminConstants";
+
+// ─── Spinner ──────────────────────────────────────────────────────────────────
+function Spinner({ size = 18 }) {
+  return (
+    <div
+      className="rounded-full border-2 border-white/20 border-t-white animate-spin shrink-0"
+      style={{ width: size, height: size }}
+    />
+  );
+}
+
+// ─── Role Badge (reused from admin patterns) ──────────────────────────────────
+function RoleBadge({ role }) {
+  const r = getRoleInfo(role);
+  return (
+    <span
+      className="px-2.5 py-[3px] rounded-full text-[11.5px] font-semibold whitespace-nowrap"
+      style={{ color: r.color, background: r.bg, border: `1px solid ${r.color}28` }}
+    >
+      {r.label}
+    </span>
+  );
+}
+
+// ─── Section Wrapper ──────────────────────────────────────────────────────────
+function Section({ icon: IconComp, title, subtitle, children, action }) {
+  return (
+    <div className="bg-slate-900 rounded-2xl border border-white/[0.08] overflow-hidden">
+      <div className="px-5 py-4 border-b border-white/[0.07] flex flex-wrap gap-2.5 items-center">
+        <div className="flex-1 min-w-[140px]">
+          <div className="flex items-center gap-2">
+            {IconComp && (
+              <span className="text-sky-400 shrink-0">
+                <IconComp />
+              </span>
+            )}
+            <p className="text-sm font-semibold text-slate-300 m-0">{title}</p>
+          </div>
+          {subtitle && (
+            <p className="text-[11px] text-slate-500 m-0 mt-0.5">{subtitle}</p>
+          )}
+        </div>
+        {action}
+      </div>
+      <div className="p-5">{children}</div>
+    </div>
+  );
+}
+
+// ─── Overview Stat Cards ──────────────────────────────────────────────────────
+function OverviewCards({ data, loading }) {
+  const cards = [
+    { label: "إجمالي الفواتير", value: data?.totalInvoices ?? 0, color: "#f0b429", icon: Icon.Hash },
+    { label: "إجمالي الحسابات", value: data?.totalAccounts ?? 0, color: "#818cf8", icon: Icon.Users },
+    { label: "حسابات جديدة اليوم", value: data?.newToday ?? 0, color: "#34d399", icon: Icon.Plus },
+    { label: "حسابات جديدة هذا الأسبوع", value: data?.newWeek ?? 0, color: "#60a5fa", icon: Icon.Users },
+    { label: "حسابات جديدة هذا الشهر", value: data?.newMonth ?? 0, color: "#f472b6", icon: Icon.Calendar },
+  ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Spinner size={24} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+      {cards.map((s, i) => (
+        <div
+          key={i}
+          className="bg-slate-950/50 rounded-xl px-3.5 py-3 border border-white/[0.05] hover:border-white/[0.12] transition-colors duration-200"
+        >
+          <div className="flex justify-between items-start gap-2">
+            <div className="min-w-0 flex-1">
+              <p className="text-[10.5px] text-slate-400 mb-1.5 font-medium leading-tight break-words">
+                {s.label}
+              </p>
+              <p className="text-2xl font-extrabold m-0 leading-none" style={{ color: s.color }}>
+                {s.value}
+              </p>
+            </div>
+            <div className="opacity-50 shrink-0 scale-[0.85]" style={{ color: s.color }}>
+              <s.icon />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Date-Based Account Report ────────────────────────────────────────────────
+function DateReportSection() {
+  const [date, setDate] = useState(() => {
+    const d = new Date();
+    return d.toISOString().split("T")[0];
+  });
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!date) return;
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const res = await fetch(`/api/reports?type=accounts-by-date&date=${date}`);
+        const d = await res.json();
+        if (!cancelled) {
+          if (d.success) setData(d);
+          else { setError(d.error || "خطأ في جلب البيانات"); setData(null); }
+        }
+      } catch {
+        if (!cancelled) { setError("فشل الاتصال بالخادم"); setData(null); }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [date]);
+
+  return (
+    <Section
+      icon={Icon.Calendar}
+      title="تقرير الحسابات الجديدة حسب التاريخ"
+      subtitle="اختر تاريخاً لعرض الحسابات التي تم إنشاؤها فيه"
+      action={
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="admin-input bg-slate-950 border-[1.5px] border-white/10 rounded-lg text-slate-100 text-sm outline-none py-2 px-3 cursor-pointer"
+          />
+        </div>
+      }
+    >
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <Spinner size={24} />
+        </div>
+      ) : error ? (
+        <div className="text-center py-6">
+          <p className="text-red-400 text-sm">{error}</p>
+        </div>
+      ) : !data || data.count === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-slate-500 text-sm m-0">
+            لا توجد حسابات تم إنشاؤها في <span className="text-slate-300 font-semibold">{date}</span>
+          </p>
+        </div>
+      ) : (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="px-2.5 py-1 rounded-full text-[11.5px] font-bold text-emerald-400 bg-emerald-400/10 border border-emerald-400/25">
+              {data.count} حساب
+            </span>
+            <span className="text-[11.5px] text-slate-400">
+              تم إنشاؤها في {new Date(data.date + "T00:00:00").toLocaleDateString("ar-EG", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse rtl min-w-[500px]">
+              <thead>
+                <tr className="bg-white/[0.03]">
+                  <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">اسم المستخدم</th>
+                  <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">الدور</th>
+                  <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">الهاتف</th>
+                  <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">المكتب</th>
+                  <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">الفواتير</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.accounts.map((acc, idx) => (
+                  <tr
+                    key={idx}
+                    className={`border-b border-white/5 transition-colors duration-150 hover:bg-blue-500/[0.06] ${idx % 2 ? "bg-white/[0.015]" : ""}`}
+                  >
+                    <td className="px-4 py-3">
+                      <span className="text-sm font-semibold text-slate-100">{acc.username}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <RoleBadge role={acc.role} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-[12px] text-slate-400 ltr text-right block" dir="ltr">
+                        {acc.phone || "—"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-[12px] text-slate-400">{acc.officeName || "—"}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center gap-1 px-2 py-[2px] rounded-full text-[11px] font-bold text-[#f0b429] bg-[#f0b429]/10 border border-[#f0b429]/25">
+                        {acc.calculationsCount} فاتورة
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </Section>
+  );
+}
+
+// ─── Invoice Leaderboard ──────────────────────────────────────────────────────
+function InvoiceLeaderboard() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/reports?type=invoice-leaderboard");
+        const d = await res.json();
+        if (d.success) setUsers(d.users || []);
+      } catch {
+        /* ignore */
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  return (
+    <Section
+      icon={Icon.Chart}
+      title="ترتيب المستخدمين حسب الفواتير"
+      subtitle="قائمة بجميع المستخدمين مرتبين حسب عدد الفواتير من الأعلى للأقل"
+      action={
+        <span className="text-[11px] text-slate-500">
+          {users.length} مستخدم
+        </span>
+      }
+    >
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <Spinner size={24} />
+        </div>
+      ) : users.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-slate-500 text-sm m-0">لا توجد بيانات فواتير بعد</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse rtl min-w-[500px]">
+            <thead>
+              <tr className="bg-white/[0.03]">
+                <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07] w-10">#</th>
+                <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">اسم المستخدم</th>
+                <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">الدور</th>
+                <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">المكتب</th>
+                <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">الفواتير</th>
+                <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">آخر دخول</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((u, idx) => (
+                <tr
+                  key={idx}
+                  className={`border-b border-white/5 transition-colors duration-150 hover:bg-blue-500/[0.06] ${idx % 2 ? "bg-white/[0.015]" : ""}`}
+                >
+                  <td className="px-4 py-3">
+                    <span className={`text-xs font-bold ${idx < 3 ? "text-amber-400" : "text-slate-500"}`}>
+                      {idx + 1}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className="w-[30px] h-[30px] rounded-full shrink-0 flex items-center justify-center text-[12px] font-bold"
+                        style={{
+                          background: getRoleInfo(u.role).bg,
+                          border: `1px solid ${getRoleInfo(u.role).color}30`,
+                          color: getRoleInfo(u.role).color,
+                        }}
+                      >
+                        {u.username?.[0]?.toUpperCase() || "؟"}
+                      </div>
+                      <span className="text-sm font-semibold text-slate-100">{u.username}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <RoleBadge role={u.role} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="text-[12px] text-slate-400">{u.officeName || "—"}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full text-[11.5px] font-bold text-[#f0b429] bg-[#f0b429]/10 border border-[#f0b429]/25 whitespace-nowrap">
+                      {u.calculationsCount} فاتورة
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {u.lastLogin ? (
+                      <span className="text-[12px] text-slate-400 whitespace-nowrap">
+                        {new Date(u.lastLogin).toLocaleDateString("ar-EG", { year: "numeric", month: "short", day: "numeric" })}
+                      </span>
+                    ) : (
+                      <span className="text-[11.5px] text-slate-500">لم يدخل بعد</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Section>
+  );
+}
+
+// ─── Invoices by Date Section ─────────────────────────────────────────────────
+function InvoicesByDateSection() {
+  const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!date) return;
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const res = await fetch(`/api/reports?type=invoices-by-date&date=${date}`);
+        const d = await res.json();
+        if (!cancelled) {
+          if (d.success) setData(d);
+          else { setError(d.error || "خطأ في جلب البيانات"); setData(null); }
+        }
+      } catch {
+        if (!cancelled) { setError("فشل الاتصال بالخادم"); setData(null); }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [date]);
+
+  return (
+    <Section
+      icon={Icon.Hash}
+      title="تقرير الفواتير حسب التاريخ"
+      subtitle="اختر تاريخاً لعرض من قام بعمل فواتير فيه وعدد كل مستخدم"
+      action={
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="admin-input bg-slate-950 border-[1.5px] border-white/10 rounded-lg text-slate-100 text-sm outline-none py-2 px-3 cursor-pointer"
+        />
+      }
+    >
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <Spinner size={24} />
+        </div>
+      ) : error ? (
+        <div className="text-center py-6">
+          <p className="text-red-400 text-sm">{error}</p>
+        </div>
+      ) : !data || data.totalInvoices === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-slate-500 text-sm m-0">
+            لا توجد فواتير في <span className="text-slate-300 font-semibold">{date}</span>
+          </p>
+          <p className="text-[11px] text-slate-600 m-0 mt-1">
+            ملاحظة: يتم تسجيل الفواتير الجديدة فقط من تاريخ تفعيل هذا التقرير
+          </p>
+        </div>
+      ) : (
+        <div>
+          {/* Summary badges */}
+          <div className="flex items-center gap-3 mb-4 flex-wrap">
+            <span className="px-3 py-1.5 rounded-full text-[12px] font-bold text-[#f0b429] bg-[#f0b429]/10 border border-[#f0b429]/25">
+              {data.totalInvoices} فاتورة
+            </span>
+            <span className="px-3 py-1.5 rounded-full text-[12px] font-bold text-sky-400 bg-sky-400/10 border border-sky-400/25">
+              {data.totalUsers} مستخدم
+            </span>
+            <span className="text-[11.5px] text-slate-400">
+              في {new Date(data.date + "T00:00:00").toLocaleDateString("ar-EG", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+            </span>
+          </div>
+
+          {/* Users table grouped by invoice count */}
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse rtl min-w-[500px]">
+              <thead>
+                <tr className="bg-white/[0.03]">
+                  <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07] w-10">#</th>
+                  <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">اسم المستخدم</th>
+                  <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">الدور</th>
+                  <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">المكتب</th>
+                  <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">عدد الفواتير</th>
+                  <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">آخر فاتورة</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.users.map((u, idx) => (
+                  <tr
+                    key={idx}
+                    className={`border-b border-white/5 transition-colors duration-150 hover:bg-blue-500/[0.06] ${idx % 2 ? "bg-white/[0.015]" : ""}`}
+                  >
+                    <td className="px-4 py-3">
+                      <span className={`text-xs font-bold ${idx < 3 ? "text-amber-400" : "text-slate-500"}`}>
+                        {idx + 1}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <div
+                          className="w-[30px] h-[30px] rounded-full shrink-0 flex items-center justify-center text-[12px] font-bold"
+                          style={{
+                            background: getRoleInfo(u.role).bg,
+                            border: `1px solid ${getRoleInfo(u.role).color}30`,
+                            color: getRoleInfo(u.role).color,
+                          }}
+                        >
+                          {u.username?.[0]?.toUpperCase() || "؟"}
+                        </div>
+                        <span className="text-sm font-semibold text-slate-100">{u.username}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <RoleBadge role={u.role} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-[12px] text-slate-400">{u.officeName || "—"}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full text-[11.5px] font-bold text-[#f0b429] bg-[#f0b429]/10 border border-[#f0b429]/25 whitespace-nowrap">
+                        {u.count} {u.count === 1 ? "فاتورة" : "فواتير"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-[12px] text-slate-400 whitespace-nowrap">
+                        {new Date(u.lastInvoice).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </Section>
+  );
+}
+
+// ─── Main ReportsTab Component ────────────────────────────────────────────────
+export default function ReportsTab() {
+  const [overview, setOverview] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/reports?type=overview");
+        const d = await res.json();
+        if (d.success) {
+          setOverview(d.data);
+        } else {
+          setError(d.error || "خطأ في جلب الإحصائيات");
+        }
+      } catch {
+        setError("فشل الاتصال بالخادم");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Section 1: Overview Stats */}
+      <Section
+        icon={Icon.Chart}
+        title="نظرة عامة على النظام"
+        subtitle="إحصائيات محدثة عن الحسابات والفواتير"
+        action={
+          <button
+            onClick={async () => {
+              setLoading(true);
+              setError("");
+              try {
+                const res = await fetch("/api/reports?type=overview");
+                const d = await res.json();
+                if (d.success) setOverview(d.data);
+              } catch {
+                /* ignore */
+              } finally {
+                setLoading(false);
+              }
+            }}
+            className="px-3 py-1.5 text-xs font-semibold bg-white/[0.06] text-slate-400 border-none rounded-lg cursor-pointer hover:bg-white/[0.12] transition-all duration-150 inline-flex items-center gap-1.5"
+          >
+            <Icon.Refresh size={13} /> تحديث
+          </button>
+        }
+      >
+        {error ? (
+          <div className="text-center py-6">
+            <p className="text-red-400 text-sm">{error}</p>
+          </div>
+        ) : (
+          <OverviewCards data={overview} loading={loading} />
+        )}
+      </Section>
+
+      {/* Section 2: Invoices by Date */}
+      <InvoicesByDateSection />
+
+      {/* Section 3: Accounts by Date */}
+      <DateReportSection />
+
+      {/* Section 4: Invoice Leaderboard */}
+      <InvoiceLeaderboard />
+    </div>
+  );
+}

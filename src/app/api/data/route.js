@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import AccountData from "@/models/AccountData";
 import Settings from "@/models/Settings";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin, requireOwner } from "@/lib/auth";
 import { invalidateCache } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
@@ -48,6 +48,47 @@ export async function GET(request) {
   }
 }
 
+/**
+ * DELETE /api/data
+ * Clear ALL financial data — owner only.
+ */
+export async function DELETE(request) {
+  try {
+    requireOwner(request);
+
+    await connectToDatabase();
+    const deleted = await AccountData.deleteMany({});
+
+    // 🔥 Invalidate all data cache
+    invalidateCache("data:");
+    console.log(`🗑️ All financial data cleared (${deleted.deletedCount} accounts) by owner`);
+
+    return NextResponse.json({
+      success: true,
+      deletedCount: deleted.deletedCount,
+      timestamp: Date.now(),
+    });
+  } catch (error) {
+    console.error("DELETE /api/data Error:", error);
+    if (error.name === "AuthError") {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+    if (error.name === "ForbiddenError") {
+      return NextResponse.json(
+        { success: false, error: "Forbidden - Owner only" },
+        { status: 403 },
+      );
+    }
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 },
+    );
+  }
+}
+
 export async function POST(request) {
   try {
     requireAdmin(request);
@@ -63,6 +104,14 @@ export async function POST(request) {
     } else if (body && body.data) {
       dataToSave = body.data;
       dateRange = body.dateRange;
+    }
+
+    // 🚫 Block empty POST — use DELETE /api/data to clear all data (owner only)
+    if (dataToSave.length === 0) {
+      return NextResponse.json(
+        { success: false, error: "Cannot clear data via POST. Use DELETE /api/data (owner only)." },
+        { status: 400 },
+      );
     }
 
     // ⚠️ Safety check: Prevent accidental data loss

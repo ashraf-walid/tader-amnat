@@ -72,4 +72,15 @@ export function requireAdmin(req) {
   return decoded;
 }
 
+/**
+ * Ensures that the user is the owner then returns the decoded payload.
+ */
+export function requireOwner(req) {
+  const decoded = requireAuth(req);
+  if (!decoded || String(decoded.role).toLowerCase() !== "owner") {
+    throw new ForbiddenError("Owner only");
+  }
+  return decoded;
+}
+
 export { AuthError, ForbiddenError, JWT_SECRET };

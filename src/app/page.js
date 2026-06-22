@@ -82,6 +82,7 @@ export default function AccountsDashboard() {
           loading={loading}
           fetchDataFromMongoDB={fetchDataFromMongoDB}
           downloadData={downloadData}
+          handleFileUpload={handleFileUpload}
           data={data}
           search={search}
         />

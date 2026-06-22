@@ -12,7 +12,6 @@ import {
   LogInIcon,
   WhatsAppIcon,
 } from "@/components/Icons";
-// import ThemeToggle from "@/components/ThemeToggle";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -67,7 +66,7 @@ export default function LoginPage() {
     <div
       dir="rtl"
       lang="ar"
-      className="min-h-screen flex items-center justify-center relative overflow-hidden font-sans bg-[var(--background,#f0f6ff)] text-[var(--foreground,#171717)] text-right"
+      className="min-h-screen flex items-center justify-center relative overflow-hidden font-sans bg-slate-900 text-slate-100 text-right"
     >
       {/* ── خلفية الشبكة ── */}
       <div
@@ -75,7 +74,7 @@ export default function LoginPage() {
         className="fixed inset-0 z-0 opacity-30"
         style={{
           backgroundImage:
-            "linear-gradient(var(--border, #e2e8f0) 1px, transparent 1px), linear-gradient(90deg, var(--border, #e2e8f0) 1px, transparent 1px)",
+            "linear-gradient(#334155 1px, transparent 1px), linear-gradient(90deg, #334155 1px, transparent 1px)",
           backgroundSize: "48px 48px",
         }}
       />
@@ -93,43 +92,33 @@ export default function LoginPage() {
       {/* ── المحتوى الرئيسي ── */}
       <main className="relative z-10 w-full max-w-[460px] px-4 py-6 flex flex-col items-center">
 
-        {/* ── زر تبديل الثيم ── */}
-        {/* <div className="absolute top-4 left-4">
-          <ThemeToggle />
-        </div> */}
-
         {/* ── رأس العلامة التجارية ── */}
         <div className="text-center mb-7">
-          <h1 className="text-[22px] font-bold text-[var(--foreground,#171717)] tracking-tight leading-tight m-0">
+          <h1 className="text-[22px] font-bold text-slate-100 tracking-tight leading-tight m-0">
             نظام إدارة الفواتير
           </h1>
-          <p className="text-[13.5px] text-[var(--muted,#64748b)] mt-1.5 font-normal">
+          <p className="text-[13.5px] text-slate-400 mt-1.5 font-normal">
             أرضيات الحاويات الواردة
           </p>
         </div>
 
         {/* ── البطاقة ── */}
         <div
-          className="w-full backdrop-blur-[20px] rounded-[20px] px-8 pt-9 pb-8"
-          style={{
-            background: "var(--card-bg)",
-            border: "1px solid var(--card-border)",
-            boxShadow: "var(--card-shadow)",
-          }}
+          className="w-full backdrop-blur-[20px] rounded-[20px] px-8 pt-9 pb-8 bg-slate-800/85 border border-white/[0.08] shadow-[0_4px_32px_rgba(0,0,0,0.4),0_1px_4px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]"
         >
 
           {/* شارة الأمان */}
           <div className="flex justify-center mb-4">
-            <div className="inline-flex items-center gap-1.5 bg-blue-600/[0.08] text-[var(--primary,#2563eb)] border border-blue-600/[0.18] rounded-full px-3 py-1 text-[11.5px] font-medium">
+            <div className="inline-flex items-center gap-1.5 bg-blue-600/[0.08] text-blue-500 border border-blue-600/[0.18] rounded-full px-3 py-1 text-[11.5px] font-medium">
               <ShieldIcon size={13} />
               دخول آمن ومشفّر
             </div>
           </div>
 
-          <h2 className="text-lg font-semibold text-[var(--foreground,#171717)] m-0 mb-1.5 text-right">
+          <h2 className="text-lg font-semibold text-slate-100 m-0 mb-1.5 text-right">
             تسجيل الدخول
           </h2>
-          <p className="text-[13.5px] text-[var(--muted,#64748b)] m-0 mb-4 font-normal text-right">
+          <p className="text-[13.5px] text-slate-400 m-0 mb-4 font-normal text-right">
             أدخل بياناتك للوصول إلى لوحة التحكم
           </p>
           <div className="w-10 h-[3px] bg-gradient-to-r from-[#2563eb] to-[#60a5fa] rounded-sm mb-[22px]" />
@@ -147,14 +136,14 @@ export default function LoginPage() {
 
           {/* حقل اسم المستخدم */}
           <div className="mb-[18px]">
-            <label htmlFor="username" className="block text-[13px] font-medium text-[var(--foreground,#171717)] mb-[7px] text-right">
+            <label htmlFor="username" className="block text-[13px] font-medium text-slate-100 mb-[7px] text-right">
               اسم المستخدم
             </label>
             <div className="relative">
               <div
                 aria-hidden="true"
                 className={`absolute top-1/2 right-3.5 -translate-y-1/2 flex items-center pointer-events-none transition-colors duration-200 ${
-                  username ? "text-[var(--primary,#2563eb)]" : "text-[var(--muted,#64748b)]"
+                  username ? "text-blue-500" : "text-slate-400"
                 }`}
               >
                 <UserIcon size={18} />
@@ -171,21 +160,21 @@ export default function LoginPage() {
                 spellCheck={false}
                 aria-required="true"
                 dir="rtl"
-                className="login-input w-full h-[46px] pr-11 pl-3.5 text-[14.5px] font-normal text-[var(--foreground,#171717)] bg-[var(--secondary,#f1f5f9)] border-[1.5px] border-[var(--border,#e2e8f0)] rounded-xl outline-none text-right box-border transition-all duration-200"
+                className="login-input w-full h-[46px] pr-11 pl-3.5 text-[14.5px] font-normal text-slate-100 bg-slate-800 border-[1.5px] border-slate-700 rounded-xl outline-none text-right box-border transition-all duration-200"
               />
             </div>
           </div>
 
           {/* حقل كلمة المرور */}
           <div className="mb-5">
-            <label htmlFor="password" className="block text-[13px] font-medium text-[var(--foreground,#171717)] mb-[7px] text-right">
+            <label htmlFor="password" className="block text-[13px] font-medium text-slate-100 mb-[7px] text-right">
               كلمة المرور
             </label>
             <div className="relative">
               <div
                 aria-hidden="true"
                 className={`absolute top-1/2 right-3.5 -translate-y-1/2 flex items-center pointer-events-none transition-colors duration-200 ${
-                  password ? "text-[var(--primary,#2563eb)]" : "text-[var(--muted,#64748b)]"
+                  password ? "text-blue-500" : "text-slate-400"
                 }`}
               >
                 <LockIcon size={18} />
@@ -200,14 +189,14 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 aria-required="true"
                 dir="rtl"
-                className="login-input w-full h-[46px] pr-11 pl-11 text-[14.5px] font-normal text-[var(--foreground,#171717)] bg-[var(--secondary,#f1f5f9)] border-[1.5px] border-[var(--border,#e2e8f0)] rounded-xl outline-none text-right box-border transition-all duration-200"
+                className="login-input w-full h-[46px] pr-11 pl-11 text-[14.5px] font-normal text-slate-100 bg-slate-800 border-[1.5px] border-slate-700 rounded-xl outline-none text-right box-border transition-all duration-200"
               />
               {/* زر إظهار/إخفاء كلمة المرور */}
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
-                className="absolute top-1/2 left-3 -translate-y-1/2 bg-transparent border-none cursor-pointer text-[var(--muted,#64748b)] p-1 flex items-center rounded-md"
+                className="absolute top-1/2 left-3 -translate-y-1/2 bg-transparent border-none cursor-pointer text-slate-400 p-1 flex items-center rounded-md"
               >
                 {showPassword ? <EyeOffIcon size={17} /> : <EyeIcon size={17} />}
               </button>
@@ -216,16 +205,16 @@ export default function LoginPage() {
 
           {/* صف الخيارات */}
           <div className="flex items-center justify-between mb-[22px]">
-            <label className="flex items-center gap-1.5 text-[13px] text-[var(--muted,#64748b)] cursor-pointer select-none">
+            <label className="flex items-center gap-1.5 text-[13px] text-slate-400 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={remember}
                 onChange={(e) => setRemember(e.target.checked)}
-                className="w-4 h-4 accent-[var(--primary,#2563eb)] cursor-pointer"
+                className="w-4 h-4 accent-blue-500 cursor-pointer"
               />
               تذكّرني
             </label>
-            <a href="https://wa.me/201000980788?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%D8%8C%20%D8%A3%D8%B1%D9%8A%D8%AF%20%D8%A7%D8%B3%D8%AA%D8%B9%D8%A7%D8%AF%D8%A9%20%D9%83%D9%84%D9%85%D8%A9%20%D8%A7%D9%84%D9%85%D8%B1%D9%88%D8%B1" target="_blank" rel="noopener noreferrer" className="text-[13px] text-[var(--primary,#2563eb)] no-underline font-medium hover:underline">
+            <a href="https://wa.me/201000980788?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%D8%8C%20%D8%A3%D8%B1%D9%8A%D8%AF%20%D8%A7%D8%B3%D8%AA%D8%B9%D8%A7%D8%AF%D8%A9%20%D9%83%D9%84%D9%85%D8%A9%20%D8%A7%D9%84%D9%85%D8%B1%D9%88%D8%B1" target="_blank" rel="noopener noreferrer" className="text-[13px] text-blue-500 no-underline font-medium hover:underline">
               نسيت كلمة المرور؟
             </a>
           </div>
@@ -250,8 +239,8 @@ export default function LoginPage() {
         </div>
 
         {/* تذييل الصفحة */}
-        <div className="text-center mt-5 text-xs text-[var(--muted,#64748b)]">
-          <span className="text-[var(--primary,#2563eb)] font-medium">
+        <div className="text-center mt-5 text-xs text-slate-400">
+          <span className="text-blue-500 font-medium">
             نظام أرضيات الحاويات
           </span>{" "}
           — جميع الحقوق محفوظة &copy; 2025
@@ -259,14 +248,10 @@ export default function LoginPage() {
 
         {/* رابط إنشاء حساب */}
         <div
-          className="mt-4 text-center px-5 py-3.5 backdrop-blur-xl rounded-[14px]"
-          style={{
-            background: "var(--footer-card-bg)",
-            border: "1px solid var(--footer-card-border)",
-          }}
+          className="mt-4 text-center px-5 py-3.5 backdrop-blur-xl rounded-[14px] bg-slate-800/70 border border-white/[0.08]"
         >
           <div className="flex items-center justify-center gap-2 flex-wrap">
-            <span className="text-[13px] text-[var(--muted,#64748b)]">
+            <span className="text-[13px] text-slate-400">
               ليس لديك حساب؟
             </span>
             <a

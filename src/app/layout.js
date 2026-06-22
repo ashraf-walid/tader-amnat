@@ -34,20 +34,8 @@ export default function RootLayout({ children }) {
     <html
       lang="ar"
       className={`${alexandria.variable} ${outfit.variable} h-full antialiased`}
-      suppressHydrationWarning
     >
       <head>
-        {/*
-          ── Theme Script ──────────────────────────────────────────────────────
-          يعمل هذا السكريبت قبل أول رسم للصفحة (synchronous) لمنع وميض الألوان.
-          يقرأ التفضيل من localStorage، وعند أول زيارة يقرأ إعداد النظام.
-          ─────────────────────────────────────────────────────────────────────
-        */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
-          }}
-        />
         {/* Microsoft Clarity Analytics */}
         <script
           dangerouslySetInnerHTML={{

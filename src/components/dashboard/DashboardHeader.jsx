@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { RefreshCw, Download } from "lucide-react";
+import { RefreshCw, Download, Upload } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -16,6 +16,7 @@ export default function DashboardHeader({
   loading,
   fetchDataFromMongoDB,
   downloadData,
+  handleFileUpload,
   data,
   search,
 }) {
@@ -63,12 +64,12 @@ export default function DashboardHeader({
       </div>
 
       {(data.length > 0 || search) && (
-        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
           <button
             onClick={() => fetchDataFromMongoDB()}
             disabled={loading}
             className={cn(
-              "flex-1 md:flex-none px-3 py-2 text-xs md:text-sm font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border",
+              "px-3 py-2.5 sm:py-2 text-sm md:text-sm font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border",
               loading
                 ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
                 : "bg-white dark:bg-slate-900 text-blue-600 border-blue-100 dark:border-blue-900/30 hover:bg-blue-50",
@@ -82,9 +83,29 @@ export default function DashboardHeader({
             تحديث من السيرفر
           </button>
 
+          <label
+            className={cn(
+              "px-3 py-2.5 sm:py-2 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border cursor-pointer",
+              loading
+                ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
+                : "bg-white dark:bg-slate-900 text-amber-600 border-amber-100 dark:border-amber-900/30 hover:bg-amber-50",
+            )}
+            title="استبدال الحسابات الحالية بملف جديد"
+          >
+            <Upload size={14} />
+            استبدال الحسابات بالملف الجديد
+            <input
+              type="file"
+              className="hidden"
+              accept=".html,.htm,.json"
+              onChange={handleFileUpload}
+              disabled={loading}
+            />
+          </label>
+
           <button
             onClick={downloadData}
-            className="flex-1 md:flex-none px-3 py-2 text-xs md:text-sm font-bold text-slate-600 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
+            className="px-3 py-2.5 sm:py-2 text-sm md:text-sm font-bold text-slate-600 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
           >
             <Download size={14} className="text-blue-500" />
             نسخة احتياطية

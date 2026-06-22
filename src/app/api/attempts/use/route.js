@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import User from "@/models/User";
+import CalculationLog from "@/models/CalculationLog";
 import { requireAuth } from "@/lib/auth";
 import { invalidateCache } from "@/lib/cache";
 
@@ -45,8 +46,16 @@ export async function POST(request) {
     const updated = await User.findByIdAndUpdate(
       user._id,
       { $inc: { attempts: -1, calculationsCount: 1 } },
-      { returnDocument: "after", select: "attempts username calculationsCount" },
+      { returnDocument: "after", select: "attempts username calculationsCount role officeName" },
     );
+
+    // Log this calculation for date-based reporting
+    await CalculationLog.create({
+      userId: user._id,
+      username: updated.username,
+      role: updated.role || "client",
+      officeName: updated.officeName || "",
+    });
 
     // 🔥 مسح الـ Cache لأن بيانات الحساب تغيرت (محاولات و فواتير)
     invalidateCache("accounts:");

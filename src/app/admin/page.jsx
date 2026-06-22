@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Icon } from "@/components/Icons";
 import { ROLES, getRoleInfo, EMPTY_FORM } from "@/lib/adminConstants";
 import AdminNav from "@/components/AdminNav";
+import ReportsTab from "@/components/admin/ReportsTab";
 import { useAccountsStore } from "@/store/useAccountsStore";
 
 // ─── مكوّن حقل الإدخال ────────────────────────────────────────────────────────
@@ -152,9 +153,11 @@ function AccountForm({ initial, onSubmit, onCancel, isSaving, visibleRoles }) {
         </div>
       </Field>
 
-      <p className="text-[11px] text-amber-400/80 bg-amber-400/[0.06] border border-amber-400/15 rounded-lg px-3 py-2 leading-relaxed -mt-1">
-        ⚠️ سجّل كلمة المرور بدقة — يجب على المستخدم إدخالها مطابقة تماماً (حرفاً حرفاً) عند تسجيل الدخول.
-      </p>
+      {(!initial || form.password) && (
+        <p className="text-[11px] text-amber-400/80 bg-amber-400/[0.06] border border-amber-400/15 rounded-lg px-3 py-2 leading-relaxed -mt-1">
+          ⚠️ سجّل كلمة المرور بدقة — يجب على المستخدم إدخالها مطابقة تماماً (حرفاً حرفاً) عند تسجيل الدخول.
+        </p>
+      )}
 
       <Field label="رقم الهاتف" icon={Icon.Phone} error={errors.phone}>
         <Input value={form.phone} onChange={set("phone")} placeholder="01xxxxxxxxx" />
@@ -236,6 +239,7 @@ export default function AdminPage() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("client");
   const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [clearConfirm, setClearConfirm] = useState("");
   const [sortBy, setSortBy] = useState("calculationsCount");
   const [sortDir, setSortDir] = useState("desc");
   // ─── Employee Availability State ────────────────────────────────────────────
@@ -388,12 +392,12 @@ export default function AdminPage() {
   };
 
   const clearFinancialData = async () => {
-    if (!window.confirm('⚠️ تحذير: هل أنت متأكد من مسح جميع البيانات المالية؟')) return;
     setDataClearing(true);
     try {
-      const res = await fetch('/api/data', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify([]) });
+      const res = await fetch('/api/data', { method: 'DELETE' });
       const d = await res.json();
-      d.success ? notify("تم مسح جميع البيانات المالية بنجاح") : notify(d.error || "خطأ أثناء مسح البيانات", "error");
+      if (d.success) { notify("تم مسح جميع البيانات المالية بنجاح"); setModal(null); setClearConfirm(""); }
+      else notify(d.error || "خطأ أثناء مسح البيانات", "error");
     } catch { notify("فشل الاتصال بالخادم", "error"); } finally { setDataClearing(false); }
   };
 
@@ -462,14 +466,17 @@ export default function AdminPage() {
           {[
             { label: "إجمالي الحسابات", value: stats.total, color: "#818cf8", icon: Icon.Users },
             { label: "حسابات العملاء", value: stats.clients, color: "#60a5fa", icon: Icon.User },
-            { label: "محاولات متاحة", value: stats.active, color: "#34d399", icon: Icon.Check },
-            { label: "محاولات منتهية", value: stats.depleted, color: "#f87171", icon: Icon.Hash },
+            { label: "حسابات نشطة", value: stats.active, color: "#34d399", icon: Icon.Check, unit: "حساب" },
+            { label: "حسابات منتهية", value: stats.depleted, color: "#f87171", icon: Icon.Hash, unit: "حساب" },
           ].map((s, i) => (
             <div key={i} className="bg-slate-900 rounded-[10px] px-3.5 py-3 border border-white/[0.07] shadow-[0_2px_12px_rgba(0,0,0,0.2)]">
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0 flex-1">
                   <p className="text-[10.5px] text-slate-400 mb-1 font-medium leading-tight break-words">{s.label}</p>
-                  <p className="text-2xl font-extrabold m-0 leading-none" style={{ color: s.color }}>{s.value}</p>
+                  <p className="text-2xl font-extrabold m-0 leading-none" style={{ color: s.color }}>
+                    {s.value}
+                    {s.unit && <span className="text-[11px] font-semibold text-slate-500 mr-1">{s.unit}</span>}
+                  </p>
                 </div>
                 <div className="opacity-60 shrink-0 scale-[0.85]" style={{ color: s.color }}><s.icon /></div>
               </div>
@@ -483,7 +490,10 @@ export default function AdminPage() {
             { id: "accounts", icon: <Icon.Users />, label: "إدارة الحسابات" },
             { id: "employees", icon: <Icon.Users />, label: "الموظفين" },
             { id: "rate", icon: <Icon.Currency />, label: "سعر الصرف" },
-            { id: "data", icon: <Icon.Structure className="ml-0.5" />, label: "بيانات المشروع" },
+            ...(userRole === "owner" ? [
+              { id: "reports", icon: <Icon.Chart />, label: "التقارير" },
+              { id: "data", icon: <Icon.Structure className="ml-0.5" />, label: "بيانات المشروع" },
+            ] : []),
           ].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
               className={`px-5 py-2.5 text-[13.5px] font-semibold border-none cursor-pointer rounded-lg transition-all duration-150 inline-flex items-center gap-1.5
@@ -591,6 +601,9 @@ export default function AdminPage() {
                         </td>
                         <td className="px-4 py-3.5">
                           <div className="flex gap-1.5">
+                            <Btn size="xs" variant="ghost" title="تجديد المحاولات" onClick={() => { setSelected(acc); setNewAttempts(""); setModal("attempts"); }}>
+                              <Icon.Refresh />
+                            </Btn>
                             <Btn size="xs" variant="ghost" title="تعديل" onClick={() => { setSelected(acc); setModal("edit"); }}>
                               <Icon.Edit />
                             </Btn>
@@ -735,6 +748,9 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* ═══ تبويب: التقارير ═══ */}
+        {tab === "reports" && userRole === "owner" && <ReportsTab />}
+
         {/* ═══ تبويب: بيانات المشروع ═══ */}
         {tab === "data" && (
           <div className="bg-slate-900 rounded-2xl border border-white/[0.08] p-5 flex flex-col gap-4">
@@ -750,7 +766,7 @@ export default function AdminPage() {
                 <p className="text-[13px] font-semibold text-red-400 mb-1">مسح كافة البيانات المالية</p>
                 <p className="text-[11px] text-slate-400 m-0">سيتم حذف جميع الحسابات والمعاملات المالية. هذا الإجراء لا يمكن التراجع عنه.</p>
               </div>
-              <Btn variant="danger" onClick={clearFinancialData} disabled={dataClearing}>
+              <Btn variant="danger" onClick={() => { setClearConfirm(""); setModal("clearData"); }} disabled={dataClearing}>
                 {dataClearing ? <Spinner /> : <Icon.Trash />}
                 {dataClearing ? "جاري المسح..." : "مسح كافة البيانات"}
               </Btn>
@@ -789,6 +805,28 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+      </Modal>
+      <Modal open={modal === "clearData"} onClose={() => setModal(null)} title="تأكيد مسح البيانات">
+        <div>
+          <div className="bg-red-400/[0.08] border border-red-400/20 rounded-[10px] px-4 py-3.5 mb-[18px]">
+            <p className="m-0 text-sm text-red-400 leading-relaxed">
+              ⚠️ تحذير: سيتم <strong className="text-slate-100">مسح جميع البيانات المالية</strong> والحسابات نهائياً.<br />
+              <span className="text-[12.5px] text-slate-400">هذا الإجراء لا يمكن التراجع عنه. تأكد من وجود نسخة احتياطية قبل المتابعة.</span>
+            </p>
+          </div>
+          <p className="text-[13px] text-slate-400 mb-2.5">
+            اكتب <strong className="text-red-400">مسح البيانات</strong> للتأكيد:
+          </p>
+          <input type="text" value={clearConfirm} onChange={(e) => setClearConfirm(e.target.value)} placeholder="مسح البيانات"
+            className="admin-input-danger w-full bg-slate-950 border-[1.5px] border-red-400/30 rounded-lg text-slate-100 text-sm rtl outline-none py-2.5 px-3 mb-[18px] box-border" />
+          <div className="flex gap-2.5 justify-end">
+            <Btn variant="ghost" onClick={() => setModal(null)}>إلغاء</Btn>
+            <Btn variant="danger" disabled={clearConfirm !== "مسح البيانات" || dataClearing} onClick={clearFinancialData}>
+              {dataClearing ? <Spinner /> : <Icon.Trash />}
+              {dataClearing ? "جاري المسح..." : "تأكيد المسح"}
+            </Btn>
+          </div>
+        </div>
       </Modal>
       <Modal open={modal === "attempts"} onClose={() => setModal(null)} title="تجديد المحاولات">
         {selected && (
