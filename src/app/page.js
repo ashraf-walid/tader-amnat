@@ -69,7 +69,7 @@ export default function AccountsDashboard() {
 
   return (
     <div
-      className="min-h-screen bg-slate-50 dark:bg-slate-950 dir-rtl"
+      className="min-h-screen bg-slate-950"
       dir="rtl"
     >
       <AdminNav />
@@ -93,7 +93,7 @@ export default function AccountsDashboard() {
           !search &&
           !isTransactionsOnlyActive ? (
           <div className="flex flex-col items-center justify-center h-75 md:h-100 mx-4 md:mx-0">
-            <div className="w-12 h-12 rounded-full border-4 border-blue-200 dark:border-blue-900/40 border-top-blue-600 animate-spin mb-4" />
+            <div className="w-12 h-12 rounded-full border-4 border-blue-900/40 border-t-blue-600 animate-spin mb-4" />
             <p className="text-sm font-medium text-slate-500">
               جاري تحميل البيانات...
             </p>
@@ -113,7 +113,7 @@ export default function AccountsDashboard() {
         ) : (
           /* Analysis View */
           <div className="space-y-6 animate-in">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div className="bg-slate-900 rounded-3xl shadow-sm border border-slate-800 overflow-hidden">
               {/* Search Bar */}
               <SearchBar
                 search={search}
@@ -149,18 +149,18 @@ export default function AccountsDashboard() {
               {/* No Search Results */}
               {filteredData.length === 0 && search && (
                 <div className="text-center py-12 px-4">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-800 mb-4">
                     <Search size={24} className="text-slate-400" />
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  <h3 className="text-lg font-semibold text-slate-300 mb-1">
                     لا توجد نتائج مطابقة
                   </h3>
                   <p className="text-sm text-slate-500 mb-4">
-                    لم يتم العثور على حسابات تطابق "{search}"
+                    لم يتم العثور على حسابات تطابق &quot;{search}&quot;
                   </p>
                   <button
                     onClick={() => setSearch("")}
-                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 rounded-xl hover:bg-blue-100 transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-blue-400 bg-blue-900/20 rounded-xl hover:bg-blue-900/35 transition-colors"
                   >
                     <Search size={14} /> مسح البحث
                   </button>

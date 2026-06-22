@@ -19,7 +19,7 @@ export default function SearchBar({
   filteredData,
 }) {
   return (
-    <div className="p-4 md:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col gap-4">
+    <div className="p-4 md:p-6 border-b border-slate-800 flex flex-col gap-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex flex-col">
           <h3 className="font-semibold text-lg whitespace-nowrap text-center md:text-right">
@@ -38,7 +38,7 @@ export default function SearchBar({
               "flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold transition-all",
               isTransactionsOnlyActive
                 ? "bg-orange-600 text-white shadow-lg shadow-orange-500/30"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200",
+                : "bg-slate-800 text-slate-500 hover:bg-slate-700",
             )}
           >
             <History size={12} />
@@ -60,7 +60,7 @@ export default function SearchBar({
           placeholder="ابحث باسم العميل أو الكود..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pr-10 pl-10 py-3 md:py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-sm"
+          className="w-full pr-10 pl-10 py-3 md:py-2 rounded-xl border border-slate-700 bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-sm"
         />
         {search && (
           <button
@@ -68,7 +68,7 @@ export default function SearchBar({
               setSearch("");
               searchInputRef.current?.focus();
             }}
-            className="absolute left-3 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
+            className="absolute left-3 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-700 rounded-full text-slate-400 hover:text-slate-300 transition-colors"
           >
             <X size={14} />
           </button>

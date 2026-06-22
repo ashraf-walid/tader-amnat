@@ -30,7 +30,7 @@ export default function AccountsTable({
     <div className="hidden md:block overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-sm">
+          <tr className="bg-slate-800/50 text-slate-400 text-sm">
             <th className="px-6 py-4 text-right font-medium">
               العميل / الحساب
             </th>
@@ -55,7 +55,7 @@ export default function AccountsTable({
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+        <tbody className="divide-y divide-slate-800">
           {filteredData.map((item, idx) => {
             const pending = pendingChanges[item.accountCode] || {};
             const historyAddition = (item.transactions || [])
@@ -87,9 +87,9 @@ export default function AccountsTable({
               <tr
                 key={idx}
                 className={cn(
-                  "hover:bg-slate-50/50 dark:hover:bg-slate-800/30 border-r-4 transition-all",
+                  "hover:bg-slate-800/30 border-r-4 transition-all",
                   hasChanges
-                    ? "border-r-blue-500 bg-blue-50/30 dark:bg-blue-900/5"
+                    ? "border-r-blue-500 bg-blue-900/5"
                     : "border-r-transparent",
                 )}
               >
@@ -101,7 +101,7 @@ export default function AccountsTable({
                   }}
                 >
                   <div className="flex flex-col gap-1 overflow-hidden">
-                    <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2 group-hover/cell:text-blue-600 transition-colors">
+                    <div className="font-semibold text-white flex items-center gap-2 group-hover/cell:text-blue-400 transition-colors">
                       <span
                         className="truncate whitespace-nowrap"
                         title={item.account}
@@ -109,7 +109,7 @@ export default function AccountsTable({
                         {item.account}
                       </span>
                       {transactionCount > 0 && (
-                        <span className="shrink-0 text-[10px] px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 rounded text-blue-600 flex items-center gap-1">
+                        <span className="shrink-0 text-[10px] px-1.5 py-0.5 bg-blue-900/30 rounded text-blue-400 flex items-center gap-1">
                           <History size={10} />
                           {transactionCount}
                         </span>
@@ -120,8 +120,8 @@ export default function AccountsTable({
                       className={cn(
                         "group/btn relative px-2 py-0.5 w-fit text-[10px] font-bold rounded uppercase tracking-wider cursor-pointer transition-all duration-200 flex items-center gap-1",
                         copiedCode === item.accountCode
-                          ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 scale-[1.05]"
-                          : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-sky-50 dark:hover:bg-sky-900/20 hover:text-sky-600 dark:hover:text-sky-400"
+                          ? "bg-emerald-900/30 text-emerald-400 scale-[1.05]"
+                          : "bg-slate-800 text-slate-500 hover:bg-sky-900/20 hover:text-sky-400"
                       )}
                       title="انقر لنسخ كود العميل"
                     >
@@ -145,8 +145,8 @@ export default function AccountsTable({
                     className={cn(
                       "px-2 py-0.5 rounded",
                       openingBalanceVal > 0
-                        ? "text-slate-600 dark:text-slate-400"
-                        : "text-red-500 bg-red-50 dark:bg-red-950/20",
+                        ? "text-slate-400"
+                        : "text-red-400 bg-red-950/20",
                     )}
                   >
                     {openingBalanceVal.toLocaleString()}
@@ -158,8 +158,8 @@ export default function AccountsTable({
                     className={cn(
                       "px-2 py-0.5 rounded",
                       movementDebit > 0
-                        ? "text-green-600 bg-green-50 dark:bg-green-900/20"
-                        : "text-slate-300 dark:text-slate-700",
+                        ? "text-green-400 bg-green-900/20"
+                        : "text-slate-700",
                     )}
                   >
                     {movementDebit > 0 ? "+" : ""}
@@ -172,8 +172,8 @@ export default function AccountsTable({
                     className={cn(
                       "px-2 py-0.5 rounded",
                       movementCredit > 0
-                        ? "text-orange-600 bg-orange-50 dark:bg-orange-950/20"
-                        : "text-slate-300 dark:text-slate-700",
+                        ? "text-orange-500 bg-orange-950/20"
+                        : "text-slate-700",
                     )}
                   >
                     {movementCredit > 0 ? "-" : ""}
@@ -193,7 +193,7 @@ export default function AccountsTable({
                         e.target.value,
                       )
                     }
-                    className="w-24 px-2 py-1 text-center text-sm font-mono text-blue-600 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 no-spinner"
+                    className="w-24 px-2 py-1 text-center text-sm font-mono text-blue-400 bg-blue-900/10 border border-blue-900/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 no-spinner"
                   />
                 </td>
                 <td className="px-6 py-4 text-center">
@@ -208,7 +208,7 @@ export default function AccountsTable({
                         e.target.value,
                       )
                     }
-                    className="w-24 px-2 py-1 text-center text-sm font-mono text-red-600 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 no-spinner"
+                    className="w-24 px-2 py-1 text-center text-sm font-mono text-red-400 bg-red-900/10 border border-red-900/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 no-spinner"
                   />
                 </td>
                 <td className="w-28 text-center">

@@ -18,7 +18,7 @@ export default function AccountCard({
   setIsHistoryOpen,
 }) {
   return (
-    <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+    <div className="md:hidden divide-y divide-slate-800">
       {filteredData.map((item, idx) => {
         const pending = pendingChanges[item.accountCode] || {};
         const historyAddition = (item.transactions || [])
@@ -51,7 +51,7 @@ export default function AccountCard({
             key={idx}
             className={cn(
               "p-4 space-y-4",
-              hasChanges && "bg-blue-50/20 dark:bg-blue-900/5",
+              hasChanges && "bg-blue-900/5",
             )}
           >
             <div
@@ -62,24 +62,24 @@ export default function AccountCard({
               }}
             >
               <div className="space-y-1">
-                <h4 className="font-bold text-slate-900 dark:text-white leading-tight">
+                <h4 className="font-bold text-white leading-tight">
                   {item.account}
                 </h4>
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded border border-slate-200 dark:border-slate-700">
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-800 text-slate-400 rounded border border-slate-700">
                     سابق: {openingBalanceVal.toLocaleString()}
                   </span>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 bg-green-50 dark:bg-green-900/10 text-green-600 rounded border border-green-100 dark:border-green-900/20">
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 bg-green-900/10 text-green-500 rounded border border-green-900/20">
                     إيداع: +{movementDebit.toLocaleString()}
                   </span>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 bg-orange-50 dark:bg-orange-900/10 text-orange-600 rounded border border-orange-100 dark:border-orange-900/20">
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 bg-orange-900/10 text-orange-500 rounded border border-orange-900/20">
                     سحب: -{movementCredit.toLocaleString()}
                   </span>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 {transactionCount > 0 && (
-                  <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
+                  <span className="bg-blue-900/30 text-blue-400 text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
                     <History size={10} />
                     {transactionCount}
                   </span>
@@ -113,7 +113,7 @@ export default function AccountCard({
                       e.target.value,
                     )
                   }
-                  className="w-full p-2 text-center text-sm font-mono text-blue-600 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-xl focus:outline-none"
+                  className="w-full p-2 text-center text-sm font-mono text-blue-400 bg-blue-900/10 border border-blue-900/30 rounded-xl focus:outline-none"
                 />
               </div>
               <div className="space-y-1">
@@ -131,7 +131,7 @@ export default function AccountCard({
                       e.target.value,
                     )
                   }
-                  className="w-full p-2 text-center text-sm font-mono text-red-600 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-xl focus:outline-none"
+                  className="w-full p-2 text-center text-sm font-mono text-red-400 bg-red-900/10 border border-red-900/30 rounded-xl focus:outline-none"
                 />
               </div>
             </div>

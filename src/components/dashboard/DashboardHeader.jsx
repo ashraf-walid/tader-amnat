@@ -23,11 +23,11 @@ export default function DashboardHeader({
   return (
     <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in">
       <div>
-        <h1 className="text-xl sm:text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
+        <h1 className="text-xl sm:text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-400 to-indigo-400">
           أمانات | تحليل حسابات العملاء
         </h1>
         {dateRange && (
-          <p className="text-slate-600 dark:text-slate-300 font-medium mt-1">
+          <p className="text-slate-300 font-medium mt-1">
             {dateRange}
           </p>
         )}
@@ -39,7 +39,7 @@ export default function DashboardHeader({
                 errorStatus ? "bg-red-500" : "bg-green-500",
               )}
             ></div>
-            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
+            <p className="text-slate-400 text-sm font-medium">
               {errorStatus
                 ? `خطأ في الاتصال: ${errorStatus}`
                 : "⚡  تخزين محلى (متزامن)"}
@@ -47,7 +47,7 @@ export default function DashboardHeader({
           </div>
 
           {lastUpdated && (
-            <span className="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-md text-slate-500 max-sm:hidden">
+            <span className="text-xs px-2 py-1 bg-slate-800 rounded-md text-slate-500 max-sm:hidden">
               آخر تحديث: {lastUpdated}
             </span>
           )}
@@ -55,7 +55,7 @@ export default function DashboardHeader({
           {errorStatus && (
             <button
               onClick={() => fetchDataFromMongoDB()}
-              className="text-xs p-1 bg-blue-50 text-blue-600 rounded"
+              className="text-xs p-1 bg-blue-900/30 text-blue-400 rounded"
             >
               إعادة محاولة
             </button>
@@ -71,8 +71,8 @@ export default function DashboardHeader({
             className={cn(
               "px-3 py-2.5 sm:py-2 text-sm md:text-sm font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border",
               loading
-                ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
-                : "bg-white dark:bg-slate-900 text-blue-600 border-blue-100 dark:border-blue-900/30 hover:bg-blue-50",
+                ? "bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed"
+                : "bg-slate-900 text-blue-400 border-blue-900/30 hover:bg-slate-800",
             )}
             title="جلب أحدث البيانات من السيرفر"
           >
@@ -87,8 +87,8 @@ export default function DashboardHeader({
             className={cn(
               "px-3 py-2.5 sm:py-2 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border cursor-pointer",
               loading
-                ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
-                : "bg-white dark:bg-slate-900 text-amber-600 border-amber-100 dark:border-amber-900/30 hover:bg-amber-50",
+                ? "bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed"
+                : "bg-slate-900 text-amber-400 border-amber-900/30 hover:bg-slate-800",
             )}
             title="استبدال الحسابات الحالية بملف جديد"
           >
@@ -105,9 +105,9 @@ export default function DashboardHeader({
 
           <button
             onClick={downloadData}
-            className="px-3 py-2.5 sm:py-2 text-sm md:text-sm font-bold text-slate-600 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
+            className="px-3 py-2.5 sm:py-2 text-sm md:text-sm font-bold text-slate-300 bg-slate-900 border border-slate-800 hover:bg-slate-800 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
           >
-            <Download size={14} className="text-blue-500" />
+            <Download size={14} className="text-blue-400" />
             نسخة احتياطية
           </button>
         </div>
