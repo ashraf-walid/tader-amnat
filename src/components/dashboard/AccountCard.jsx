@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { Check, History } from "lucide-react";
+import React, { useState } from "react";
+import { Check, History, Copy } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -17,6 +17,15 @@ export default function AccountCard({
   setSelectedAccount,
   setIsHistoryOpen,
 }) {
+  const [copiedCode, setCopiedCode] = useState(null);
+
+  const handleCopyCode = (e, code) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(code || "");
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 1800);
+  };
+
   return (
     <div className="md:hidden divide-y divide-slate-800">
       {filteredData.map((item, idx) => {
@@ -65,6 +74,27 @@ export default function AccountCard({
                 <h4 className="font-bold text-white leading-tight">
                   {item.account}
                 </h4>
+                <button
+                  onClick={(e) => handleCopyCode(e, item.accountCode)}
+                  className={cn(
+                    "group/btn relative px-2 py-0.5 w-fit text-[10px] font-bold rounded uppercase tracking-wider cursor-pointer transition-all duration-200 flex items-center gap-1",
+                    copiedCode === item.accountCode
+                      ? "bg-emerald-900/30 text-emerald-400 scale-[1.05]"
+                      : "bg-slate-800 text-slate-500 hover:bg-sky-900/20 hover:text-sky-400"
+                  )}
+                >
+                  {copiedCode === item.accountCode ? (
+                    <>
+                      <Check size={10} className="text-emerald-500" />
+                      <span>تم</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{item.accountCode || "---"}</span>
+                      <Copy size={9} className="opacity-80 group-hover/btn:opacity-70 transition-opacity duration-150" />
+                    </>
+                  )}
+                </button>
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                   <span className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-800 text-slate-400 rounded border border-slate-700">
                     سابق: {openingBalanceVal.toLocaleString()}

@@ -191,11 +191,11 @@ export default function ClientBalance() {
           <div className="flex flex-col items-center gap-4 w-full">
             <div className="flex items-baseline gap-2">
               <span className="text-4xl md:text-6xl font-black tracking-tight">{fmt(adjustedClosingDebit)}</span>
-              <span className="text-blue-200 text-lg font-medium">مدين</span>
+              <span className="text-blue-200 text-lg font-medium">ليك</span>
             </div>
             <div className="flex items-baseline gap-2 opacity-80 bg-black/10 px-4 py-1.5 rounded-2xl">
               <span className="text-xl md:text-2xl font-bold">{fmt(closingBalance?.credit)}</span>
-              <span className="text-blue-200 text-sm">دائن</span>
+              <span className="text-blue-200 text-sm">عليك</span>
             </div>
           </div>
         </div>

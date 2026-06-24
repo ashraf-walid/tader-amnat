@@ -149,11 +149,9 @@ export default function ArabicDatePicker({ selected, onChange, label, placeholde
             popperClassName="adp-popper"
             renderCustomHeader={CustomHeader}
             showPopperArrow={false} autoComplete="off"
-            onFocus={(e) => {
-              if (window.innerWidth < 1024) {
-                e.target.blur();
-              }
-            }}
+            readOnly
+            inputMode="none"
+            onFocus={(e) => e.target.blur()}
           />
         </div>
       </div>
