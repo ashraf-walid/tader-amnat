@@ -2,8 +2,11 @@
 
 import EmployeeCard from "@/components/EmployeeCard";
 import { UsersIcon } from "@/components/Icons";
+import { usePageAnalytics } from "@/hooks/usePageAnalytics";
 
 export default function EmployeesClient({ employees }) {
+  // تفعيل التحليلات لمراقبة زيارات صفحة الموظفين
+  usePageAnalytics("/employees");
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       {/* Page Header */}
