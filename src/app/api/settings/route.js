@@ -80,11 +80,11 @@ export async function PUT(req) {
       { returnDocument: "after", upsert: true },
     );
 
-    // 🔥 مسح الـ Cache القديم فوراً
+    // 🔥 Delete old Cache 
     cache.delete(CacheKeys.EXCHANGE_RATE);
     console.log("🗑️ Exchange rate cache invalidated");
 
-    // حفظ القيمة الجديدة في الذاكرة
+    // save new value in cache
     cache.set(
       CacheKeys.EXCHANGE_RATE,
       rateSetting.value,

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { 
@@ -8,7 +9,8 @@ import {
   InfoIcon, 
   RefreshIcon,
   NavChartIcon,
-  PlusIcon
+  PlusIcon,
+  NavMonitorIcon
 } from './Icons';
 
 function fmt(n, dec = 2) {
@@ -111,16 +113,25 @@ export default function ClientBalance() {
             <InfoIcon size={32} />
           </div>
           <div className="space-y-2">
-            <h3 className="text-amber-300 font-bold text-lg">صفحة الرصيد غير مفعّلة بعد</h3>
+            <h3 className="text-amber-300 font-bold text-lg">يظهر رصيد الحساب للعملاء الذين تم تسجيل مكتب لهم</h3>
             <p className="text-amber-400 text-sm leading-relaxed">{data.message}</p>
           </div>
-          <button 
-            onClick={fetchBalance}
-            className="flex items-center gap-2 px-5 py-2 bg-slate-800 border border-amber-800/30 text-amber-400 rounded-xl hover:bg-slate-700 transition-colors font-medium text-sm cursor-pointer"
-          >
-            <RefreshIcon size={16} />
-            إعادة التحميل
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3 w-full justify-center"> 
+            <Link 
+              href="/Storagecalculator"
+              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-600 border border-amber-500/30 text-white rounded-xl hover:bg-amber-500 transition-all font-medium text-sm no-underline cursor-pointer w-full sm:w-auto"
+            >
+              <NavMonitorIcon size={16} />
+               الأرضيات
+            </Link>
+            <button 
+              onClick={fetchBalance}
+              className="text-xs flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-800 border border-amber-800/30 text-amber-400 rounded-xl hover:bg-slate-700 transition-colors cursor-pointer w-full sm:w-auto"
+            >
+              <RefreshIcon size={14} />
+              إعادة التحميل
+            </button>
+          </div>
         </div>
       </div>
     );
