@@ -13,6 +13,7 @@ import CargoTypeSelector from '@/components/storage-calculator/CargoTypeSelector
 import AdvancedOptions from '@/components/storage-calculator/AdvancedOptions';
 import CalculateButton from '@/components/storage-calculator/CalculateButton';
 import ResultSection from '@/components/storage-calculator/ResultSection';
+import { usePageAnalytics } from "@/hooks/usePageAnalytics";
 
 export default function StorageCalculator({ adminExchangeRate }) {
   const {
@@ -78,6 +79,9 @@ export default function StorageCalculator({ adminExchangeRate }) {
     resetForm,
     formatNumber
   } = useStorageCalculator(adminExchangeRate);
+
+  // Enable analytics to monitor employee page visits
+  usePageAnalytics("/Storagecalculator");
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100" dir="rtl" style={{ fontFamily: "'Alexandria', system-ui, sans-serif" }}>

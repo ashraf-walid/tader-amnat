@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CopyIcon } from "@/components/Icons";
+import { usePageAnalytics } from "@/hooks/usePageAnalytics";
 
 // ─── بيانات الحسابات البنكية ─────────────────────────────────────────────────
 const BANK_ACCOUNTS = [
@@ -161,6 +162,9 @@ function BankCard({ bank, copiedId, copiedField, onCopy }) {
 
 // ─── Main Client Component ───────────────────────────────────────────────────
 export default function BankAccountsClient() {
+  // Enable analytics to monitor bank accounts visits
+  usePageAnalytics("/bank-accounts");
+
   const [search, setSearch] = useState("");
   const [copiedId, setCopiedId] = useState(null);
   const [copiedField, setCopiedField] = useState("");

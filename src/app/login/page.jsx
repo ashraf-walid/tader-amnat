@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { clearAnalyticsUserCache } from "@/hooks/usePageAnalytics";
 import {
   ShieldIcon,
   UserIcon,
@@ -41,6 +42,8 @@ export default function LoginPage() {
         setLoading(false);
         return;
       }
+      // Clear analytics cache so the newly logged-in user is tracked fresh
+      clearAnalyticsUserCache();
       // Redirect based on role
       const role = data.user?.role;
       if (role === "admin" || role === "owner") {

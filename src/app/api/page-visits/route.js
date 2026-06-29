@@ -65,6 +65,10 @@ export async function POST(request) {
 /**
  * GET /api/page-visits
  * Get all page visit statistics (restricted to Admins / Owners)
+ *
+ * Query params:
+ *   ?check=latest  → returns only the latest `updatedAt` timestamp (lightweight check)
+ *   (no params)    → returns full visit data
  */
 export async function GET(request) {
   try {
@@ -73,7 +77,22 @@ export async function GET(request) {
 
     await connectToDatabase();
 
-    // Fetch visits sorted by lastVisitedAt (newest first)
+    const { searchParams } = new URL(request.url);
+
+    // Lightweight mode: just return the timestamp of the most recently updated record
+    if (searchParams.get("check") === "latest") {
+      const latest = await PageVisit.findOne()
+        .sort({ updatedAt: -1 })
+        .select("updatedAt")
+        .lean();
+
+      return NextResponse.json({
+        success: true,
+        latestUpdatedAt: latest?.updatedAt ?? null,
+      });
+    }
+
+    // Full mode: fetch all visits sorted by lastVisitedAt (newest first)
     const visits = await PageVisit.find()
       .populate("userId", "username role officeName") // details from the referenced User
       .sort({ lastVisitedAt: -1 })

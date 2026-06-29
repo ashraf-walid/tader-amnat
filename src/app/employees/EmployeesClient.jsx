@@ -5,14 +5,14 @@ import { UsersIcon } from "@/components/Icons";
 import { usePageAnalytics } from "@/hooks/usePageAnalytics";
 
 export default function EmployeesClient({ employees }) {
-  // تفعيل التحليلات لمراقبة زيارات صفحة الموظفين
+  // Enable analytics to monitor employee page visits
   usePageAnalytics("/employees");
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       {/* Page Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center shadow-[0_4px_16px_rgba(16,185,129,0.3)] shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-linear-to-br from-emerald-500 to-teal-400 flex items-center justify-center shadow-[0_4px_16px_rgba(16,185,129,0.3)] shrink-0">
             <UsersIcon size={20} />
           </div>
           <div>

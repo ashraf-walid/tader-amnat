@@ -19,16 +19,27 @@ async function getClientUser() {
     .then((d) => {
       if (d.success && d.user) {
         cachedUser = d.user;
-      } else {
-        cachedUser = { id: "guest", username: "guest" };
+        return cachedUser;
       }
-      return cachedUser;
+      // Do NOT cache guest in cachedUser so we can re-evaluate on subsequent page loads if they log in
+      return { id: "guest", username: "guest" };
     })
     .catch(() => {
       return { id: "guest", username: "guest" };
+    })
+    .finally(() => {
+      cachedPromise = null;
     });
 
   return cachedPromise;
+}
+
+/**
+ * Programmatically clears the analytics user cache.
+ */
+export function clearAnalyticsUserCache() {
+  cachedUser = null;
+  cachedPromise = null;
 }
 
 /**
@@ -56,8 +67,14 @@ export function usePageAnalytics(pageName) {
   }, [pageName]);
 
   useEffect(() => {
+    // ─── Development Guard ───
+    // Prevent tracking page visits in development environment
+    if (process.env.NODE_ENV === "development") return;
+
     // Ensure we are in a client environment
     if (typeof window === "undefined") return;
+
+    const page = pageNameRef.current || window.location.pathname || "/";
 
     // Reset state for this page render
     hasSentRef.current = false;
@@ -67,8 +84,6 @@ export function usePageAnalytics(pageName) {
     getClientUser().then((user) => {
       userRef.current = user;
     });
-
-    const page = pageNameRef.current || window.location.pathname || "/";
 
     const checkAndLogVisit = () => {
       // Prevent duplicate logs for the same page session
@@ -104,18 +119,26 @@ export function usePageAnalytics(pageName) {
           body: JSON.stringify({ page }),
           keepalive: true, // Ensures request completes even if page unloads
         })
-          .then((r) => r.json())
+          .then((res) => {
+            // If session is expired or unauthorized, reset the analytics cache client-side
+            if (res.status === 401 || res.status === 403) {
+              clearAnalyticsUserCache();
+            }
+            return res.json();
+          })
           .then((data) => {
             if (data.success) {
               localStorage.setItem(storageKey, now.toString());
+            } else {
+              // Reset in-memory flag if server reports failure
+              hasSentRef.current = false;
             }
           })
           .catch((err) => {
             console.error("Failed to post page visit on exit:", err);
+            // Reset in-memory flag on network error so another mount can try again
+            hasSentRef.current = false;
           });
-
-        // Optimistically set the timestamp locally to avoid race conditions
-        localStorage.setItem(storageKey, now.toString());
       }
     };
 
@@ -124,20 +147,11 @@ export function usePageAnalytics(pageName) {
       checkAndLogVisit();
     };
 
-    // Log the visit if user switches tab or minimizes window
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        checkAndLogVisit();
-      }
-    };
-
     window.addEventListener("beforeunload", handleBeforeUnload);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     // Component cleanups (SPA client-side navigation)
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
       checkAndLogVisit();
     };
   }, [pageName]);

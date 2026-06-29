@@ -16,6 +16,7 @@ import {
   InstallIcon,
 } from '@/components/Icons';
 import { usePWAInstall } from '@/lib/usePWAInstall';
+import { clearAnalyticsUserCache } from '@/hooks/usePageAnalytics';
 
 // ── Toast نجاح التثبيت ──────────────────────────────────────
 function InstallSuccessToast({ visible }) {
@@ -163,6 +164,8 @@ export default function AdminNav() {
     setLogging(true);
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
+      // Clear analytics user cache so the next visitor is tracked correctly
+      clearAnalyticsUserCache();
       cachedUser = null;
       cachedLoaded = false;
       setUser(null);
