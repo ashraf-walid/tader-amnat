@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Icon } from "@/components/Icons";
 
 // ─── Spinner ──────────────────────────────────────────────────────────────────
@@ -8,6 +8,30 @@ function Spinner({ size = 18 }) {
       className="rounded-full border-2 border-white/20 border-t-white animate-spin shrink-0"
       style={{ width: size, height: size }}
     />
+  );
+}
+
+function Section({ icon: IconComp, title, subtitle, children, action }) {
+  return (
+    <div className="bg-slate-900 rounded-2xl border border-white/[0.08] overflow-hidden">
+      <div className="px-5 py-4 border-b border-white/[0.07] flex flex-wrap gap-2.5 items-center">
+        <div className="flex-1 min-w-[140px]">
+          <div className="flex items-center gap-2">
+            {IconComp && (
+              <span className="text-sky-400 shrink-0">
+                <IconComp />
+              </span>
+            )}
+            <p className="text-sm font-semibold text-slate-300 m-0">{title}</p>
+          </div>
+          {subtitle && (
+            <p className="text-[11px] text-slate-500 m-0 mt-0.5">{subtitle}</p>
+          )}
+        </div>
+        {action}
+      </div>
+      <div className="p-5">{children}</div>
+    </div>
   );
 }
 
@@ -33,6 +57,67 @@ export function PageVisitsSection() {
   });
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(""); // "up-to-date" | "updated" | "error"
+  const [sortBy, setSortBy] = useState("visitCount");
+  const [sortDir, setSortDir] = useState("desc");
+
+  const sortedVisits = useMemo(() => {
+    const data = [...visits];
+
+    data.sort((a, b) => {
+      let valueA;
+      let valueB;
+
+      switch (sortBy) {
+        case "page":
+          valueA = a.page;
+          valueB = b.page;
+          break;
+
+        case "user":
+          valueA = a.username || a.userId?.username || "guest";
+          valueB = b.username || b.userId?.username || "guest";
+          break;
+
+        case "visitCount":
+          valueA = a.visitCount;
+          valueB = b.visitCount;
+          break;
+
+        case "lastVisitedAt":
+          valueA = new Date(a.lastVisitedAt).getTime();
+          valueB = new Date(b.lastVisitedAt).getTime();
+          break;
+
+        default:
+          return 0;
+      }
+
+      if (typeof valueA === "number") {
+        return sortDir === "asc"
+          ? valueA - valueB
+          : valueB - valueA;
+      }
+
+      return sortDir === "asc"
+        ? String(valueA).localeCompare(String(valueB))
+        : String(valueB).localeCompare(String(valueA));
+    });
+
+    return data;
+  }, [visits, sortBy, sortDir]);
+
+  const handleSort = (key) => {
+    if (sortBy === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortBy(key); setSortDir("desc"); }
+  };
+
+  const COLUMNS = [
+    { key: "page", label: "الصفحة" },
+    { key: "user", label: "المستخدم" },
+    { key: "visitCount", label: "عدد الزيارات" },
+    { key: "lastVisitedAt", label: "آخر زيارة" },
+  ];
+
   const handleRefresh = async () => {
     setLoading(true);
     setStatus("");
@@ -96,6 +181,7 @@ export function PageVisitsSection() {
   const totalVisits = visits.reduce((s, v) => s + (v.visitCount || 0), 0);
   const uniquePages = pageList.length;
 
+  return (
     <Section
       icon={Icon.Chart}
       title="تحليلات زيارات الصفحات"
@@ -203,14 +289,22 @@ export function PageVisitsSection() {
               <table className="w-full border-collapse rtl min-w-[560px]">
                 <thead>
                   <tr className="bg-white/[0.03]">
-                    <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">الصفحة</th>
-                    <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">المستخدم</th>
-                    <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">عدد الزيارات</th>
-                    <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">آخر زيارة</th>
+                    {COLUMNS.map((col) => (
+                      <th key={col.key}
+                        onClick={ () => handleSort(col.key) }
+                        className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">
+                        <span className="inline-flex items-center gap-1">
+                          {col.label}
+                          { sortBy === col.key && (
+                            <span className="text-sky-400 text-[10px]">{sortDir === "asc" ? "▲" : "▼"}</span>
+                          )}
+                        </span>
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {visits.map((v, idx) => (
+                  {sortedVisits.map((v, idx) => (
                     <tr
                       key={idx}
                       className={`border-b border-white/5 transition-colors duration-150 hover:bg-sky-500/[0.05] ${idx % 2 ? "bg-white/[0.015]" : ""}`}
@@ -246,4 +340,5 @@ export function PageVisitsSection() {
         </div>
       )}
     </Section>
+    );
 }

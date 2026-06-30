@@ -2,6 +2,7 @@
 
 import { PageVisitsSection } from "./VisitsSection";
 import { DateReportSection } from "./DateReportSection";
+import { InvoicesByDateSection } from "./Invoices";
 
 
 // ─── Main ReportsTab Component ────────────────────────────────────────────────

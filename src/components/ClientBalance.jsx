@@ -181,13 +181,6 @@ export default function ClientBalance() {
             )}
           </div>
         </div>
-        <button 
-          onClick={fetchBalance}
-          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl hover:bg-slate-700 transition-all text-slate-200 font-medium shadow-sm cursor-pointer"
-        >
-          <RefreshIcon size={18} />
-          تحديث البيانات
-        </button>
       </div>
 
       {/* Prominent Closing Balance */}
@@ -328,13 +321,21 @@ export default function ClientBalance() {
         )}
       </div>
 
+      <button 
+          onClick={fetchBalance}
+          className="flex items-center justify-center w-full gap-2 px-5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl hover:bg-slate-700 transition-all text-slate-200 font-medium shadow-sm cursor-pointer"
+        >
+          <RefreshIcon size={18} />
+          تحديث البيانات
+      </button>
+
       {/* Footer Info */}
-      <div className="bg-amber-900/10 border border-amber-900/20 rounded-2xl p-4 flex gap-3">
+      <div className="bg-amber-900/10 border border-amber-900/20 rounded-2xl p-4 flex items-center justify-center gap-3">
         <div className="text-amber-500 shrink-0">
           <InfoIcon size={20} />
         </div>
         <p className="text-sm text-amber-400 leading-relaxed">
-          هذه البيانات مستخرجة من النظام المحاسبي وتخضع للمراجعة. في حال وجود أي استفسار يرجى مراجعة إدارة الحسابات.
+          ملاحظة: يتم تجديد رصيد الحساب يومياً في الساعة 15:00 عصراً
         </p>
       </div>
     </div>

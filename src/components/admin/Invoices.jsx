@@ -25,6 +25,30 @@ function RoleBadge({ role }) {
   );
 }
 
+function Section({ icon: IconComp, title, subtitle, children, action }) {
+  return (
+    <div className="bg-slate-900 rounded-2xl border border-white/[0.08] overflow-hidden">
+      <div className="px-5 py-4 border-b border-white/[0.07] flex flex-wrap gap-2.5 items-center">
+        <div className="flex-1 min-w-[140px]">
+          <div className="flex items-center gap-2">
+            {IconComp && (
+              <span className="text-sky-400 shrink-0">
+                <IconComp />
+              </span>
+            )}
+            <p className="text-sm font-semibold text-slate-300 m-0">{title}</p>
+          </div>
+          {subtitle && (
+            <p className="text-[11px] text-slate-500 m-0 mt-0.5">{subtitle}</p>
+          )}
+        </div>
+        {action}
+      </div>
+      <div className="p-5">{children}</div>
+    </div>
+  );
+}
+
 export function InvoicesByDateSection() {
   const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [data, setData] = useState(null);
