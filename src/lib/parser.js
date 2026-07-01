@@ -1,4 +1,4 @@
-import { PRIORITY_CODES } from './constants';
+// import { PRIORITY_CODES } from './constants';
 
 /**
  * Parser for the accounting HTML trial balance export.
@@ -48,9 +48,9 @@ export async function parseAccountingHTML(file) {
             }
 
             // Filter for priority codes only to reduce DB operations
-            if (!PRIORITY_CODES.includes(code)) {
-              return;
-            }
+            // if (!PRIORITY_CODES.includes(code)) {
+            //   return;
+            // }
             
             // Numerical values are usually in ALIGN=right cells BEFORE the name cell
             const values = cells

@@ -31,7 +31,7 @@ export default function AccountsTable({
       <table className="w-full">
         <thead>
           <tr className="bg-slate-800/50 text-slate-400 text-sm">
-            <th className="px-6 py-4 text-right font-medium">
+            <th className="px-4 py-4 text-right font-medium">
               العميل / الحساب
             </th>
             <th className="px-4 py-4 text-center font-medium">
@@ -43,14 +43,14 @@ export default function AccountsTable({
             <th className="px-4 py-4 text-center font-medium text-orange-600">
               مدين
             </th>
-            <th className="px-6 py-4 text-center font-medium text-blue-600">
+            <th className="px-4 py-4 text-center font-medium text-blue-600">
               إضافة مبلغ (+)
             </th>
-            <th className="px-6 py-4 text-center font-medium text-red-600">
+            <th className="px-4 py-4 text-center font-medium text-red-600">
               تخصيم مبلغ (-)
             </th>
-            <th className="px-6 py-4 text-center w-4"></th>
-            <th className="px-6 py-4 text-left font-medium">
+            <th className="px-4 py-4 text-center w-4"></th>
+            <th className="px-4 py-4 text-left font-medium">
               الرصيد النهائي
             </th>
           </tr>
@@ -94,7 +94,7 @@ export default function AccountsTable({
                 )}
               >
                 <td
-                  className="px-6 py-4 max-w-80 cursor-pointer group/cell"
+                  className="px-4 py-4 max-w-80 cursor-pointer group/cell"
                   onClick={() => {
                     setSelectedAccount(item);
                     setIsHistoryOpen(true);
@@ -181,7 +181,7 @@ export default function AccountsTable({
                   </span>
                 </td>
 
-                <td className="px-6 py-4 text-center">
+                <td className="px-4 py-4 text-center">
                   <input
                     type="number"
                     placeholder="0"
@@ -196,7 +196,7 @@ export default function AccountsTable({
                     className="w-24 px-2 py-1 text-center text-sm font-mono text-blue-400 bg-blue-900/10 border border-blue-900/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 no-spinner"
                   />
                 </td>
-                <td className="px-6 py-4 text-center">
+                <td className="px-4 py-4 text-center">
                   <input
                     type="number"
                     placeholder="0"
@@ -221,7 +221,7 @@ export default function AccountsTable({
                     </button>
                   )}
                 </td>
-                <td className="px-6 py-4 text-left font-bold font-mono whitespace-nowrap">
+                <td className="px-4 py-4 text-left font-bold font-mono whitespace-nowrap">
                   <div
                     className={cn(
                       "inline-block px-3 py-1 rounded-lg text-lg",

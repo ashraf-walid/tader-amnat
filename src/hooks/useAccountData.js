@@ -12,6 +12,7 @@ import {
   isIndexedDBSupported,
 } from "@/lib/localDB";
 import { parseAccountingHTML } from "@/lib/parser";
+import { mergeHTMLWithBaseBalances, checkBaseBalancesExists } from "@/lib/mergeBalances";
 
 export function useAccountData() {
   const [allAccounts, setAllAccounts] = useState([]);
@@ -87,6 +88,78 @@ export function useAccountData() {
       setLoading(false);
     }
   }, [fetchDataFromMongoDB]);
+
+  // Process file with merge (HTML + base balances)
+  const processFileWithMerge = async (file) => {
+    setLoading(true);
+    try {
+      const fileName = file.name.toLowerCase();
+
+      // التحقق من أن الملف HTML فقط
+      if (!fileName.endsWith(".html") && !fileName.endsWith(".htm")) {
+        throw new Error("هذه الوظيفة تدعم ملفات HTML فقط");
+      }
+
+      // التحقق من وجود ملف الأرصدة الأساسية
+      const baseExists = await checkBaseBalancesExists();
+      if (!baseExists) {
+        throw new Error("لم يتم العثور على ملف الأرصدة الأساسية (base-balances-30-06.json)");
+      }
+
+      // دمج الملف الجديد مع الأرصدة الأساسية
+      const { data: results, dateRange: extractedDateRange, mergeInfo } =
+        await mergeHTMLWithBaseBalances(file);
+
+      // تهيئة الحسابات المستخرجة
+      const preparedResults = results.map((newRecord) => ({
+        ...newRecord,
+        transactions: [],
+      }));
+
+      // ✅ 1. حفظ في IndexedDB أولاً (فوري)
+      await saveAllAccounts(preparedResults);
+      if (extractedDateRange) await setDateRangeDB(extractedDateRange);
+
+      // ✅ 2. تحديث الواجهة فوراً
+      setAllAccounts(preparedResults);
+      setData(preparedResults);
+      if (extractedDateRange) setDateRange(extractedDateRange);
+
+      // ✅ 3. رفع إلى MongoDB في الخلفية (بدون انتظار)
+      fetch("/api/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          data: preparedResults,
+          dateRange: extractedDateRange,
+        }),
+      })
+        .then(() => {
+          console.log("✅ تمت المزامنة مع MongoDB");
+          setLastSyncTimestamp(Date.now());
+        })
+        .catch((err) => console.error("⚠️ فشلت المزامنة مع MongoDB:", err));
+
+      // عرض معلومات الدمج
+      alert(
+        `✅ تم الدمج بنجاح!\n\n` +
+        `📊 إجمالي الحسابات: ${mergeInfo.totalAccounts}\n` +
+        `🔄 حسابات مدمجة: ${mergeInfo.mergedAccounts}\n` +
+        `📌 حسابات من 30/06 فقط: ${mergeInfo.onlyInBase}\n` +
+        `🆕 حسابات جديدة: ${mergeInfo.onlyInNew}`
+      );
+
+      return { success: true, mergeInfo };
+    } catch (err) {
+      alert(
+        err.message ||
+          "حدث خطأ أثناء دمج الملفات. يرجى التأكد من صحة الملف.",
+      );
+      return { success: false, error: err.message };
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Process file (HTML or JSON backup)
   const processFile = async (file) => {
@@ -193,6 +266,12 @@ export function useAccountData() {
     const file = e.target.files?.[0];
     if (!file) return;
     processFile(file);
+  };
+
+  const handleFileUploadWithMerge = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    processFileWithMerge(file);
   };
 
   const onDragOver = (e) => {
@@ -329,7 +408,9 @@ export function useAccountData() {
     isDragging,
     fetchDataFromMongoDB,
     processFile,
+    processFileWithMerge,
     handleFileUpload,
+    handleFileUploadWithMerge,
     onDragOver,
     onDragLeave,
     onDrop,

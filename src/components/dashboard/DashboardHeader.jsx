@@ -17,6 +17,7 @@ export default function DashboardHeader({
   fetchDataFromMongoDB,
   downloadData,
   handleFileUpload,
+  handleFileUploadWithMerge,
   data,
   search,
 }) {
@@ -103,6 +104,26 @@ export default function DashboardHeader({
             />
           </label>
 
+          <label
+            className={cn(
+              "px-3 py-2.5 sm:py-2 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border cursor-pointer",
+              loading
+                ? "bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed"
+                : "bg-slate-900 text-emerald-400 border-emerald-900/30 hover:bg-slate-800",
+            )}
+            title="دمج ملف HTML جديد مع أرصدة 30/06"
+          >
+            <Upload size={14} />
+            دمج مع أرصدة 30/06
+            <input
+              type="file"
+              className="hidden"
+              accept=".html,.htm"
+              onChange={handleFileUploadWithMerge}
+              disabled={loading}
+            />
+          </label>
+
           <button
             onClick={downloadData}
             className="px-3 py-2.5 sm:py-2 text-sm md:text-sm font-bold text-slate-300 bg-slate-900 border border-slate-800 hover:bg-slate-800 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
@@ -115,3 +136,37 @@ export default function DashboardHeader({
     </header>
   );
 }
+
+
+// import { convertHTMLToBaseBalances } from '@/lib/convertToBaseBalances';
+
+
+// async function convertHTML(file) {
+//   if (!file) return;
+  
+//   try {
+//     await convertHTMLToBaseBalances(file);
+//     // يمكنك إضافة رسالة نجاح هنا
+//     console.log('تم تحويل الملف بنجاح');
+//   } catch (error) {
+//     console.error('خطأ أثناء التحويل:', error);
+//   }
+// }
+
+        {/* <label>
+            <Upload size={14} />
+             الجديد
+            <input
+              type="file"
+              className="hidden"
+              accept=".html,.htm,.json"
+              onChange={(e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        convertHTML(file);
+        
+        e.target.value = '';
+      }
+    }}
+            />
+          </label> */}

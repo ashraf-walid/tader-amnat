@@ -26,6 +26,7 @@ export default function AccountsDashboard() {
     isDragging,
     fetchDataFromMongoDB,
     handleFileUpload,
+    handleFileUploadWithMerge,
     onDragOver,
     onDragLeave,
     onDrop,
@@ -83,6 +84,7 @@ export default function AccountsDashboard() {
           fetchDataFromMongoDB={fetchDataFromMongoDB}
           downloadData={downloadData}
           handleFileUpload={handleFileUpload}
+          handleFileUploadWithMerge={handleFileUploadWithMerge}
           data={data}
           search={search}
         />
