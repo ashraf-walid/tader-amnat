@@ -6,7 +6,7 @@ import cache, { CacheKeys, CacheTTL, invalidateCache } from "@/lib/cache";
 
 export async function GET(req) {
   try {
-    // 1️⃣ محاولة القراءة من الذاكرة أولاً
+    // 1️⃣ Try reading from memory first
     const cachedRate = cache.get(CacheKeys.EXCHANGE_RATE);
     if (cachedRate !== null) {
       console.log("✅ Exchange rate from cache:", cachedRate);
@@ -20,7 +20,7 @@ export async function GET(req) {
       );
     }
 
-    // 2️⃣ إذا لم توجد في الذاكرة، اقرأ من MongoDB
+    // 2️⃣ If not found in memory, read from MongoDB
     await connectToDatabase();
     const defaultRate = 53;
 
