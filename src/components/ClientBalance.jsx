@@ -51,7 +51,8 @@ export default function ClientBalance() {
   };
 
   useEffect(() => {
-    fetchBalance();
+    const timer = setTimeout(fetchBalance, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   if (loading) {
@@ -99,12 +100,12 @@ export default function ClientBalance() {
               <h3 className="text-blue-300 font-bold text-lg">لوحة تحكم الإدارة</h3>
               <p className="text-blue-400 text-sm leading-relaxed">{data.message}</p>
             </div>
-            <a 
+            <Link
               href="/"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-500 transition-colors font-medium text-sm no-underline cursor-pointer"
             >
               الانتقال إلى لوحة التحكم
-            </a>
+            </Link>
           </div>
         </div>
       );
@@ -158,6 +159,28 @@ export default function ClientBalance() {
   // تحديث إجمالي الحركة للعرض المتناسق
   const adjustedTotalsDebit = (totals?.debit || 0) + manualAdditions;
   const adjustedTotalsCredit = (totals?.credit || 0) + manualDeductions;
+  const finalBalance = adjustedClosingDebit - (closingBalance?.credit || 0);
+  const finalBalanceAbs = Math.abs(finalBalance);
+  const finalBalanceStatus = finalBalance > 0
+    ? {
+        label: 'ليك',
+        cardClass: 'from-emerald-700 to-emerald-950 border-emerald-500/50',
+        amountClass: 'text-emerald-50',
+        badgeClass: 'bg-emerald-500/20 text-emerald-50 border-emerald-200/10',
+      }
+    : finalBalance < 0
+      ? {
+          label: 'عليك',
+          cardClass: 'from-rose-700 to-rose-950 border-rose-500/50',
+          amountClass: 'text-rose-50',
+          badgeClass: 'bg-rose-500/20 text-rose-50 border-rose-200/10',
+        }
+      : {
+          label: 'متوازن',
+          cardClass: 'from-slate-700 to-slate-950 border-slate-500/50',
+          amountClass: 'text-slate-50',
+          badgeClass: 'bg-white/15 text-slate-50 border-white/10',
+        };
 
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
@@ -184,27 +207,23 @@ export default function ClientBalance() {
       </div>
 
       {/* Prominent Closing Balance */}
-      <div className="bg-linear-to-br from-blue-700 to-blue-900 rounded-3xl p-8 md:p-10 shadow-xl border border-blue-500/50 flex flex-col items-center justify-center text-white relative overflow-hidden">
+      <div className={`bg-linear-to-br ${finalBalanceStatus.cardClass} rounded-3xl p-8 md:p-10 shadow-xl border flex flex-col items-center justify-center text-white relative overflow-hidden`}>
         {/* Background Decoration */}
         <div className="absolute -top-10 -right-10 opacity-10 rotate-12 pointer-events-none">
           <NavChartIcon size={180} />
         </div>
         
         <div className="relative z-10 flex flex-col items-center">
-          <span className="bg-white/20 px-4 py-1.5 rounded-full text-blue-50 font-medium text-sm mb-6 backdrop-blur-sm border border-white/10 flex items-center gap-2">
+          <span className={`${finalBalanceStatus.badgeClass} px-4 py-1.5 rounded-full font-medium text-sm mb-6 backdrop-blur-sm border flex items-center gap-2`}>
             <NavChartIcon size={16} />
             الرصيد النهائي
           </span>
           
-          <div className="flex flex-col items-center gap-4 w-full">
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl md:text-6xl font-black tracking-tight">{fmt(adjustedClosingDebit)}</span>
-              <span className="text-blue-200 text-lg font-medium">ليك</span>
-            </div>
-            <div className="flex items-baseline gap-2 opacity-80 bg-black/10 px-4 py-1.5 rounded-2xl">
-              <span className="text-xl md:text-2xl font-bold">{fmt(closingBalance?.credit)}</span>
-              <span className="text-blue-200 text-sm">عليك</span>
-            </div>
+          <div className="flex items-baseline justify-center gap-2 w-full">
+            <span className={`text-4xl md:text-6xl font-black tracking-tight ${finalBalanceStatus.amountClass}`}>
+              {fmt(finalBalanceAbs)}
+            </span>
+            <span className="text-white/80 text-lg font-medium">{finalBalanceStatus.label}</span>
           </div>
         </div>
       </div>

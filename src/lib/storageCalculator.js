@@ -339,11 +339,10 @@ export function calculateMultiContainerInvoice(arrivalDate, releaseDate, contain
     if (hasCargoService && adjustedConfig.CARGO_SERVICE_FEE) {
       const activeCount = group.cargoServiceCount !== undefined ? group.cargoServiceCount : count;
       // LCL: نصف السعر لتفريغ المشمول
-      const cargoServiceRate = isLCLStorage
-        ? adjustedConfig.CARGO_SERVICE_FEE * 0.5
-        : isActuallyDangerous
-          ? adjustedConfig.CARGO_SERVICE_FEE * 1
-          : adjustedConfig.CARGO_SERVICE_FEE;
+      const cargoServiceRate =
+          adjustedConfig.CARGO_SERVICE_FEE *
+          (isLCLStorage ? 0.5 : 1) *
+          (isActuallyDangerous ? 1.5 : 1);
       totalCargoServiceFeeUSD += cargoServiceRate * activeCount;
     }
   });
