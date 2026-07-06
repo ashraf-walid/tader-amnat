@@ -1,6 +1,16 @@
 'use client';
 
-export default function BillingTypeSelector({ billingType, setBillingType, prevDays, setPrevDays, days }) {
+import ArabicDatePicker from '@/components/ArabicDatePicker';
+
+export default function BillingTypeSelector({
+  billingType,
+  setBillingType,
+  firstInvoiceDate,
+  setFirstInvoiceDate,
+  arrDate,
+  relDate,
+  prevDays
+}) {
   return (
     <div className="bg-[#111827] border border-white/[0.12] rounded-[20px] p-6 mb-4">
       {/* Release type */}
@@ -27,23 +37,23 @@ export default function BillingTypeSelector({ billingType, setBillingType, prevD
         <>
           <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-[#4a5568] mb-3">
             <span className="w-0.5 h-3.5 bg-[#f0b429] rounded-sm" />
-            الأيام المسددة سابقاً (في الفاتورة الأولى)
+            تاريخ سداد الفاتورة الأولى
           </div>
           <div className="flex flex-col gap-2 mb-4">
-            <input
-              type="number"
-              className="w-full py-3 px-3.5 rounded-xl border-[1.5px] border-white/[0.12] bg-[#1a2035] text-[#f0f2f8] text-[15px] font-medium text-right outline-none transition-all focus:border-[#f0b429] focus:shadow-[0_0_0_3px_rgba(240,180,41,0.12)]"
-              style={{ direction: 'rtl' }}
-              value={prevDays}
-              min={0}
-              max={days || undefined}
-              onChange={e => {
-                const val = Number(e.target.value);
-                const maxDays = days || 0;
-                setPrevDays(val > maxDays ? maxDays : (val < 0 ? 0 : val));
-              }}
-              placeholder="0"
+            <ArabicDatePicker
+              id="first-invoice-date"
+              label="تاريخ إنشاء / سداد فاتورة الصرف أول مرة"
+              selected={firstInvoiceDate}
+              onChange={setFirstInvoiceDate}
+              minDate={arrDate || undefined}
+              maxDate={relDate || undefined}
+              placeholderText="يوم / شهر / سنة"
             />
+            {prevDays > 0 && (
+              <div className="text-xs font-semibold text-[#f0b429] bg-[rgba(240,180,41,0.1)] border border-[rgba(240,180,41,0.2)] rounded-xl px-3 py-2">
+                الأيام المسددة سابقاً: {prevDays} يوم
+              </div>
+            )}
           </div>
         </>
       )}

@@ -31,7 +31,8 @@ export function useStorageCalculator(adminExchangeRate) {
   // ── Primary state ──
   const [arrDate, setArrDate] = useState(null);
   const [relDate, setRelDate] = useState(new Date());
-  const [billingType, setBillingType] = useState("INITIAL");
+  const [billingType, setBillingTypeState] = useState("INITIAL");
+  const [firstInvoiceDate, setFirstInvoiceDateState] = useState(null);
   const [twentyCount, setTwentyCount] = useState(1);
   const [fortyCount, setFortyCount] = useState(0);
 
@@ -59,7 +60,7 @@ export function useStorageCalculator(adminExchangeRate) {
 
   // ── Advanced / secondary state ──
   const [advOpen, setAdvOpen] = useState(false);
-  const [prevDays, setPrevDays] = useState(0);
+  const [, setPrevDays] = useState(0);
 
   // ── New Appended Features ──
   const [isHolidayRelease, setIsHolidayRelease] = useState(false);
@@ -85,6 +86,40 @@ export function useStorageCalculator(adminExchangeRate) {
 
   // Derived state
   const days = calculateLiveDays(arrDate, relDate);
+  const renewalPrevDays = calculateLiveDays(arrDate, firstInvoiceDate) || 0;
+  const effectivePrevDays = billingType === "RENEWAL" ? renewalPrevDays : 0;
+
+  const setFirstInvoiceDate = useCallback((date) => {
+    if (!date) {
+      setFirstInvoiceDateState(null);
+      return;
+    }
+
+    const first = new Date(date);
+    first.setHours(0, 0, 0, 0);
+
+    if (arrDate) {
+      const arrival = new Date(arrDate);
+      arrival.setHours(0, 0, 0, 0);
+      if (first < arrival) return;
+    }
+
+    if (relDate) {
+      const release = new Date(relDate);
+      release.setHours(0, 0, 0, 0);
+      if (first > release) return;
+    }
+
+    setFirstInvoiceDateState(date);
+  }, [arrDate, relDate]);
+
+  const setBillingType = useCallback((nextBillingType) => {
+    setBillingTypeState(nextBillingType);
+    setPrevDays(0);
+    if (nextBillingType !== "RENEWAL") {
+      setFirstInvoiceDateState(null);
+    }
+  }, []);
 
   // Per-size multipliers (using respective size config)
   const nsMultiplier20 = calculateNsMultiplier(
@@ -149,6 +184,7 @@ export function useStorageCalculator(adminExchangeRate) {
     clearResult();
     setArrDate(null);
     setRelDate(new Date());
+    setFirstInvoiceDateState(null);
     setTwentyCount(1);
     setFortyCount(0);
     setTwentyCargoType("FULL");
@@ -183,6 +219,11 @@ export function useStorageCalculator(adminExchangeRate) {
       return;
     }
 
+    if (billingType === "RENEWAL" && !firstInvoiceDate) {
+      setError("الرجاء تحديد تاريخ سداد الفاتورة الأولى.");
+      return;
+    }
+
     // التحقق من تاريخ خروج المشمول
     if (hasCargoStorage && !cargoExitDate) {
       setError("الرجاء تحديد تاريخ خروج المشمول من الحاوية.");
@@ -208,8 +249,8 @@ export function useStorageCalculator(adminExchangeRate) {
     setAttemptsLoading(false);
 
     const maxDays = days || 0;
-    if (billingType === "RENEWAL" && prevDays > maxDays) {
-      setError(`الأيام المسددة سابقاً (${prevDays} يوم) لا يمكن أن تتجاوز إجمالي مدة التخزين (${maxDays} يوم).`);
+    if (billingType === "RENEWAL" && effectivePrevDays > maxDays) {
+      setError(`الأيام المسددة سابقاً (${effectivePrevDays} يوم) لا يمكن أن تتجاوز إجمالي مدة التخزين (${maxDays} يوم).`);
       return;
     }
 
@@ -368,7 +409,7 @@ export function useStorageCalculator(adminExchangeRate) {
         {
           exchangeRate,
           billingType,
-          previousDays: prevDays,
+          previousDays: effectivePrevDays,
           isExternalStorage,
           isLCLStorage,
           additionalServices: selectedServices,
@@ -420,12 +461,12 @@ export function useStorageCalculator(adminExchangeRate) {
       setError(err.message);
     }
   }, [
-    arrDate, relDate, billingType, twentyCount, fortyCount,
+    arrDate, relDate, billingType, firstInvoiceDate, twentyCount, fortyCount,
     twentyCargoType, fortyCargoType, nonStdType20, nonStdType40,
     hasCargoStripping, hasCargoStorage, isExternalStorage, isLCLStorage,
     isHolidayRelease, hasDangerYard20, hasDangerYard40,
     services, serviceQuantities,
-    exchangeRate, days, prevDays, nsMultiplier20, nsMultiplier40, cargoExitDate
+    exchangeRate, days, effectivePrevDays, nsMultiplier20, nsMultiplier40, cargoExitDate
   ]);
 
   // Auto effects
@@ -455,6 +496,7 @@ export function useStorageCalculator(adminExchangeRate) {
     arrDate, setArrDate,
     relDate, setRelDate,
     billingType, setBillingType,
+    firstInvoiceDate, setFirstInvoiceDate,
     twentyCount, setTwentyCount,
     fortyCount, setFortyCount,
 
@@ -483,7 +525,7 @@ export function useStorageCalculator(adminExchangeRate) {
 
     // Advanced
     advOpen, setAdvOpen,
-    prevDays, setPrevDays,
+    prevDays: effectivePrevDays, setPrevDays,
 
     // Features
     isHolidayRelease, setIsHolidayRelease,

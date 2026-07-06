@@ -21,6 +21,7 @@ export default function StorageCalculator({ adminExchangeRate }) {
     arrDate, setArrDate,
     relDate, setRelDate,
     billingType, setBillingType,
+    firstInvoiceDate, setFirstInvoiceDate,
     twentyCount, setTwentyCount,
     fortyCount, setFortyCount,
 
@@ -49,7 +50,7 @@ export default function StorageCalculator({ adminExchangeRate }) {
 
     // Advanced
     advOpen, setAdvOpen,
-    prevDays, setPrevDays,
+    prevDays,
 
     // Features
     isHolidayRelease, setIsHolidayRelease,
@@ -154,9 +155,11 @@ export default function StorageCalculator({ adminExchangeRate }) {
             <BillingTypeSelector
               billingType={billingType}
               setBillingType={setBillingType}
+              firstInvoiceDate={firstInvoiceDate}
+              setFirstInvoiceDate={setFirstInvoiceDate}
+              arrDate={arrDate}
+              relDate={relDate}
               prevDays={prevDays}
-              setPrevDays={setPrevDays}
-              days={days}
             />
 
             {/* Container Counts */}
