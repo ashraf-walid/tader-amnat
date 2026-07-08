@@ -2,7 +2,7 @@
   "name": "أمانات - الأرضيات",
   "short_name": "أمانات",
   "description": "نظام عرض أرصدة العملاء وحساب فواتير الأرضيات",
-  "start_url": "/login",
+  "start_url": "/Storagecalculator",
   "display": "standalone",
   "background_color": "#0b1120",
   "theme_color": "#0b1120",

@@ -12,6 +12,7 @@ import {
   ChevronDownIcon,
   LogOutIcon,
   MenuIcon,
+  // BellIcon,
   CloseIcon,
   InstallIcon,
 } from '@/components/Icons';
@@ -159,6 +160,51 @@ export default function AdminNav() {
     document.body.style.overflow = mobileOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [mobileOpen]);
+
+  // دالة مساعدة: تحويل VAPID public key من Base64 إلى Uint8Array
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = atob(base64);
+    return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+  }
+
+  async function enableNotifications() {
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        alert('لم يتم منح إذن الإشعارات.');
+        return;
+      }
+
+      const registration = await navigator.serviceWorker.ready;
+
+      // ✅ تحويل المفتاح من String إلى Uint8Array — مطلوب من pushManager
+      const applicationServerKey = urlBase64ToUint8Array(
+        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+      );
+
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey,
+      });
+
+      const res = await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(subscription),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'فشل حفظ الاشتراك');
+
+      alert('✅ تم تفعيل الإشعارات بنجاح.');
+    } catch (err) {
+      console.error('enableNotifications error:', err);
+      alert(`❌ فشل تفعيل الإشعارات: ${err.message}`);
+    }
+  }
+
 
   const handleLogout = async () => {
     setLogging(true);
@@ -349,8 +395,20 @@ export default function AdminNav() {
                       <InstallIcon size={14} />
                       {isInstalled ? 'مثبت' : 'تثبيت التطبيق'}
                     </button>
-                    <div className="h-px bg-white/[0.06] my-1" />
+                    <div className="h-px bg-white/6 my-1" />
                   </>
+
+                  {user.role === 'owner' && (
+                    <button
+                      onClick={enableNotifications}
+                      disabled={logging}
+                      className="admin-dropdown-item flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-slate-300 no-underline w-full"
+                    >
+                      <div>🔔</div>
+                      تفعيل الاشعارات
+                      <div className="h-px bg-white/6 my-1" />
+                    </button>
+                  )}
 
                   <button
                     onClick={handleLogout}

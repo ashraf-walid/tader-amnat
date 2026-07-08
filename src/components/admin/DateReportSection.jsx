@@ -131,7 +131,7 @@ export function DateReportSection() {
                   <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">الدور</th>
                   <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">الهاتف</th>
                   <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">المكتب</th>
-                  <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">الفواتير</th>
+                  <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">عمليات الحساب</th>
                 </tr>
               </thead>
               <tbody>
@@ -156,7 +156,7 @@ export function DateReportSection() {
                     </td>
                     <td className="px-4 py-3">
                       <span className="inline-flex items-center gap-1 px-2 py-[2px] rounded-full text-[11px] font-bold text-[#f0b429] bg-[#f0b429]/10 border border-[#f0b429]/25">
-                        {acc.calculationsCount} فاتورة
+                        {acc.calculationsCount} عملية
                       </span>
                     </td>
                   </tr>

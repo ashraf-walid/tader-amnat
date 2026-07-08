@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { clearAnalyticsUserCache } from "@/hooks/usePageAnalytics";
 import {
@@ -22,6 +22,22 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success) {
+          router.replace("/Storagecalculator");
+        } else {
+          setChecking(false);
+        }
+      })
+      .catch(() => setChecking(false));
+  }, [router]);
+
+  if (checking) return null;
 
   const handleLogin = async () => {
     if (!username.trim() || !password.trim()) {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'amanat-cache-v18';
+const CACHE_NAME = 'amanat-cache-v19';
 
 self.addEventListener('install', (event) => {
   console.log('[ServiceWorker] Installing new version...');
@@ -129,3 +129,48 @@ self.addEventListener('fetch', (event) => {
     );
   }
 });
+
+// ─────────────────────────────────────────────
+// Push Notifications
+// ─────────────────────────────────────────────
+
+// استقبال الإشعار وعرضه للمستخدم
+self.addEventListener('push', (event) => {
+  let data = { title: 'إشعار جديد', body: '', url: '/' };
+
+  try {
+    data = event.data.json();
+  } catch {
+    data.body = event.data?.text?.() || '';
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: '/icons/tader192.png',
+      badge: '/icons/tader192.png',
+      dir: 'rtl',
+      lang: 'ar',
+      data: { url: data.url || '/' },
+    })
+  );
+});
+
+// عند نقر المستخدم على الإشعار → فتح أو تركيز نافذة التطبيق
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.navigate(targetUrl);
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) return clients.openWindow(targetUrl);
+    })
+  );
+});
+

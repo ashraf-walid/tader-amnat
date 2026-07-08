@@ -80,8 +80,8 @@ export function InvoicesByDateSection() {
   return (
     <Section
       icon={Icon.Hash}
-      title="تقرير الفواتير حسب التاريخ"
-      subtitle="اختر تاريخاً لعرض من قام بعمل فواتير فيه وعدد كل مستخدم"
+      title="تقرير عمليات حساب الفواتير حسب التاريخ"
+      subtitle="اختر تاريخاً لعرض من استخدم الحاسبة وعدد العمليات لكل مستخدم"
       action={
         <input
           type="date"
@@ -102,10 +102,10 @@ export function InvoicesByDateSection() {
       ) : !data || data.totalInvoices === 0 ? (
         <div className="text-center py-8">
           <p className="text-slate-500 text-sm m-0">
-            لا توجد فواتير في <span className="text-slate-300 font-semibold">{date}</span>
+            لا توجد عمليات حساب في <span className="text-slate-300 font-semibold">{date}</span>
           </p>
           <p className="text-[11px] text-slate-600 m-0 mt-1">
-            ملاحظة: يتم تسجيل الفواتير الجديدة فقط من تاريخ تفعيل هذا التقرير
+            ملاحظة: يتم تسجيل عمليات استخدام الحاسبة فقط من تاريخ تفعيل هذا التقرير
           </p>
         </div>
       ) : (
@@ -113,7 +113,7 @@ export function InvoicesByDateSection() {
           {/* Summary badges */}
           <div className="flex items-center gap-3 mb-4 flex-wrap">
             <span className="px-3 py-1.5 rounded-full text-[12px] font-bold text-[#f0b429] bg-[#f0b429]/10 border border-[#f0b429]/25">
-              {data.totalInvoices} فاتورة
+              {data.totalInvoices} عملية حساب
             </span>
             <span className="px-3 py-1.5 rounded-full text-[12px] font-bold text-sky-400 bg-sky-400/10 border border-sky-400/25">
               {data.totalUsers} مستخدم
@@ -123,7 +123,7 @@ export function InvoicesByDateSection() {
             </span>
           </div>
 
-          {/* Users table grouped by invoice count */}
+          {/* Users table grouped by calculator usage count */}
           <div className="overflow-x-auto">
             <table className="w-full border-collapse rtl min-w-[500px]">
               <thead>
@@ -132,8 +132,8 @@ export function InvoicesByDateSection() {
                   <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">اسم المستخدم</th>
                   <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">الدور</th>
                   <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">المكتب</th>
-                  <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">عدد الفواتير</th>
-                  <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">آخر فاتورة</th>
+                  <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">عدد العمليات</th>
+                  <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">آخر استخدام</th>
                 </tr>
               </thead>
               <tbody>
@@ -170,7 +170,7 @@ export function InvoicesByDateSection() {
                     </td>
                     <td className="px-4 py-3">
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full text-[11.5px] font-bold text-[#f0b429] bg-[#f0b429]/10 border border-[#f0b429]/25 whitespace-nowrap">
-                        {u.count} {u.count === 1 ? "فاتورة" : "فواتير"}
+                        {u.count} {u.count === 1 ? "عملية" : "عمليات"}
                       </span>
                     </td>
                     <td className="px-4 py-3">

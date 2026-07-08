@@ -107,6 +107,56 @@ function AttemptsBadge({ attempts }) {
   );
 }
 
+function formatDateTime(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return `${date.toLocaleDateString("ar-EG", { year: "numeric", month: "short", day: "numeric" })} - ${date.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}`;
+}
+
+function DetailRow({ label, children }) {
+  return (
+    <div className="flex items-start justify-between gap-3 py-2.5 border-b border-white/[0.06] last:border-b-0">
+      <span className="text-[12px] text-slate-500 shrink-0">{label}</span>
+      <div className="text-[13px] text-slate-200 font-semibold text-left break-words min-w-0">{children || "—"}</div>
+    </div>
+  );
+}
+
+function AccountDetails({ account }) {
+  if (!account) return null;
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="bg-slate-950/60 border border-white/[0.08] rounded-xl px-4 py-3.5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="m-0 text-base font-bold text-slate-100 break-words">{account.username}</p>
+            <p className="m-0 mt-1 text-[11.5px] text-slate-500">بيانات الحساب المسجلة في النظام</p>
+          </div>
+          <RoleBadge role={account.role} />
+        </div>
+      </div>
+
+      <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl px-4">
+        <DetailRow label="اسم المستخدم">{account.username}</DetailRow>
+        <DetailRow label="الدور"><RoleBadge role={account.role} /></DetailRow>
+        <DetailRow label="رقم الهاتف">
+          <span dir="ltr" className="block">{account.phone || "—"}</span>
+        </DetailRow>
+        <DetailRow label="اسم المكتب">{account.officeName || "—"}</DetailRow>
+        <DetailRow label="كود الحساب">{account.accountCode || "—"}</DetailRow>
+        <DetailRow label="عمليات الحساب">{account.calculationsCount || 0} عملية</DetailRow>
+        <DetailRow label="المحاولات">{account.attempts ?? "غير محددة"}</DetailRow>
+        <DetailRow label="حالة الحساب">{account.isActive === false ? "غير مفعل" : "مفعل"}</DetailRow>
+        <DetailRow label="آخر دخول">{formatDateTime(account.lastLogin)}</DetailRow>
+        <DetailRow label="تاريخ الإنشاء">{formatDateTime(account.createdAt)}</DetailRow>
+        <DetailRow label="آخر تحديث">{formatDateTime(account.updatedAt)}</DetailRow>
+        <DetailRow label="معرف الحساب">{account.id || "—"}</DetailRow>
+      </div>
+    </div>
+  );
+}
+
 // ─── نموذج الحساب ─────────────────────────────────────────────────────────────
 function AccountForm({ initial, onSubmit, onCancel, isSaving, visibleRoles }) {
   const [form, setForm] = useState(() => {
@@ -261,7 +311,7 @@ export default function AdminPage() {
   const COLUMNS = [
     { key: "username", label: "اسم المستخدم", sortable: true },
     { key: "role", label: "الدور", sortable: true },
-    { key: "calculationsCount", label: "الفواتير", sortable: true },
+    { key: "calculationsCount", label: "عمليات الحساب", sortable: true },
     { key: "lastLogin", label: "آخر دخول", sortable: true },
     { key: "actions", label: "الإجراءات", sortable: false },
   ];
@@ -420,11 +470,12 @@ export default function AdminPage() {
     return sortDir === "asc" ? va - vb : vb - va;
   });
 
+  const clientAccounts = accounts.filter((a) => a.role === "client");
   const stats = {
-    total: accounts.length,
-    clients: accounts.filter((a) => a.role === "client").length,
-    active: accounts.filter((a) => (a.attempts || 0) > 0).length,
-    depleted: accounts.filter((a) => (a.attempts || 0) === 0).length,
+    clients: clientAccounts.length,
+    engagedClients: clientAccounts.filter((a) => (a.calculationsCount || 0) > 0).length,
+    unusedClients: clientAccounts.filter((a) => (a.calculationsCount || 0) === 0).length,
+    totalCalculations: accounts.reduce((sum, a) => sum + (a.calculationsCount || 0), 0),
   };
 
   if (!authLoaded) return (
@@ -455,7 +506,7 @@ export default function AdminPage() {
               </div>
               <div>
                 <h1 className="text-[22px] font-extrabold m-0 text-slate-100">لوحة الإدارة</h1>
-                <p className="text-[12.5px] text-slate-400 m-0">نظام أرضيات الحاويات الواردة</p>
+                <p className="text-[12.5px] text-slate-400 m-0">مؤشرات اعتماد العملاء على حاسبة أرضيات الحاويات</p>
               </div>
             </div>
           </div>
@@ -464,10 +515,10 @@ export default function AdminPage() {
         {/* ─── بطاقات الإحصاء ─── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-6">
           {[
-            { label: "إجمالي الحسابات", value: stats.total, color: "#818cf8", icon: Icon.Users },
-            { label: "حسابات العملاء", value: stats.clients, color: "#60a5fa", icon: Icon.User },
-            { label: "حسابات نشطة", value: stats.active, color: "#34d399", icon: Icon.Check, unit: "حساب" },
-            { label: "حسابات منتهية", value: stats.depleted, color: "#f87171", icon: Icon.Hash, unit: "حساب" },
+            { label: "عملاء مسجلون", value: stats.clients, color: "#60a5fa", icon: Icon.User, unit: "عميل" },
+            { label: "اعتمدوا على الحاسبة", value: stats.engagedClients, color: "#34d399", icon: Icon.Check, unit: "عميل" },
+            { label: "لم يستخدموها بعد", value: stats.unusedClients, color: "#f87171", icon: Icon.Hash, unit: "عميل" },
+            { label: "عمليات حساب الفواتير", value: stats.totalCalculations, color: "#f0b429", icon: Icon.Chart, unit: "عملية" },
           ].map((s, i) => (
             <div key={i} className="bg-slate-900 rounded-[10px] px-3.5 py-3 border border-white/[0.07] shadow-[0_2px_12px_rgba(0,0,0,0.2)]">
               <div className="flex justify-between items-start gap-2">
@@ -551,25 +602,14 @@ export default function AdminPage() {
                       <tr key={acc.id}
                         className={`border-b border-white/5 transition-colors duration-150 hover:bg-blue-500/[0.06] ${idx % 2 ? "bg-white/[0.015]" : ""}`}>
                         <td className="px-4 py-3.5">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-[34px] h-[34px] rounded-full shrink-0 flex items-center justify-center text-[13px] font-bold"
-                              style={{ background: getRoleInfo(acc.role).bg, border: `1px solid ${getRoleInfo(acc.role).color}30`, color: getRoleInfo(acc.role).color }}>
-                              {acc.username?.[0]?.toUpperCase() || "؟"}
-                            </div>
-                            <div>
-                              <div className="text-sm font-semibold text-slate-100">{acc.username}</div>
-                              {(acc.officeName || acc.accountCode) && (
-                                <div className="text-[11.5px] text-blue-400 font-medium mt-0.5">
-                                  {acc.officeName || ""}
-                                  {acc.officeName && acc.accountCode && " · "}
-                                  {acc.accountCode ? `كود: ${acc.accountCode}` : ""}
-                                </div>
-                              )}
-                              {acc.phone && (
-                                <div className="text-[11px] text-slate-500 mt-0.5 ltr text-right" dir="ltr">{acc.phone}</div>
-                              )}
-                            </div>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => { setSelected(acc); setModal("details"); }}
+                            className="bg-transparent border-none p-0 m-0 text-sm font-semibold text-slate-100 cursor-pointer hover:text-sky-400 transition-colors duration-150 text-right"
+                            title="عرض تفاصيل الحساب"
+                          >
+                            {acc.username}
+                          </button>
                         </td>
                         <td className="px-4 py-3.5"><RoleBadge role={acc.role} /></td>
                         {/* <td className="px-4 py-3.5">
@@ -584,7 +624,7 @@ export default function AdminPage() {
                         </td> */}
                         <td className="px-4 py-3.5">
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full text-[11.5px] font-bold text-[#f0b429] bg-[#f0b429]/10 border border-[#f0b429]/25 whitespace-nowrap">
-                            {acc.calculationsCount || 0} فاتورة
+                            {acc.calculationsCount || 0} عملية
                           </span>
                         </td>
                         <td className="px-4 py-3.5">
@@ -781,6 +821,9 @@ export default function AdminPage() {
       </Modal>
       <Modal open={modal === "edit"} onClose={() => setModal(null)} title="تعديل الحساب">
         {selected && <AccountForm initial={{ ...selected, password: "" }} onSubmit={editAccount} onCancel={() => setModal(null)} isSaving={isSaving} visibleRoles={userRole === "owner" ? ROLES : ROLES.filter(r => r.value !== "owner")} />}
+      </Modal>
+      <Modal open={modal === "details"} onClose={() => setModal(null)} title={selected?.role === "client" ? "تفاصيل العميل" : "تفاصيل الحساب"}>
+        {selected && <AccountDetails account={selected} />}
       </Modal>
       <Modal open={modal === "delete"} onClose={() => setModal(null)} title="تأكيد الحذف">
         {selected && (
