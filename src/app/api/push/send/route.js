@@ -8,9 +8,9 @@ export const dynamic = "force-dynamic";
 
 /**
  * POST /api/push/send
- * يرسل إشعار Push لجميع المشتركين أو لمستخدم محدد
+ * Sends a Push notification to all subscribers or a specific user
  * Body: { title, body, url?, userId? }
- * مقتصر على الـ owner فقط
+ * Owner only
  */
 export async function POST(req) {
   try {
@@ -24,7 +24,7 @@ export async function POST(req) {
 
     await connectToDatabase();
 
-    // إذا تم تحديد userId → أرسل له فقط، وإلا أرسل للجميع
+    // If userId is specified → send only to that user; otherwise, send to everyone.
     const filter = userId ? { userId } : {};
     const subscriptions = await PushSubscription.find(filter);
 
@@ -44,7 +44,7 @@ export async function POST(req) {
           );
           results.sent++;
         } catch (err) {
-          // 410 Gone أو 404 → الاشتراك منتهي، احذفه من DB
+          // 410 Gone or 404 → subscription expired, remove it from DB
           if (err.statusCode === 410 || err.statusCode === 404) {
             await PushSubscription.deleteOne({ _id: sub._id });
             results.removed++;

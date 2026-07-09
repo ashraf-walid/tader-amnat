@@ -179,15 +179,20 @@ export default function AdminNav() {
 
       const registration = await navigator.serviceWorker.ready;
 
-      // ✅ تحويل المفتاح من String إلى Uint8Array — مطلوب من pushManager
-      const applicationServerKey = urlBase64ToUint8Array(
-        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-      );
+      // 🔍 التحقق أولاً من وجود اشتراك نشط سابقاً
+      let subscription = await registration.pushManager.getSubscription();
 
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey,
-      });
+      if (!subscription) {
+        // ✅ Converting the key from String to Uint8Array — required by pushManager
+        const applicationServerKey = urlBase64ToUint8Array(
+          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+        );
+
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey,
+        });
+      }
 
       const res = await fetch('/api/push/subscribe', {
         method: 'POST',
@@ -222,7 +227,7 @@ export default function AdminNav() {
     }
   };
 
-  // ── منع وميض الصفحة (CLS): شريط فارغ بنفس الارتفاع أثناء التحميل لأول مرة ──
+  // ── Prevent page flickering (CLS): A blank bar of the same height during the first load ──
   if (!loaded) {
     return (
       <div
@@ -260,7 +265,7 @@ export default function AdminNav() {
           boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
         }}
       >
-        {/* شريط الدور الملوّن */}
+        {/* Colored role bar */}
         <div
           className="h-0.5 opacity-75"
           style={{ background: `linear-gradient(90deg, transparent 0%, ${roleColor} 40%, ${roleColor} 60%, transparent 100%)` }}
@@ -379,11 +384,25 @@ export default function AdminNav() {
                         <NavSettingsIcon size={14} />
                         لوحة الإدارة
                       </Link>
-                      <div className="h-px bg-white/[0.06] my-1" />
+                      <div className="h-px bg-white/6 my-1" />
                     </>
                   )}
 
                   {/* ── زر تثبيت PWA (ديسكتوب dropdown) ── */}
+                  {user.role === 'owner' && (
+                    <>
+                      <button
+                        onClick={enableNotifications}
+                        disabled={logging}
+                        className="admin-dropdown-item flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-slate-300 no-underline w-full"
+                      >
+                        <div>🔔</div>
+                        تفعيل الاشعارات
+                      </button>
+                      <div className="h-px bg-white/6 my-1"/>
+                    </>
+                  )}
+
                   <>
                     <button
                       id="pwa-install-btn-desktop"
@@ -397,18 +416,6 @@ export default function AdminNav() {
                     </button>
                     <div className="h-px bg-white/6 my-1" />
                   </>
-
-                  {user.role === 'owner' && (
-                    <button
-                      onClick={enableNotifications}
-                      disabled={logging}
-                      className="admin-dropdown-item flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-slate-300 no-underline w-full"
-                    >
-                      <div>🔔</div>
-                      تفعيل الاشعارات
-                      <div className="h-px bg-white/6 my-1" />
-                    </button>
-                  )}
 
                   <button
                     onClick={handleLogout}

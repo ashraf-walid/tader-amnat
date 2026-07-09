@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import Settings from "@/models/Settings";
+import PushSubscription from "@/models/PushSubscription";
+import webpush from "@/lib/webpush";
 import { requireAdmin } from "@/lib/auth";
 import cache, { CacheKeys, CacheTTL, invalidateCache } from "@/lib/cache";
 
@@ -90,6 +92,35 @@ export async function PUT(req) {
       rateSetting.value,
       CacheTTL.EXCHANGE_RATE,
     );
+
+    // 🔔 إرسال إشعار لجميع المشتركين عند تغيير سعر الصرف
+    try {
+      const subscriptions = await PushSubscription.find({});
+      if (subscriptions.length > 0) {
+        const payload = JSON.stringify({
+          title: "تحديث سعر الصرف 💲",
+          body: `تم تحديث سعر الصرف الرسمي في النظام إلى ${rateSetting.value} ج.م.`,
+          url: "/Storagecalculator",
+        });
+
+        Promise.allSettled(
+          subscriptions.map(async (sub) => {
+            try {
+              await webpush.sendNotification(
+                { endpoint: sub.endpoint, keys: sub.keys },
+                payload
+              );
+            } catch (err) {
+              if (err.statusCode === 410 || err.statusCode === 404) {
+                await PushSubscription.deleteOne({ _id: sub._id });
+              }
+            }
+          })
+        ).catch((err) => console.error("Push broadcast error:", err));
+      }
+    } catch (pushErr) {
+      console.error("Failed to send push notifications for exchange rate update:", pushErr);
+    }
 
     return NextResponse.json({
       success: true,

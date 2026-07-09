@@ -1,4 +1,4 @@
-const CACHE_NAME = 'amanat-cache-v19';
+const CACHE_NAME = 'amanat-cache-v20';
 
 self.addEventListener('install', (event) => {
   console.log('[ServiceWorker] Installing new version...');
@@ -134,7 +134,7 @@ self.addEventListener('fetch', (event) => {
 // Push Notifications
 // ─────────────────────────────────────────────
 
-// استقبال الإشعار وعرضه للمستخدم
+// Receiving and displaying the notification to the user
 self.addEventListener('push', (event) => {
   let data = { title: 'إشعار جديد', body: '', url: '/' };
 
@@ -156,7 +156,7 @@ self.addEventListener('push', (event) => {
   );
 });
 
-// عند نقر المستخدم على الإشعار → فتح أو تركيز نافذة التطبيق
+// When the user clicks on the notification → open or focus the app window
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const targetUrl = event.notification.data?.url || '/';

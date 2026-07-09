@@ -7,8 +7,8 @@ export const dynamic = "force-dynamic";
 
 /**
  * POST /api/push/subscribe
- * يحفظ Push Subscription الخاصة بالمستخدم في قاعدة البيانات
- */
+ * Saves the user's Push Subscription in the database
+*/
 export async function POST(req) {
   try {
     const decoded = requireAuth(req);
@@ -20,7 +20,7 @@ export async function POST(req) {
 
     await connectToDatabase();
 
-    // upsert: تحديث إن وجد، إنشاء إن لم يوجد — لتفادي التكرار لنفس الجهاز
+    // upsert: Update if available, create if not — to avoid duplication for the same device
     await PushSubscription.findOneAndUpdate(
       { endpoint: subscription.endpoint },
       {

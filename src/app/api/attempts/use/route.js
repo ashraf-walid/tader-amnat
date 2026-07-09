@@ -2,10 +2,9 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import User from "@/models/User";
 import CalculationLog from "@/models/CalculationLog";
-import PushSubscription from "@/models/PushSubscription";
-import webpush from "@/lib/webpush";
 import { requireAuth } from "@/lib/auth";
 import { invalidateCache } from "@/lib/cache";
+
 
 
 export const dynamic = "force-dynamic";
@@ -60,46 +59,7 @@ export async function POST(request) {
       officeName: updated.officeName || "",
     });
 
-    // 🔔 إرسال إشعار للمالك (owner) عند حساب فاتورة جديدة
-    try {
-      const owners = await User.find({ role: "owner" }).select("_id").lean();
-      // const ownerIds = owners.map((o) => o._id);
-
-      // استبعاد المالك نفسه من تلقي إشعار عن حركته هو
-      // const targetSubscriptions = await PushSubscription.find({
-      //   userId: { $in: ownerIds, $ne: user._id },
-      // });
-
-      if (targetSubscriptions.length > 0) {
-        const payload = JSON.stringify({
-          title: "حساب فاتورة جديدة ⚓",
-          body: `قام ${updated.username}${
-            updated.officeName ? ` (${updated.officeName})` : ""
-          } بحساب فاتورة أرضيات جديدة.`,
-          url: "/admin",
-        });
-
-        // إرسال الإشعارات بدون تعطيل الـ response الرئيسي
-        Promise.allSettled(
-          targetSubscriptions.map(async (sub) => {
-            try {
-              await webpush.sendNotification(
-                { endpoint: sub.endpoint, keys: sub.keys },
-                payload
-              );
-            } catch (err) {
-              if (err.statusCode === 410 || err.statusCode === 404) {
-                await PushSubscription.deleteOne({ _id: sub._id });
-              }
-            }
-          })
-        ).catch((err) => console.error("Promise.allSettled push error:", err));
-      }
-    } catch (pushErr) {
-      console.error("Failed to send push notification to owner:", pushErr);
-    }
-
-    // 🔥 مسح الـ Cache لأن بيانات الحساب تغيرت (محاولات و فواتير)
+    // 🔥 Clearing the cache because the account data has changed (attempts and invoices)
     invalidateCache("accounts:");
     console.log("🗑️ Accounts cache invalidated after combined use attempt");
 
