@@ -1,4 +1,4 @@
-      'use client';
+'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
@@ -18,6 +18,7 @@ import {
 } from '@/components/Icons';
 import { usePWAInstall } from '@/lib/usePWAInstall';
 import { clearAnalyticsUserCache } from '@/hooks/usePageAnalytics';
+import { enableNotifications, checkSubscription } from '@/lib/enableNotifications';
 
 // ── Toast نجاح التثبيت ──────────────────────────────────────
 function InstallSuccessToast({ visible }) {
@@ -36,9 +37,8 @@ function InstallSuccessToast({ visible }) {
     <div
       role="status"
       aria-live="polite"
-      className={`fixed bottom-5 left-1/2 z-[9999] -translate-x-1/2 ${
-        phase === 'enter' ? 'pwa-toast-enter' : 'pwa-toast-exit'
-      }`}
+      className={`fixed bottom-5 left-1/2 z-[9999] -translate-x-1/2 ${phase === 'enter' ? 'pwa-toast-enter' : 'pwa-toast-exit'
+        }`}
     >
       <div
         style={{
@@ -109,7 +109,7 @@ export default function AdminNav() {
   const [logging, setLogging] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-
+  const [isSubscribed, setIsSubscribed] = useState(false);
   const { canInstall, install, installed, isInstalled } = usePWAInstall();
 
   const userMenuRef = useRef(null);
@@ -123,6 +123,15 @@ export default function AdminNav() {
       setMobileOpen(false);
     }
   }, [pathname]);
+
+  useEffect(() => {
+    checkSubscription().then(setIsSubscribed);
+  }, []);
+
+  const handleEnableNotifications = async () => {
+    await enableNotifications();
+    checkSubscription().then(setIsSubscribed);
+  };
 
   // جلب بيانات المستخدم مع دعم التحديث التلقائي في الخلفية (Stale-While-Revalidate)
   useEffect(() => {
@@ -139,7 +148,7 @@ export default function AdminNav() {
           cachedLoaded = true;
         }
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoaded(true));
   }, []);
 
@@ -160,56 +169,6 @@ export default function AdminNav() {
     document.body.style.overflow = mobileOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [mobileOpen]);
-
-  // دالة مساعدة: تحويل VAPID public key من Base64 إلى Uint8Array
-  function urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-    const rawData = atob(base64);
-    return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
-  }
-
-  async function enableNotifications() {
-    try {
-      const permission = await Notification.requestPermission();
-      if (permission !== 'granted') {
-        alert('لم يتم منح إذن الإشعارات.');
-        return;
-      }
-
-      const registration = await navigator.serviceWorker.ready;
-
-      // 🔍 التحقق أولاً من وجود اشتراك نشط سابقاً
-      let subscription = await registration.pushManager.getSubscription();
-
-      if (!subscription) {
-        // ✅ Converting the key from String to Uint8Array — required by pushManager
-        const applicationServerKey = urlBase64ToUint8Array(
-          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-        );
-
-        subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey,
-        });
-      }
-
-      const res = await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(subscription),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'فشل حفظ الاشتراك');
-
-      alert('✅ تم تفعيل الإشعارات بنجاح.');
-    } catch (err) {
-      console.error('enableNotifications error:', err);
-      alert(`❌ فشل تفعيل الإشعارات: ${err.message}`);
-    }
-  }
-
 
   const handleLogout = async () => {
     setLogging(true);
@@ -389,19 +348,17 @@ export default function AdminNav() {
                   )}
 
                   {/* ── زر تثبيت PWA (ديسكتوب dropdown) ── */}
-                  {user.role === 'owner' && (
-                    <>
-                      <button
-                        onClick={enableNotifications}
-                        disabled={logging}
-                        className="admin-dropdown-item flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-slate-300 no-underline w-full"
-                      >
-                        <div>🔔</div>
-                        تفعيل الاشعارات
-                      </button>
-                      <div className="h-px bg-white/6 my-1"/>
-                    </>
-                  )}
+                  <>
+                    <button
+                      onClick={handleEnableNotifications}
+                      disabled={isSubscribed}
+                      className="admin-dropdown-item flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-slate-300 no-underline cursor-pointer w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <div>🔔</div>
+                      {isSubscribed ? "الإشعارات مفعلة" : "تفعيل الإشعارات"}
+                    </button>
+                    <div className="h-px bg-white/6 my-1" />
+                  </>
 
                   <>
                     <button
@@ -521,6 +478,16 @@ export default function AdminNav() {
 
             {/* فاصل وتسجيل الخروج */}
             <div className="p-2.5 pb-3 border-t border-white/[0.07] flex flex-col gap-2">
+
+              <button
+                onClick={handleEnableNotifications}
+                disabled={isSubscribed}
+                className="w-full flex items-center gap-2.5 p-2.5 rounded-[10px] text-[13px] bg-blue-500/8 border border-blue-500/18 text-slate-300 text-sm font-semibold transition-all font-[inherit] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div>🔔</div>
+                {isSubscribed ? "الإشعارات مفعلة" : "تفعيل الإشعارات"}
+              </button>
+
               {/* ── زر تثبيت PWA (موبايل panel) ── */}
               <button
                 id="pwa-install-btn-mobile"
@@ -539,7 +506,7 @@ export default function AdminNav() {
               <button
                 onClick={handleLogout}
                 disabled={logging}
-                className="w-full flex items-center gap-2.5 p-2.5 rounded-[10px] bg-red-500/[0.08] border border-red-500/[0.18] text-red-400 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-70 font-[inherit]"
+                className="w-full flex items-center gap-2.5 p-2.5 rounded-[10px] bg-red-500/8 border border-red-500/18 text-red-400 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-70 font-[inherit]"
               >
                 {logging ? (
                   <div className="w-4 h-4 rounded-full border-2 border-red-400/30 border-t-red-400 animate-spin" />
