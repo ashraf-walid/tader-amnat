@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { usePageAnalytics } from '@/hooks/usePageAnalytics';
+
 import { 
   SummaryIcon, 
   InfoIcon, 
@@ -20,8 +20,6 @@ function fmt(n, dec = 2) {
 }
 
 export default function ClientBalance() {
-  // Enable analytics to monitor page visits to client balance
-  usePageAnalytics("/client/balance");
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { CopyIcon } from "@/components/Icons";
-import { usePageAnalytics } from "@/hooks/usePageAnalytics";
 
 // ─── بيانات الحسابات البنكية ─────────────────────────────────────────────────
 const BANK_ACCOUNTS = [
@@ -54,6 +53,13 @@ const BANK_ACCOUNTS = [
     account: "100005383085",
     currency: "جنيه مصري",
     accent: "#14b8a6",
+  },
+  {
+    id: 8,
+    bank: "البنك الأهلي المصري",
+    account: "4083070743303600012",
+    currency: "جنيه مصري",
+    accent: "#3b82f6",
   },
 ];
 
@@ -162,8 +168,6 @@ function BankCard({ bank, copiedId, copiedField, onCopy }) {
 
 // ─── Main Client Component ───────────────────────────────────────────────────
 export default function BankAccountsClient() {
-  // Enable analytics to monitor bank accounts visits
-  usePageAnalytics("/bank-accounts");
 
   const [search, setSearch] = useState("");
   const [copiedId, setCopiedId] = useState(null);

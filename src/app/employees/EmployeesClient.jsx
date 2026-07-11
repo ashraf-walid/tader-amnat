@@ -2,11 +2,8 @@
 
 import EmployeeCard from "@/components/EmployeeCard";
 import { UsersIcon } from "@/components/Icons";
-import { usePageAnalytics } from "@/hooks/usePageAnalytics";
 
 export default function EmployeesClient({ employees }) {
-  // Enable analytics to monitor employee page visits
-  usePageAnalytics("/employees");
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       {/* Page Header */}
