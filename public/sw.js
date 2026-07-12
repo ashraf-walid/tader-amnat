@@ -1,4 +1,4 @@
-const CACHE_NAME = 'amanat-cache-v22';
+const CACHE_NAME = 'amanat-cache-v23';
 
 self.addEventListener('install', (event) => {
   console.log('[ServiceWorker] Installing new version...');
@@ -45,6 +45,13 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+
+  const url = new URL(event.request.url);
+  if (url.pathname === '/' && event.request.redirect === 'manual') {
+    // دع المتصفح يتعامل مع التوجيه تلقائيًا
+    return;
+  }
+
   const request = event.request;
 
   if (request.method !== 'GET') {
