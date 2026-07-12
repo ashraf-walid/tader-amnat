@@ -25,16 +25,20 @@ export default function LoginPage() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.success) {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/auth/me", { credentials: "include" });
+        const data = await res.json();
+        if (data.success) {
           router.replace("/Storagecalculator");
-        } else {
-          setChecking(false);
+          return;
         }
-      })
-      .catch(() => setChecking(false));
+      } catch (e) {
+        console.error("Auth check failed:", e);
+      }
+      setChecking(false);
+    };
+    checkAuth();
   }, [router]);
 
   if (checking) return null;
