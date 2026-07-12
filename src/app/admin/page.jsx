@@ -148,6 +148,7 @@ function AccountDetails({ account }) {
         <DetailRow label="عمليات الحساب">{account.calculationsCount || 0} عملية</DetailRow>
         <DetailRow label="المحاولات">{account.attempts ?? "غير محددة"}</DetailRow>
         <DetailRow label="حالة الحساب">{account.isActive === false ? "غير مفعل" : "مفعل"}</DetailRow>
+        <DetailRow label="تثبيت PWA">{account.isPwaInstalled ? "مثبت على الجهاز (PWA) 📱" : "لم يتم التثبيت بعد ❌"}</DetailRow>
         <DetailRow label="آخر دخول">{formatDateTime(account.lastLogin)}</DetailRow>
         <DetailRow label="تاريخ الإنشاء">{formatDateTime(account.createdAt)}</DetailRow>
         <DetailRow label="آخر تحديث">{formatDateTime(account.updatedAt)}</DetailRow>

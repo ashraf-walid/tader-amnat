@@ -1,7 +1,7 @@
 import "./globals.css";
 import { Alexandria, Outfit } from "next/font/google";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
-import AnalyticsTracker from "@/components/AnalyticsTracker";
+// import AnalyticsTracker from "@/components/AnalyticsTracker";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -46,7 +46,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className="min-h-full flex flex-col">
         <ServiceWorkerRegister />
-        <AnalyticsTracker />
+        {/* <AnalyticsTracker /> */}
         {children}
       </body>
     </html>

@@ -51,6 +51,10 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    isPwaInstalled: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

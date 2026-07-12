@@ -56,6 +56,7 @@ export async function GET(request) {
       calculationsCount: user.calculationsCount || 0,
       accountCode: user.accountCode,
       isActive: user.isActive,
+      isPwaInstalled: user.isPwaInstalled || false,
       lastLogin: user.lastLogin,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,

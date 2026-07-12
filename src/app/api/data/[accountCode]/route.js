@@ -3,6 +3,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import AccountData from "@/models/AccountData";
 import { requireAdmin } from "@/lib/auth";
 import { invalidateCache } from "@/lib/cache";
+import { calculateNetBalance, sendBalanceNotification } from "@/lib/balanceNotification";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,18 @@ export async function PATCH(request, { params }) {
 
     await connectToDatabase();
 
+    const existingAccount = await AccountData.findOne({ accountCode }).lean();
+    if (!existingAccount) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Account not found",
+        },
+        { status: 404 },
+      );
+    }
+    const oldBal = calculateNetBalance(existingAccount);
+
     // Update only the transactions field for this specific account
     const updatedAccount = await AccountData.findOneAndUpdate(
       { accountCode },
@@ -45,6 +58,12 @@ export async function PATCH(request, { params }) {
         },
         { status: 404 },
       );
+    }
+
+    // Compare new balance with old balance and send notification if changed
+    const newBal = calculateNetBalance(updatedAccount);
+    if (Math.abs(oldBal - newBal) > 0.001) {
+      sendBalanceNotification(accountCode, newBal);
     }
 
     // 🔥 Invalidate cache for data pages

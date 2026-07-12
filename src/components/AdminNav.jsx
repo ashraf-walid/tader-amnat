@@ -176,6 +176,7 @@ export default function AdminNav() {
       await fetch('/api/auth/logout', { method: 'POST' });
       // Clear analytics user cache so the next visitor is tracked correctly
       clearAnalyticsUserCache();
+      localStorage.removeItem('pwa_reported');
       cachedUser = null;
       cachedLoaded = false;
       setUser(null);

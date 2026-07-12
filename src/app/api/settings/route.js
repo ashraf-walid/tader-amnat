@@ -46,7 +46,7 @@ export async function GET(req) {
       },
       {
         headers: {
-          "Cache-Control": "public, max-age=300, stale-while-revalidate=60",
+          "Cache-Control": "public, max-age=200, stale-while-revalidate=20",
         },
       },
     );
@@ -98,7 +98,7 @@ export async function PUT(req) {
       const subscriptions = await PushSubscription.find({});
       if (subscriptions.length > 0) {
         const payload = JSON.stringify({
-          title: "تحديث سعر الصرف 💲",
+          title: "تحديث سعر الصرف 💱",
           body: `تم تحديث سعر الصرف الرسمي في النظام إلى ${rateSetting.value} ج.م.`,
           url: "/Storagecalculator",
         });

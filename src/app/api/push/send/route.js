@@ -16,7 +16,7 @@ export async function POST(req) {
   try {
     requireOwner(req);
 
-    const { title, body, url = "/", userId } = await req.json();
+    const { title, body, url = "/", userId, icon, badge, image } = await req.json();
 
     if (!title || !body) {
       return NextResponse.json({ success: false, error: "العنوان والنص مطلوبان" }, { status: 400 });
@@ -32,7 +32,7 @@ export async function POST(req) {
       return NextResponse.json({ success: false, error: "لا يوجد مشتركون" }, { status: 404 });
     }
 
-    const payload = JSON.stringify({ title, body, url });
+    const payload = JSON.stringify({ title, body, url, icon, badge, image });
     const results = { sent: 0, failed: 0, removed: 0 };
 
     await Promise.allSettled(

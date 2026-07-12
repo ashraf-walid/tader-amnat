@@ -4,6 +4,7 @@ import AccountData from "@/models/AccountData";
 import Settings from "@/models/Settings";
 import { requireAdmin, requireOwner } from "@/lib/auth";
 import { invalidateCache } from "@/lib/cache";
+import { calculateNetBalance, sendBalanceNotification } from "@/lib/balanceNotification";
 
 export const dynamic = "force-dynamic";
 
@@ -129,11 +130,39 @@ export async function POST(request) {
       }
     }
 
+    // Get existing accounts to calculate balances before update and preserve manual transactions
+    const oldAccounts = await AccountData.find({}).lean();
+    const oldBalancesMap = new Map();
+    const oldTransactionsMap = new Map();
+
+    for (const acc of oldAccounts) {
+      oldBalancesMap.set(acc.accountCode, calculateNetBalance(acc));
+      if (acc.transactions && acc.transactions.length > 0) {
+        oldTransactionsMap.set(acc.accountCode, acc.transactions);
+      }
+    }
+
+    // Merge transactions into the new data being saved so manual ledger adjustments aren't lost
+    for (const newAcc of dataToSave) {
+      const oldTx = oldTransactionsMap.get(newAcc.accountCode);
+      newAcc.transactions = oldTx || [];
+    }
+
     // Replace all data with the new uploaded data
-    // This matches the original logic of overwriting the JSON file
     await AccountData.deleteMany({});
     if (dataToSave && dataToSave.length > 0) {
       await AccountData.insertMany(dataToSave);
+    }
+
+    // Compare new balances with old ones and send push notifications
+    for (const newAcc of dataToSave) {
+      const newBal = calculateNetBalance(newAcc);
+      const oldBal = oldBalancesMap.get(newAcc.accountCode);
+      // Notify client if balance changed
+      if (oldBal === undefined || Math.abs(oldBal - newBal) > 0.001) {
+        // Execute asynchronously
+        sendBalanceNotification(newAcc.accountCode, newBal);
+      }
     }
 
     // Save dateRange if provided

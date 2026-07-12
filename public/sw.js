@@ -1,4 +1,4 @@
-const CACHE_NAME = 'amanat-cache-v21';
+const CACHE_NAME = 'amanat-cache-v22';
 
 self.addEventListener('install', (event) => {
   console.log('[ServiceWorker] Installing new version...');
@@ -7,7 +7,6 @@ self.addEventListener('install', (event) => {
       .then((cache) => cache.addAll([
         '/offline.html',
         '/',
-        '/login',
         '/Storagecalculator',
         '/Storagecalculator/rates',
         '/client/balance',
@@ -184,8 +183,9 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
-      icon: '/icons/tader192.png',
-      badge: '/icons/tader192.png',
+      icon: data.icon || '/icons/tader192.png',
+      badge: data.badge || '/icons/tader192.png',
+      image: data.image || undefined,
       dir: 'rtl',
       lang: 'ar',
       data: { url: data.url || '/' },
