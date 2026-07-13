@@ -148,7 +148,6 @@ function AccountDetails({ account }) {
         <DetailRow label="عمليات الحساب">{account.calculationsCount || 0} عملية</DetailRow>
         <DetailRow label="المحاولات">{account.attempts ?? "غير محددة"}</DetailRow>
         <DetailRow label="حالة الحساب">{account.isActive === false ? "غير مفعل" : "مفعل"}</DetailRow>
-        <DetailRow label="تثبيت PWA">{account.isPwaInstalled ? "مثبت على الجهاز (PWA) 📱" : "لم يتم التثبيت بعد ❌"}</DetailRow>
         <DetailRow label="آخر دخول">{formatDateTime(account.lastLogin)}</DetailRow>
         <DetailRow label="تاريخ الإنشاء">{formatDateTime(account.createdAt)}</DetailRow>
         <DetailRow label="آخر تحديث">{formatDateTime(account.updatedAt)}</DetailRow>
@@ -289,6 +288,8 @@ export default function AdminPage() {
   const [dataClearing, setDataClearing] = useState(false);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("client");
+  const [pwaFilter, setPwaFilter] = useState("all");
+  const [notificationsFilter, setNotificationsFilter] = useState("all");
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [clearConfirm, setClearConfirm] = useState("");
   const [sortBy, setSortBy] = useState("calculationsCount");
@@ -312,6 +313,8 @@ export default function AdminPage() {
   const COLUMNS = [
     { key: "username", label: "اسم المستخدم", sortable: true },
     { key: "role", label: "الدور", sortable: true },
+    { key: "pwaStatus", label: "PWA", sortable: false },
+    { key: "notificationsStatus", label: "الإشعارات", sortable: false },
     { key: "calculationsCount", label: "عمليات الحساب", sortable: true },
     { key: "lastLogin", label: "آخر دخول", sortable: true },
     { key: "actions", label: "الإجراءات", sortable: false },
@@ -455,9 +458,15 @@ export default function AdminPage() {
   const filtered = accounts.filter((a) => {
     if (userRole !== "owner" && a.role === "owner") return false;
     const matchRole = roleFilter === "all" || a.role === roleFilter;
+    const matchPwa = pwaFilter === "all" || 
+      (pwaFilter === "installed" && a.isPwaInstalled) || 
+      (pwaFilter === "not-installed" && !a.isPwaInstalled);
+    const matchNotifications = notificationsFilter === "all" || 
+      (notificationsFilter === "enabled" && a.hasNotifications) || 
+      (notificationsFilter === "disabled" && !a.hasNotifications);
     const q = search.toLowerCase();
     const matchSearch = !q || a.username.toLowerCase().includes(q) || (a.phone || "").includes(q) || (a.officeName || "").toLowerCase().includes(q);
-    return matchRole && matchSearch;
+    return matchRole && matchPwa && matchNotifications && matchSearch;
   }).sort((a, b) => {
     let va, vb;
     switch (sortBy) {
@@ -569,6 +578,18 @@ export default function AdminPage() {
                 <option value="all">كل الأدوار</option>
                 {(userRole === "owner" ? ROLES : ROLES.filter(r => r.value !== "owner")).map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
               </select>
+              <select value={pwaFilter} onChange={(e) => setPwaFilter(e.target.value)}
+                className={`${inputCls} py-2 px-3 flex-none cursor-pointer w-auto`}>
+                <option value="all">كل حالات PWA</option>
+                <option value="installed">مثبت 📱</option>
+                <option value="not-installed">غير مثبت ❌</option>
+              </select>
+              <select value={notificationsFilter} onChange={(e) => setNotificationsFilter(e.target.value)}
+                className={`${inputCls} py-2 px-3 flex-none cursor-pointer w-auto`}>
+                <option value="all">كل حالات الإشعارات</option>
+                <option value="enabled">مفعل 🔔</option>
+                <option value="disabled">غير مفعل 🔕</option>
+              </select>
               <Btn variant="ghost" size="sm" onClick={() => fetchAccounts()}><Icon.Refresh /> تحديث</Btn>
               <Btn variant="primary" size="sm" onClick={() => setModal("add")}><Icon.Plus /> إضافة حساب</Btn>
             </div>
@@ -613,16 +634,32 @@ export default function AdminPage() {
                           </button>
                         </td>
                         <td className="px-4 py-3.5"><RoleBadge role={acc.role} /></td>
-                        {/* <td className="px-4 py-3.5">
-                          <div className="flex items-center gap-2">
-                            <AttemptsBadge attempts={acc.attempts || 0} />
-                            <button title="تجديد المحاولات"
-                              onClick={() => { setSelected(acc); setNewAttempts(""); setModal("attempts"); }}
-                              className="bg-sky-500/[0.12] border-none cursor-pointer text-sky-500 p-[5px] rounded-md flex transition-colors duration-150 hover:bg-sky-500/25">
-                              <Icon.Refresh />
-                            </button>
+                        <td className="px-4 py-3.5">
+                          <div className="flex justify-center">
+                            {acc.isPwaInstalled ? (
+                              <span className="text-green-500 text-lg" title="مثبت على الجهاز (PWA)">
+                                📱
+                              </span>
+                            ) : (
+                              <span className="text-red-400 text-lg" title="لم يتم التثبيت بعد">
+                                ❌
+                              </span>
+                            )}
                           </div>
-                        </td> */}
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <div className="flex justify-center">
+                            {acc.hasNotifications ? (
+                              <span className="text-blue-400 text-lg" title="مفعل الإشعارات">
+                                🔔
+                              </span>
+                            ) : (
+                              <span className="text-slate-500 text-lg" title="غير مفعل الإشعارات">
+                                🔕
+                              </span>
+                            )}
+                          </div>
+                        </td>
                         <td className="px-4 py-3.5">
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full text-[11.5px] font-bold text-[#f0b429] bg-[#f0b429]/10 border border-[#f0b429]/25 whitespace-nowrap">
                             {acc.calculationsCount || 0} عملية

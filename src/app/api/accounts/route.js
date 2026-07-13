@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import User from "@/models/User";
+import PushSubscription from "@/models/PushSubscription";
 import cache, { CacheKeys, CacheTTL, invalidateCache } from "@/lib/cache";
 import { requireAdmin } from "@/lib/auth";
 
@@ -60,7 +61,16 @@ export async function GET(request) {
       lastLogin: user.lastLogin,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
+      hasNotifications: false,
     }));
+
+    // 3️⃣ احسب حالة الإشعارات لكل حساب
+    const userIds = users.map(u => u._id);
+    const subs = await PushSubscription.find({ userId: { $in: userIds } }).select('userId');
+    const subSet = new Set(subs.map(s => s.userId.toString()));
+    accounts.forEach(acc => {
+      acc.hasNotifications = subSet.has(acc.id);
+    });
 
     // 3️⃣ احفظ في الذاكرة لمدة 5 دقائق
     cache.set(CacheKeys.ALL_ACCOUNTS, accounts, CacheTTL.ACCOUNTS_LIST);
