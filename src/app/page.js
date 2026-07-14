@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { Search } from "lucide-react";
-import AdminNav from "@/components/AdminNav";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import SearchBar from "@/components/dashboard/SearchBar";
 import AccountsTable from "@/components/dashboard/AccountsTable";
@@ -73,7 +72,6 @@ export default function AccountsDashboard() {
       className="min-h-screen bg-slate-950"
       dir="rtl"
     >
-      <AdminNav />
       <div className="max-w-7xl mx-auto space-y-8 p-4 md:p-8">
         {/* Dashboard Header */}
         <DashboardHeader

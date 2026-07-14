@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { verify } from "jsonwebtoken";
 import { connectToDatabase } from "@/lib/mongodb";
 import EmployeeAvailability from "@/models/EmployeeAvailability";
-import AdminNav from "@/components/AdminNav";
 import EmployeesClient from "./EmployeesClient";
 
 // ─── Server Component: Auth + Data Fetch ─────────────────────────────────────
@@ -42,7 +41,7 @@ export default async function EmployeesPage() {
       className="min-h-screen bg-slate-950"
       dir="rtl"
     >
-      <AdminNav />
+
       <EmployeesClient employees={serialized} />
     </div>
   );

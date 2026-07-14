@@ -4,22 +4,19 @@ import Settings from "@/models/Settings";
 import PushSubscription from "@/models/PushSubscription";
 import webpush from "@/lib/webpush";
 import { requireAdmin } from "@/lib/auth";
-import cache, { CacheKeys, CacheTTL, invalidateCache } from "@/lib/cache";
+import cache, { CacheKeys, CacheTTL } from "@/lib/cache";
 
-export async function GET(req) {
+export async function GET() {
   try {
     // 1️⃣ Try reading from memory first
     const cachedRate = cache.get(CacheKeys.EXCHANGE_RATE);
     if (cachedRate !== null) {
       console.log("✅ Exchange rate from cache:", cachedRate);
-      return NextResponse.json(
-        { success: true, exchangeRate: cachedRate, fromCache: true },
-        {
-          headers: {
-            "Cache-Control": "public, max-age=300, stale-while-revalidate=60",
-          },
-        },
-      );
+      return NextResponse.json({
+        success: true,
+        exchangeRate: cachedRate,
+        fromCache: true,
+      });
     }
 
     // 2️⃣ If not found in memory, read from MongoDB

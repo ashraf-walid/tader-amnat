@@ -12,13 +12,14 @@ import {
   ChevronDownIcon,
   LogOutIcon,
   MenuIcon,
-  // BellIcon,
   CloseIcon,
   InstallIcon,
 } from '@/components/Icons';
 import { usePWAInstall } from '@/lib/usePWAInstall';
 import { clearAnalyticsUserCache } from '@/hooks/usePageAnalytics';
 import { enableNotifications, checkSubscription } from '@/lib/enableNotifications';
+import { useUser } from '@/hooks/useUser';
+import { useQueryClient } from '@tanstack/react-query';
 
 // ── Toast نجاح التثبيت ──────────────────────────────────────
 function InstallSuccessToast({ visible }) {
@@ -96,16 +97,15 @@ const NAV_ITEMS = [
 const roleLabels = { owner: '𝔸', admin: 'مدير', employee: 'قائد', client: 'مُستخلص' };
 const roleColors = { owner: '#f0b429', admin: '#818cf8', employee: '#34d399', client: '#60a5fa' };
 
-// ذاكرة تخزين مؤقت لتجنب تأخير التحميل عند الانتقال بين الصفحات (SPA Navigation)
-let cachedUser = null;
-let cachedLoaded = false;
+
 
 export default function AdminNav() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [user, setUser] = useState(cachedUser);
-  const [loaded, setLoaded] = useState(cachedLoaded);
+  const queryClient = useQueryClient();
+  const { data: user, isLoading, refetch } = useUser();
+  const loaded = !isLoading;
   const [logging, setLogging] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -133,24 +133,7 @@ export default function AdminNav() {
     checkSubscription().then(setIsSubscribed);
   };
 
-  // جلب بيانات المستخدم مع دعم التحديث التلقائي في الخلفية (Stale-While-Revalidate)
-  useEffect(() => {
-    fetch('/api/auth/me')
-      .then(r => r.json())
-      .then(d => {
-        if (d.success) {
-          setUser(d.user);
-          cachedUser = d.user;
-          cachedLoaded = true;
-        } else {
-          setUser(null);
-          cachedUser = null;
-          cachedLoaded = true;
-        }
-      })
-      .catch(() => { })
-      .finally(() => setLoaded(true));
-  }, []);
+
 
   // إغلاق dropdown المستخدم عند النقر خارجه
   useEffect(() => {
@@ -194,10 +177,10 @@ export default function AdminNav() {
       // Clear analytics user cache so the next visitor is tracked correctly
       clearAnalyticsUserCache();
       localStorage.removeItem('pwa_reported');
-      cachedUser = null;
-      cachedLoaded = false;
-      setUser(null);
-      setLoaded(false);
+      
+      // Clear the user cache
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+
       router.push('/login');
     } catch {
       setLogging(false);

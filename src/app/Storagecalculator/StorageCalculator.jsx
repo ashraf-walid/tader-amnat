@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { InfoIcon } from '@/components/Icons';
-import AdminNav from '@/components/AdminNav';
+
 import { useStorageCalculator } from '@/hooks/useStorageCalculator';
 
 import ExchangeRateEditor from '@/components/storage-calculator/ExchangeRateEditor';
@@ -85,7 +85,7 @@ export default function StorageCalculator({ adminExchangeRate }) {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100" dir="rtl" style={{ fontFamily: "'Alexandria', system-ui, sans-serif" }}>
-      <AdminNav />
+
       <div className="max-w-[700px] mx-auto px-4 py-6 pb-20">
         {isInitializing && (
           <div className="flex flex-col items-center justify-center py-20 gap-4">

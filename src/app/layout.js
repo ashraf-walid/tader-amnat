@@ -1,6 +1,8 @@
 import "./globals.css";
 import { Alexandria, Outfit } from "next/font/google";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import ClientNavWrapper from "@/components/ClientNavWrapper";
+import { Providers } from "@/components/Providers";
 // import AnalyticsTracker from "@/components/AnalyticsTracker";
 
 const outfit = Outfit({
@@ -38,16 +40,19 @@ export default function RootLayout({ children }) {
     >
       <head>
         {/* Microsoft Clarity Analytics */}
-        <script
+        {/* <script
           dangerouslySetInnerHTML={{
             __html: `(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window, document, "clarity", "script", "x80sprsik2");`,
           }}
-        />
+        /> */}
       </head>
       <body className="min-h-full flex flex-col">
-        <ServiceWorkerRegister />
-        {/* <AnalyticsTracker /> */}
-        {children}
+        <Providers>
+          <ServiceWorkerRegister />
+          {/* <AnalyticsTracker /> */}
+          <ClientNavWrapper />
+          {children}
+        </Providers>
       </body>
     </html>
   );

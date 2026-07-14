@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.101.2",
     "bcrypt": "^6.0.0",
     "clsx": "^2.1.1",
     "convert-layout": "^0.11.1",

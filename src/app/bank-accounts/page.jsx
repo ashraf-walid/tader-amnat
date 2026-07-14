@@ -1,7 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verify } from "jsonwebtoken";
-import AdminNav from "@/components/AdminNav";
 import BankAccountsClient from "./BankAccountsClient";
 
 // ─── Server Component: Auth Guard ────────────────────────────────────────────
@@ -24,7 +23,7 @@ export default async function BankAccountsPage() {
       className="min-h-screen bg-slate-950 font-sans text-slate-100"
       dir="rtl"
     >
-      <AdminNav />
+
       <BankAccountsClient />
     </div>
   );

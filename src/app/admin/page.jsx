@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Icon } from "@/components/Icons";
 import { ROLES, getRoleInfo, EMPTY_FORM } from "@/lib/adminConstants";
-import AdminNav from "@/components/AdminNav";
+
 import ReportsTab from "@/components/admin/ReportsTab";
 import { useAccountsStore } from "@/store/useAccountsStore";
 
@@ -504,7 +504,7 @@ export default function AdminPage() {
         select option { background: #0f172a; }
       `}</style>
 
-      <AdminNav />
+
 
       <div className="max-w-[960px] mx-auto px-4 py-6">
         {/* ─── رأس الصفحة ─── */}
@@ -549,10 +549,10 @@ export default function AdminPage() {
         <div className="flex gap-2 mb-5 flex-wrap">
           {[
             { id: "accounts", icon: <Icon.Users />, label: "إدارة الحسابات" },
-            { id: "employees", icon: <Icon.Users />, label: "الموظفين" },
+            { id: "reports", icon: <Icon.Chart />, label: "التقارير" },
             { id: "rate", icon: <Icon.Currency />, label: "سعر الصرف" },
+            { id: "employees", icon: <Icon.Users />, label: "الموظفين" },
             ...(userRole === "owner" ? [
-              { id: "reports", icon: <Icon.Chart />, label: "التقارير" },
               { id: "data", icon: <Icon.Structure className="ml-0.5" />, label: "بيانات المشروع" },
             ] : []),
           ].map(t => (

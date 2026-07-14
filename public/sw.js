@@ -1,4 +1,4 @@
-const CACHE_NAME = 'amanat-cache-v23';
+const CACHE_NAME = 'amanat-cache-v25';
 const RUNTIME_CACHE = 'amanat-runtime-v1';
 
 self.addEventListener('install', (event) => {
@@ -59,7 +59,7 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
   if (url.pathname === '/' && event.request.redirect === 'manual') {
-    // دع المتصفح يتعامل مع التوجيه تلقائيًا
+    // Let the browser handle the routing automatically.
     return;
   }
 
@@ -85,7 +85,9 @@ self.addEventListener('fetch', (event) => {
               }
               return fetch(request)
                 .then((networkResponse) => {
-                  cache.put(request, networkResponse.clone());
+                  if (networkResponse.ok) {
+                    cache.put(request, networkResponse.clone());
+                  }
                   return networkResponse;
                 });
             });
@@ -106,7 +108,9 @@ self.addEventListener('fetch', (event) => {
               }
               return fetch(request)
                 .then((networkResponse) => {
-                  cache.put(request, networkResponse.clone());
+                  if (networkResponse.ok) {
+                    cache.put(request, networkResponse.clone());
+                  }
                   return networkResponse;
                 });
             });
@@ -127,7 +131,9 @@ self.addEventListener('fetch', (event) => {
                 }
                 return fetch(request)
                   .then((networkResponse) => {
-                    cache.put(request, networkResponse.clone());
+                    if (networkResponse.ok) {
+                      cache.put(request, networkResponse.clone());
+                    }
                     return networkResponse;
                   });
               });
@@ -139,7 +145,9 @@ self.addEventListener('fetch', (event) => {
           .then((networkResponse) => {
             return caches.open(CACHE_NAME)
               .then((cache) => {
-                cache.put(request, networkResponse.clone());
+                if (networkResponse.ok) {
+                  cache.put(request, networkResponse.clone());
+                }
                 return networkResponse;
               });
           })
