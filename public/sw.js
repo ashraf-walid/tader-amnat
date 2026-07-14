@@ -1,24 +1,34 @@
 const CACHE_NAME = 'amanat-cache-v23';
+const RUNTIME_CACHE = 'amanat-runtime-v1';
 
 self.addEventListener('install', (event) => {
   console.log('[ServiceWorker] Installing new version...');
+
+  // Only precache static assets - no protected pages
+  const staticAssets = [
+    '/offline.html',
+    '/manifest.json',
+    '/icons/tader.png',
+    '/icons/tader192.png',
+    '/icons/tadernoback.png',
+    '/icons/screenshot-mobile.png',
+    '/icons/screenshot-wide.png'
+  ];
+
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll([
-        '/offline.html',
-        '/',
-        '/Storagecalculator',
-        '/Storagecalculator/rates',
-        '/client/balance',
-        '/bank-accounts',
-        '/employees',
-        '/manifest.json',
-        '/icons/tader.png',
-        '/icons/tader192.png',
-        '/icons/tadernoback.png',
-        '/icons/screenshot-mobile.png',
-        '/icons/screenshot-wide.png'
-      ]))
+      .then((cache) => {
+        // Use Promise.allSettled to prevent single failure from breaking install
+        return Promise.allSettled(
+          staticAssets.map(url => cache.add(url))
+        ).then((results) => {
+          const failed = results.filter(r => r.status === 'rejected');
+          if (failed.length > 0) {
+            console.warn('[ServiceWorker] Some assets failed to cache:', failed);
+          }
+          console.log('[ServiceWorker] Static assets cached successfully');
+        });
+      })
       .then(() => self.skipWaiting())
   );
 });
@@ -30,7 +40,8 @@ self.addEventListener('activate', (event) => {
       .then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            if (cacheName !== CACHE_NAME) {
+            // Keep only current CACHE_NAME and RUNTIME_CACHE
+            if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE) {
               console.log('[ServiceWorker] Removing old cache:', cacheName);
               return caches.delete(cacheName);
             }
@@ -145,31 +156,37 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     event.respondWith(
-      caches.open(CACHE_NAME).then((cache) => {
-        return cache.match(request).then((cachedResponse) => {
-          return cachedResponse || fetch(request).then((networkResponse) => {
-            // Cache the fetched page for future navigations
-            cache.put(request, networkResponse.clone());
-            return networkResponse;
-          }).catch(() => {
-            // Offline fallback
-            return cache.match('/')
-              .then((rootMatch) => {
-                if (rootMatch) return rootMatch;
-                return cache.match('/offline.html')
-                  .then((offlineMatch) => {
-                    if (offlineMatch) return offlineMatch;
-                    // Last resort: inline minimal HTML
-                    return new Response(
-                      '<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>غير متصل</title><style>body{font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0f172a;color:#f1f5f9;text-align:center;padding:1rem}h1{font-size:1.2rem}button{margin-top:1rem;padding:.6rem 1.5rem;border:none;border-radius:.5rem;background:#3b82f6;color:#fff;font-size:1rem;cursor:pointer;font-family:inherit}</style></head><body><div><h1>لا يوجد اتصال بالإنترنت</h1><button onclick="location.reload()">إعادة المحاولة</button></div></body></html>',
-                      { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-                    );
-                  });
-              });
-          });
-        });
-      })
+      (async () => {
+        try {
+          // Try Network First
+          const fresh = await fetch(request);
+          if (fresh.ok && fresh.type === 'basic') {
+            // Cache successful responses separately from precached assets
+            const cache = await caches.open(RUNTIME_CACHE);
+            cache.put(request, fresh.clone());
+          }
+          return fresh;
+        } catch (error) {
+          // Network failed → fallback to cached version
+          const cache = await caches.open(RUNTIME_CACHE);
+          const cached = await cache.match(request);
+          if (cached) {
+            return cached;
+          }
+          // Last resort: offline page
+          const offline = await caches.match('/offline.html');
+          if (offline) {
+            return offline;
+          }
+          // Minimal inline fallback
+          return new Response(
+            '<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>غير متصل</title><style>body{font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0f172a;color:#f1f5f9;text-align:center;padding:1rem}h1{font-size:1.2rem}button{margin-top:1rem;padding:.6rem 1.5rem;border:none;border-radius:.5rem;background:#3b82f6;color:#fff;font-size:1rem;cursor:pointer;font-family:inherit}</style></head><body><div><h1>لا يوجد اتصال بالإنترنت</h1><button onclick="location.reload()">إعادة المحاولة</button></div></body></html>',
+            { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+          );
+        }
+      })()
     );
+    return;
   }
 });
 

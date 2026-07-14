@@ -174,6 +174,23 @@ export default function AdminNav() {
     setLogging(true);
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
+
+      // Clear ALL caches to prevent data leakage between users on shared devices
+      if ('caches' in window) {
+        const cacheKeys = await caches.keys();
+        await Promise.all(cacheKeys.map(key => caches.delete(key)));
+        console.log('[Security] All caches cleared on logout');
+      }
+
+      // Optional: Unregister service worker to force fresh installation
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.ready;
+        if (registration && registration.unregister) {
+          await registration.unregister();
+          console.log('[Security] Service worker unregistered');
+        }
+      }
+
       // Clear analytics user cache so the next visitor is tracked correctly
       clearAnalyticsUserCache();
       localStorage.removeItem('pwa_reported');
