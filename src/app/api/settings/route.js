@@ -41,11 +41,6 @@ export async function GET() {
         updatedAt: rateSetting?.updatedAt || null,
         fromCache: false,
       },
-      {
-        headers: {
-          "Cache-Control": "public, max-age=200, stale-while-revalidate=20",
-        },
-      },
     );
   } catch (error) {
     console.error("Failed to fetch settings:", error);
