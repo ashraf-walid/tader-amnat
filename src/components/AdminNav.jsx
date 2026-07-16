@@ -17,7 +17,7 @@ import {
 } from '@/components/Icons';
 import { usePWAInstall } from '@/lib/usePWAInstall';
 import { clearAnalyticsUserCache } from '@/hooks/usePageAnalytics';
-import { enableNotifications, checkSubscription } from '@/lib/enableNotifications';
+import { enableNotifications, checkSubscription, disableNotifications } from '@/lib/enableNotifications';
 import { useUser } from '@/hooks/useUser';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -110,7 +110,9 @@ export default function AdminNav() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const { canInstall, install, installed, isInstalled } = usePWAInstall();
+  const [showIOSModal, setShowIOSModal] = useState(false);
+  const [notificationLoading, setNotificationLoading] = useState(false);
+  const { canInstall, install, installed, isInstalled, isIOS } = usePWAInstall();
 
   const userMenuRef = useRef(null);
   const prevPathnameRef = useRef(pathname);
@@ -128,9 +130,22 @@ export default function AdminNav() {
     checkSubscription().then(setIsSubscribed);
   }, []);
 
-  const handleEnableNotifications = async () => {
-    await enableNotifications();
-    checkSubscription().then(setIsSubscribed);
+  const handleToggleNotifications = async () => {
+    if (notificationLoading) return;
+    setNotificationLoading(true);
+    try {
+      if (isSubscribed) {
+        await disableNotifications();
+      } else {
+        await enableNotifications();
+      }
+      const status = await checkSubscription();
+      setIsSubscribed(status);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setNotificationLoading(false);
+    }
   };
 
 
@@ -351,12 +366,20 @@ export default function AdminNav() {
                   {/* ── زر تثبيت PWA (ديسكتوب dropdown) ── */}
                   <>
                     <button
-                      onClick={handleEnableNotifications}
-                      disabled={isSubscribed}
+                      onClick={handleToggleNotifications}
+                      disabled={notificationLoading}
                       className="admin-dropdown-item flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-slate-300 no-underline cursor-pointer w-full disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <div>🔔</div>
-                      {isSubscribed ? "الإشعارات مفعلة" : "تفعيل الإشعارات"}
+                      {notificationLoading ? (
+                        <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-300/30 border-t-slate-300 animate-spin" />
+                      ) : (
+                        <div>🔔</div>
+                      )}
+                      {notificationLoading
+                        ? 'جاري التعديل...'
+                        : isSubscribed
+                        ? 'إلغاء تفعيل الإشعارات'
+                        : 'تفعيل الإشعارات'}
                     </button>
                     <div className="h-px bg-white/6 my-1" />
                   </>
@@ -364,7 +387,14 @@ export default function AdminNav() {
                   <>
                     <button
                       id="pwa-install-btn-desktop"
-                      onClick={async () => { await install(); setUserMenuOpen(false); }}
+                      onClick={async () => {
+                        if (isIOS) {
+                          setShowIOSModal(true);
+                        } else {
+                          await install();
+                        }
+                        setUserMenuOpen(false);
+                      }}
                       disabled={isInstalled || !canInstall}
                       className="pwa-install-btn admin-dropdown-item flex items-center gap-2.5 px-3.5 py-2 text-[13px] w-full bg-transparent border border-transparent rounded-[8px] cursor-pointer font-[inherit] text-right transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{ color: '#a78bfa' }}
@@ -481,18 +511,33 @@ export default function AdminNav() {
             <div className="p-2.5 pb-3 border-t border-white/[0.07] flex flex-col gap-2">
 
               <button
-                onClick={handleEnableNotifications}
-                disabled={isSubscribed}
+                onClick={handleToggleNotifications}
+                disabled={notificationLoading}
                 className="w-full flex items-center gap-2.5 p-2.5 rounded-[10px] text-[13px] bg-blue-500/8 border border-blue-500/18 text-slate-300 text-sm font-semibold transition-all font-[inherit] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <div>🔔</div>
-                {isSubscribed ? "الإشعارات مفعلة" : "تفعيل الإشعارات"}
+                {notificationLoading ? (
+                  <div className="w-4 h-4 rounded-full border-2 border-slate-300/30 border-t-slate-300 animate-spin" />
+                ) : (
+                  <div>🔔</div>
+                )}
+                {notificationLoading
+                  ? 'جاري التعديل...'
+                  : isSubscribed
+                  ? 'إلغاء تفعيل الإشعارات'
+                  : 'تفعيل الإشعارات'}
               </button>
 
               {/* ── زر تثبيت PWA (موبايل panel) ── */}
               <button
                 id="pwa-install-btn-mobile"
-                onClick={async () => { await install(); setMobileOpen(false); }}
+                onClick={async () => {
+                  if (isIOS) {
+                    setShowIOSModal(true);
+                  } else {
+                    await install();
+                  }
+                  setMobileOpen(false);
+                }}
                 disabled={isInstalled || !canInstall}
                 className="w-full flex items-center gap-2.5 p-2.5 rounded-[10px] text-[#a78bfa] text-sm font-semibold transition-all font-[inherit] pwa-install-btn disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
@@ -519,6 +564,121 @@ export default function AdminNav() {
             </div>
           </div>
         </>
+      )}
+
+      {/* ── نافذة إرشادات التثبيت على الآيفون iOS ── */}
+      {showIOSModal && (
+        <div 
+          dir="rtl"
+          className="fixed inset-0 flex items-center justify-center p-4 animate-fade-in"
+          style={{ fontFamily: 'inherit', zIndex: 99999 }}
+        >
+          {/* Backdrop blur with fade anim */}
+          <div 
+            onClick={() => setShowIOSModal(false)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-md transition-opacity duration-300"
+          />
+          
+          {/* Content container with bounce/scale-in effect */}
+          <style dangerouslySetInnerHTML={{__html: `
+            @keyframes pwaModalScale {
+              from {
+                opacity: 0;
+                transform: scale(0.93) translateY(12px);
+              }
+              to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+              }
+            }
+          `}} />
+          <div 
+            className="relative w-full max-w-md overflow-hidden rounded-2xl border border-white/10 p-6 shadow-2xl backdrop-blur-xl transition-all"
+            style={{
+              animation: 'pwaModalScale 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(139,92,246,0.3)',
+              background: 'linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(30,41,59,0.98) 100%)',
+            }}
+          >
+            {/* Elegant Top Glow Line */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-violet-500 via-fuchsia-500 to-pink-500" />
+            
+            {/* Header info */}
+            <div className="flex items-start justify-between mb-5">
+              <div>
+                <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+                  <span className="text-xl">📱</span>
+                  تثبيت التطبيق على آيفون (iOS)
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                  اتبع هذه الخطوات البسيطة لإضافة التطبيق إلى الشاشة الرئيسية وتفعيل الإشعارات:
+                </p>
+              </div>
+              <button 
+                onClick={() => setShowIOSModal(false)}
+                className="text-slate-400 hover:text-slate-200 bg-white/5 hover:bg-white/10 p-1.5 rounded-lg transition-colors border border-white/10 flex items-center justify-center"
+              >
+                <CloseIcon size={15} />
+              </button>
+            </div>
+
+            {/* List of Steps */}
+            <div className="space-y-4 mb-6">
+              {/* Step 1 */}
+              <div className="flex items-start gap-3.5 bg-white/2 hover:bg-white/4 p-3.5 rounded-xl border border-white/5 transition-all">
+                <div className="w-8 h-8 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0 shadow-[0_0_12px_rgba(59,130,246,0.15)] font-bold text-sm">
+                  ١
+                </div>
+                <div className="text-sm text-slate-200 leading-relaxed font-medium">
+                  اضغط على زر **المشاركة** 
+                  <span className="inline-flex items-center justify-center p-1 bg-white/10 border border-white/15 rounded-md mx-1 text-slate-100 align-middle">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400">
+                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                      <polyline points="16 6 12 2 8 6" />
+                      <line x1="12" y1="2" x2="12" y2="15" />
+                    </svg>
+                  </span> 
+                  الموجود في أسفل متصفح Safari.
+                </div>
+              </div>
+              
+              {/* Step 2 */}
+              <div className="flex items-start gap-3.5 bg-white/2 hover:bg-white/4 p-3.5 rounded-xl border border-white/5 transition-all">
+                <div className="w-8 h-8 rounded-full bg-violet-500/10 border border-violet-500/30 flex items-center justify-center text-violet-400 shrink-0 shadow-[0_0_12px_rgba(139,92,246,0.15)] font-bold text-sm">
+                  ٢
+                </div>
+                <div className="text-sm text-slate-200 leading-relaxed font-medium font-sans">
+                  مرر خيارات القائمة لأسفل ثم اضغط على **"إضافة إلى الشاشة الرئيسية"** 
+                  <span className="inline-flex items-center justify-center p-1 bg-white/10 border border-white/15 rounded-md mx-1 text-slate-100 align-middle">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-violet-400">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <line x1="12" y1="8" x2="12" y2="16" />
+                      <line x1="8" y1="12" x2="16" y2="12" />
+                    </svg>
+                  </span>.
+                </div>
+              </div>
+
+              {/* Step 3 */}
+              <div className="flex items-start gap-3.5 bg-white/2 hover:bg-white/4 p-3.5 rounded-xl border border-white/5 transition-all">
+                <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 shadow-[0_0_12px_rgba(16,185,129,0.15)] font-bold text-sm">
+                  ٣
+                </div>
+                <div className="text-sm text-slate-200 leading-relaxed font-medium">
+                  انقر على زر **"إضافة" (Add)** في الزاوية العلوية اليمنى لإتمام التثبيت بنجاح.
+                </div>
+              </div>
+            </div>
+
+            {/* Footer action button */}
+            <button 
+              onClick={() => setShowIOSModal(false)}
+              className="w-full flex items-center justify-center py-2.5 bg-linear-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold rounded-xl text-sm border-none shadow-[0_8px_16px_rgba(99,102,241,0.25)] transition-all transform hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+            >
+              حسناً، فهمت
+            </button>
+          </div>
+        </div>
       )}
     </>
   );

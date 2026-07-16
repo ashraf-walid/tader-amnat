@@ -18,6 +18,7 @@ export function usePWAInstall() {
   const [installed, setInstalled] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -27,9 +28,22 @@ export function usePWAInstall() {
       window.navigator.standalone === true;
     
     setIsInstalled(isStandalone);
-    setIsSupported('serviceWorker' in navigator && 'BeforeInstallPromptEvent' in window);
+
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    const isApple = /iphone|ipad|ipod/.test(userAgent) && !window.MSStream;
+    setIsIOS(isApple);
+
+    setIsSupported(
+      'serviceWorker' in navigator && 
+      ('BeforeInstallPromptEvent' in window || isApple)
+    );
 
     if (isStandalone) return;
+
+    if (isApple) {
+      setCanInstall(true);
+      return;
+    }
 
     const handleBeforeInstall = (e) => {
       e.preventDefault();
@@ -63,6 +77,10 @@ export function usePWAInstall() {
   }, []);
 
   const install = useCallback(async () => {
+    if (isIOS) {
+      // لن يفعل شيئاً لأن التثبيت على iOS يحتاج لواجهة مخصصة (يتم معالجتها في الكومبوننت)
+      return;
+    }
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
@@ -71,7 +89,7 @@ export function usePWAInstall() {
       setCanInstall(false);
       setIsInstalled(true);
     }
-  }, [deferredPrompt]);
+  }, [deferredPrompt, isIOS]);
 
-  return { canInstall, install, installed, isInstalled, isSupported };
+  return { canInstall, install, installed, isInstalled, isSupported, isIOS };
 }

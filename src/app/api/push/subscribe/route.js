@@ -41,3 +41,26 @@ export async function POST(req) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
+
+/**
+ * DELETE /api/push/subscribe
+ * Deletes the user's Push Subscription from the database
+ */
+export async function DELETE(req) {
+  try {
+    const decoded = requireAuth(req);
+    const { endpoint } = await req.json();
+
+    if (!endpoint) {
+      return NextResponse.json({ success: false, error: "رابط الاشتراك مطلوب لإلغاء تفعيله." }, { status: 400 });
+    }
+
+    await connectToDatabase();
+    await PushSubscription.findOneAndDelete({ endpoint, userId: decoded.userId });
+
+    return NextResponse.json({ success: true, message: "تم حذف الاشتراك بنجاح" });
+  } catch (err) {
+    console.error("DELETE /api/push/subscribe error:", err);
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
+}
