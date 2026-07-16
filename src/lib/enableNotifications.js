@@ -1,3 +1,6 @@
+// 🔒 قفل لمنع التنفيذ المتزامن للعمليات
+let isOperationInProgress = false;
+
 // دالة مساعدة: تحويل VAPID public key من Base64 إلى Uint8Array
 function urlBase64ToUint8Array(base64String) {
   if (!base64String) {
@@ -12,6 +15,12 @@ function urlBase64ToUint8Array(base64String) {
 export async function enableNotifications() {
   if (typeof window === 'undefined') return;
 
+  // 🔒 منع التنفيذ المتزامن
+  if (isOperationInProgress) {
+    console.log('عملية إشعارات قيد التنفيذ بالفعل، يُرجى الانتظار...');
+    return;
+  }
+
   // 1. تحقق من دعم متصفح المستخدم للإشعارات الأساسية
   if (!('Notification' in window)) {
     alert('⚠️ الإشعارات غير مدعومة في هذا المتصفح.');
@@ -25,9 +34,29 @@ export async function enableNotifications() {
   }
 
   try {
+    isOperationInProgress = true; // 🔒 قفل العملية
+
+    // 🔍 التحقق من أن التطبيق مثبت
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const isInstalled = isStandalone || window.navigator.standalone; // iOS standalone detection
+    
+    if (!isInstalled) {
+      const proceed = confirm(
+        '💡 للحصول على أفضل تجربة، يُفضل تثبيت التطبيق أولاً.\n\nهل تريد المتابعة بتفعيل الإشعارات بدون تثبيت؟'
+      );
+      if (!proceed) {
+        console.log('المستخدم اختار عدم المتابعة بدون تثبيت التطبيق');
+        return;
+      }
+    }
+
+    // طلب الإذن من المستخدم
     const permission = await Notification.requestPermission();
+    
+    // إذا لم يُمنح الإذن (رفض أو أغلق النافذة)، نخرج بهدوء بدون alert خطأ
     if (permission !== 'granted') {
-      alert('⚠️ لم يتم منح إذن الإشعارات. يرجى تفعيل الإذن من إعدادات المتصفح.');
+      // المستخدم رفض أو لم يستجب — حالة عادية، لا داعي لـ alert مزعج
+      console.log('Notification permission not granted:', permission);
       return;
     }
 
@@ -67,7 +96,10 @@ export async function enableNotifications() {
     alert('✅ تم تفعيل الإشعارات بنجاح.');
   } catch (err) {
     console.error('enableNotifications error:', err);
+    // نعرض alert فقط للأخطاء الفنية الحقيقية، وليس لرفض المستخدم
     alert(`❌ فشل تفعيل الإشعارات: ${err.message}`);
+  } finally {
+    isOperationInProgress = false; // 🔓 فك القفل دائماً
   }
 }
 
@@ -95,12 +127,20 @@ export async function checkSubscription() {
 export async function disableNotifications() {
   if (typeof window === 'undefined') return;
 
+  // 🔒 منع التنفيذ المتزامن
+  if (isOperationInProgress) {
+    console.log('عملية إشعارات قيد التنفيذ بالفعل، يُرجى الانتظار...');
+    return;
+  }
+
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     alert('⚠️ نظام إشعارات الدفع (Push) غير مدعوم في هذا المتصفح/البيئة.');
     return;
   }
 
   try {
+    isOperationInProgress = true; // 🔒 قفل العملية
+
     const registration = await navigator.serviceWorker.ready;
     if (!registration || !registration.pushManager) {
       alert('⚠️ خدمة إرسال الإشعارات (PushManager) غير متوفرة أو غير نشطة.');
@@ -134,5 +174,7 @@ export async function disableNotifications() {
   } catch (err) {
     console.error('disableNotifications error:', err);
     alert(`❌ فشل إلغاء تفعيل الإشعارات: ${err.message}`);
+  } finally {
+    isOperationInProgress = false; // 🔓 فك القفل دائماً
   }
 }
