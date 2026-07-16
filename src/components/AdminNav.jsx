@@ -132,6 +132,12 @@ export default function AdminNav() {
 
   const handleToggleNotifications = async () => {
     if (notificationLoading) return;
+
+    if (!isSubscribed && !isInstalled) {
+      alert('⚠️ يرجى تثبيت التطبيق أولاً على جهازك لتتمكن من تفعيل واستقبال الإشعارات.');
+      return;
+    }
+
     setNotificationLoading(true);
     try {
       if (isSubscribed) {
