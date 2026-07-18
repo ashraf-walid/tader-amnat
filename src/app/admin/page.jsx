@@ -146,12 +146,12 @@ function AccountDetails({ account }) {
         <DetailRow label="اسم المكتب">{account.officeName || "—"}</DetailRow>
         <DetailRow label="كود الحساب">{account.accountCode || "—"}</DetailRow>
         <DetailRow label="عمليات الحساب">{account.calculationsCount || 0} عملية</DetailRow>
-        <DetailRow label="المحاولات">{account.attempts ?? "غير محددة"}</DetailRow>
+        {/* <DetailRow label="المحاولات">{account.attempts ?? "غير محددة"}</DetailRow> */}
         <DetailRow label="حالة الحساب">{account.isActive === false ? "غير مفعل" : "مفعل"}</DetailRow>
         <DetailRow label="آخر دخول">{formatDateTime(account.lastLogin)}</DetailRow>
         <DetailRow label="تاريخ الإنشاء">{formatDateTime(account.createdAt)}</DetailRow>
         <DetailRow label="آخر تحديث">{formatDateTime(account.updatedAt)}</DetailRow>
-        <DetailRow label="معرف الحساب">{account.id || "—"}</DetailRow>
+        {/* <DetailRow label="معرف الحساب">{account.id || "—"}</DetailRow> */}
       </div>
     </div>
   );
@@ -313,7 +313,7 @@ export default function AdminPage() {
   const COLUMNS = [
     { key: "username", label: "اسم المستخدم", sortable: true },
     { key: "role", label: "الدور", sortable: true },
-    { key: "pwaStatus", label: "PWA", sortable: false },
+    { key: "pwaStatus", label: "مثبت", sortable: false },
     { key: "notificationsStatus", label: "الإشعارات", sortable: false },
     { key: "calculationsCount", label: "عمليات الحساب", sortable: true },
     { key: "lastLogin", label: "آخر دخول", sortable: true },
