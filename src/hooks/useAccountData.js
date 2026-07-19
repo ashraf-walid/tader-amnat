@@ -127,18 +127,27 @@ export function useAccountData() {
 
       // ✅ 3. رفع إلى MongoDB في الخلفية (بدون انتظار)
       // استخدام المسار الخاص بالدمج لحذف المعاملات القديمة
+      const payload = {
+        data: preparedResults,
+        dateRange: extractedDateRange,
+        clearTransactions: true, // ⚠️ علامة لحذف المعاملات القديمة
+      };
+      
+      console.log("🔍 Sending merge request to API:", {
+        accountsCount: preparedResults.length,
+        clearTransactions: payload.clearTransactions,
+        firstAccountHasTransactions: preparedResults[0]?.transactions?.length || 0
+      });
+      
       fetch("/api/data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          data: preparedResults,
-          dateRange: extractedDateRange,
-          clearTransactions: true, // ⚠️ علامة لحذف المعاملات القديمة
-        }),
+        body: JSON.stringify(payload),
       })
-        .then(() => {
-          console.log("✅ تمت المزامنة مع MongoDB");
-          setLastSyncTimestamp(Date.now());
+        .then(async (response) => {
+          const result = await response.json();
+          console.log("✅ تمت المزامنة مع MongoDB:", result);
+          await setLastSyncTimestamp(Date.now());
         })
         .catch((err) => console.error("⚠️ فشلت المزامنة مع MongoDB:", err));
 

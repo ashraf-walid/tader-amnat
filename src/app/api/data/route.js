@@ -99,12 +99,14 @@ export async function POST(request) {
 
     let dataToSave = [];
     let dateRange = null;
+    let clearTransactions = false;
 
     if (Array.isArray(body)) {
       dataToSave = body;
     } else if (body && body.data) {
       dataToSave = body.data;
       dateRange = body.dateRange;
+      clearTransactions = body.clearTransactions === true; // ⚠️ الحفظ هنا
     }
 
     // 🚫 Block empty POST — use DELETE /api/data to clear all data (owner only)
@@ -143,17 +145,29 @@ export async function POST(request) {
     }
 
     // ⚠️ التحقق من علامة حذف المعاملات (عند الدمج مع أرصدة 30/06)
-    const shouldClearTransactions = body.clearTransactions === true;
+    const shouldClearTransactions = clearTransactions;
+    
+    console.log("🔍 POST /api/data - clearTransactions flag:", shouldClearTransactions);
+    console.log("🔍 POST /api/data - body structure:", {
+      hasData: !!body.data,
+      dataLength: dataToSave.length,
+      hasClearFlag: 'clearTransactions' in body,
+      clearValue: body.clearTransactions
+    });
 
     // Merge transactions into the new data being saved (إلا إذا كان الطلب يحمل علامة الحذف)
     for (const newAcc of dataToSave) {
       if (shouldClearTransactions) {
         // حذف المعاملات القديمة عند الدمج
         newAcc.transactions = [];
+        console.log(`✅ تم تعيين transactions = [] للحساب ${newAcc.accountCode}`);
       } else {
         // الحفاظ على المعاملات القديمة في الحالات العادية
         const oldTx = oldTransactionsMap.get(newAcc.accountCode);
         newAcc.transactions = oldTx || [];
+        if (oldTx && oldTx.length > 0) {
+          console.log(`📌 تم الحفاظ على ${oldTx.length} معاملات للحساب ${newAcc.accountCode}`);
+        }
       }
     }
 
