@@ -126,12 +126,14 @@ export function useAccountData() {
       if (extractedDateRange) setDateRange(extractedDateRange);
 
       // ✅ 3. رفع إلى MongoDB في الخلفية (بدون انتظار)
+      // استخدام المسار الخاص بالدمج لحذف المعاملات القديمة
       fetch("/api/data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           data: preparedResults,
           dateRange: extractedDateRange,
+          clearTransactions: true, // ⚠️ علامة لحذف المعاملات القديمة
         }),
       })
         .then(() => {

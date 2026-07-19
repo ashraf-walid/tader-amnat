@@ -142,10 +142,19 @@ export async function POST(request) {
       }
     }
 
-    // Merge transactions into the new data being saved so manual ledger adjustments aren't lost
+    // ⚠️ التحقق من علامة حذف المعاملات (عند الدمج مع أرصدة 30/06)
+    const shouldClearTransactions = body.clearTransactions === true;
+
+    // Merge transactions into the new data being saved (إلا إذا كان الطلب يحمل علامة الحذف)
     for (const newAcc of dataToSave) {
-      const oldTx = oldTransactionsMap.get(newAcc.accountCode);
-      newAcc.transactions = oldTx || [];
+      if (shouldClearTransactions) {
+        // حذف المعاملات القديمة عند الدمج
+        newAcc.transactions = [];
+      } else {
+        // الحفاظ على المعاملات القديمة في الحالات العادية
+        const oldTx = oldTransactionsMap.get(newAcc.accountCode);
+        newAcc.transactions = oldTx || [];
+      }
     }
 
     // Replace all data with the new uploaded data

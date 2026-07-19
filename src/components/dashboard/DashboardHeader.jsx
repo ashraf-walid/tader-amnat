@@ -21,6 +21,27 @@ export default function DashboardHeader({
   data,
   search,
 }) {
+  // دالة للتعامل مع رفع الملف مع التحذير
+  const handleMergeWithWarning = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const confirmed = window.confirm(
+      "⚠️ تحذير: عملية الدمج ستؤدي إلى:\n\n" +
+      "1️⃣ دمج الأرصدة المالية (30/06 + الملف الجديد)\n" +
+      "2️⃣ حذف جميع المعاملات اليدوية القديمة (الإضافات والخصومات)\n" +
+      "3️⃣ البدء من جديد مع الأرصدة المدمجة فقط\n\n" +
+      "هل تريد المتابعة؟"
+    );
+
+    if (confirmed) {
+      handleFileUploadWithMerge(e);
+    } else {
+      // إعادة تعيين الإدخال
+      e.target.value = '';
+    }
+  };
+
   return (
     <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in">
       <div>
@@ -111,7 +132,7 @@ export default function DashboardHeader({
                 ? "bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed"
                 : "bg-slate-900 text-emerald-400 border-emerald-900/30 hover:bg-slate-800",
             )}
-            title="دمج ملف HTML جديد مع أرصدة 30/06"
+            title="دمج ملف HTML جديد مع أرصدة 30/06 (⚠️ سيتم حذف المعاملات اليدوية القديمة)"
           >
             <Upload size={14} />
             دمج مع أرصدة 30/06
@@ -119,7 +140,7 @@ export default function DashboardHeader({
               type="file"
               className="hidden"
               accept=".html,.htm"
-              onChange={handleFileUploadWithMerge}
+              onChange={handleMergeWithWarning}
               disabled={loading}
             />
           </label>
