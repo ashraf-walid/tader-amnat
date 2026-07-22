@@ -2,11 +2,13 @@
   "name": "amanat",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "delete-transactions": "node -r dotenv/config scripts/delete-transactions-by-date.js dotenv_config_path=.env.local"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.2",

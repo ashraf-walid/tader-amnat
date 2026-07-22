@@ -125,7 +125,7 @@ export default function DashboardHeader({
             />
           </label>
 
-          <label
+          {/* <label
             className={cn(
               "px-3 py-2.5 sm:py-2 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border cursor-pointer",
               loading
@@ -143,7 +143,7 @@ export default function DashboardHeader({
               onChange={handleMergeWithWarning}
               disabled={loading}
             />
-          </label>
+          </label> */}
 
           <button
             onClick={downloadData}
