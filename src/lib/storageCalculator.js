@@ -92,14 +92,14 @@ export function calculateStorageFee(days, config, options = {}) {
   let totalUSD = 0;
   const breakdown = [];
 
-  // عدد الأيام المطلوب حسابها هو الفرق بين الإجمالي وما تم دفعه سابقاً
+  // Days to calculate is the difference between total and previously paid days
   const daysToCalculate = Math.max(0, days - previousDays);
   let calculationStartDay = previousDays + 1;
 
   if (daysToCalculate > 0) {
     let daysToDistribute = daysToCalculate;
 
-    // 1. التعامل مع فترة السماح إذا كان الحساب يقع ضمنها
+    // 1. Handle grace period if calculation falls within it
     if (calculationStartDay <= GRACE_PERIOD_DAYS) {
       const daysInGrace = Math.min(daysToDistribute, GRACE_PERIOD_DAYS - calculationStartDay + 1);
       if (daysInGrace > 0) {
@@ -118,7 +118,7 @@ export function calculateStorageFee(days, config, options = {}) {
       }
     }
 
-    // 2. توزيع الأيام المتبقية على الشرائح
+    // 2. Distribute remaining days across tiers
     for (const tier of TIERS) {
       if (daysToDistribute <= 0) break;
 

@@ -18,7 +18,7 @@ function matchesPath(pathname, paths) {
 export async function proxy(req) {
   const { pathname } = req.nextUrl;
 
-  // 🔒 التأكد من تعيين JWT_SECRET
+  // 🔒 Ensure JWT_SECRET is set
   if (!process.env.JWT_SECRET) {
     console.error("❌ JWT_SECRET must be set in environment variables!");
     throw new Error("JWT_SECRET is not configured");

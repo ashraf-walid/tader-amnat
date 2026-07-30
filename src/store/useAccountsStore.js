@@ -15,7 +15,7 @@ export const useAccountsStore = create(
        */
       loadAccounts: async () => {
         const { accounts } = get();
-        // لا تُظهر مؤشر التحميل إذا كانت هناك بيانات مخزّنة (تحديث صامت في الخلفية)
+        // Don't show loading indicator if there is cached data (silent background update)
         if (accounts.length === 0) set({ accLoading: true });
         try {
           const res = await fetch("/api/accounts");
@@ -33,7 +33,7 @@ export const useAccountsStore = create(
     }),
     {
       name: "accounts-storage",
-      // لا تُبقِ accLoading (حالة مؤقتة) في التخزين
+      // Don't persist accLoading (temporary state) in storage
       partialize: (state) => ({
         accounts: state.accounts,
         lastFetched: state.lastFetched,

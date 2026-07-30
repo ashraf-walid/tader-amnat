@@ -26,7 +26,7 @@ export function usePWAInstall() {
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
       window.navigator.standalone === true;
-    
+
     setIsInstalled(isStandalone);
 
     const userAgent = window.navigator.userAgent.toLowerCase();
@@ -34,7 +34,7 @@ export function usePWAInstall() {
     setIsIOS(isApple);
 
     setIsSupported(
-      'serviceWorker' in navigator && 
+      'serviceWorker' in navigator &&
       ('BeforeInstallPromptEvent' in window || isApple)
     );
 
@@ -78,7 +78,7 @@ export function usePWAInstall() {
 
   const install = useCallback(async () => {
     if (isIOS) {
-      // لن يفعل شيئاً لأن التثبيت على iOS يحتاج لواجهة مخصصة (يتم معالجتها في الكومبوننت)
+      // Won't do anything because iOS installation needs custom UI (handled in component)
       return;
     }
     if (!deferredPrompt) return;

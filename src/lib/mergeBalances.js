@@ -94,7 +94,7 @@ export async function mergeHTMLWithBaseBalances(htmlFile) {
   try {
     console.log('🔄 بدء عملية الدمج...');
 
-    // 1. تحميل الأرصدة الأساسية (30/06)
+    // 1. Load base balances (30/06)
     const baseBalancesData = await loadBaseBalances();
     const baseAccounts = baseBalancesData.data || [];
 
@@ -102,7 +102,7 @@ export async function mergeHTMLWithBaseBalances(htmlFile) {
       throw new Error('لا توجد حسابات في ملف الأرصدة الأساسية');
     }
 
-    // 2. تحليل ملف HTML الجديد
+    // 2. Parse new HTML file
     const { data: newAccounts, dateRange: newDateRange } = await parseAccountingHTML(htmlFile);
 
     if (!newAccounts || newAccounts.length === 0) {
@@ -120,7 +120,7 @@ export async function mergeHTMLWithBaseBalances(htmlFile) {
       newAccountsMap.set(account.accountCode, account);
     });
 
-    // 4. دمج الحسابات
+    // 4. Merge accounts
     const mergedAccounts = [];
     let mergedCount = 0;
     let onlyInBaseCount = 0;
@@ -163,7 +163,7 @@ export async function mergeHTMLWithBaseBalances(htmlFile) {
 
     console.log('✅ اكتملت عملية الدمج بنجاح:', mergeInfo);
 
-    // 7. إنشاء نطاق تاريخ مدمج
+    // 7. Create combined date range
     const combinedDateRange = `${baseBalancesData.dateRange} + ${newDateRange}`;
 
     return {

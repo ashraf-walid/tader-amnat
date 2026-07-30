@@ -16,7 +16,7 @@ export async function parseAccountingHTML(file) {
 
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlText, 'text/html');
-        
+
         // Extract date range from the top of the file
         // Pattern: خلال الفترة من 2026/6/6 إلى 2026/6/7
         let dateRange = '';
@@ -27,12 +27,12 @@ export async function parseAccountingHTML(file) {
         }
 
         const rows = Array.from(doc.querySelectorAll('tr'));
-        
+
         const data = [];
-        
+
         rows.forEach(row => {
           const cells = Array.from(row.querySelectorAll('td'));
-          
+
           // Data rows in this specific report have a name cell with COLSPAN=5
           // or a large number of cells.
           if (cells.length >= 8) {
@@ -41,7 +41,7 @@ export async function parseAccountingHTML(file) {
 
             const name = nameCell.textContent.trim();
             const code = cells[cells.length - 1].textContent.trim();
-            
+
             // Skip headers/totals
             if (!name || name.includes('إجمالي') || name.includes('صفحة') || name.includes('الحساب')) {
               return;
@@ -51,15 +51,15 @@ export async function parseAccountingHTML(file) {
             // if (!PRIORITY_CODES.includes(code)) {
             //   return;
             // }
-            
+
             // Numerical values are usually in ALIGN=right cells BEFORE the name cell
             const values = cells
-              .filter(cell => cell.getAttribute('align') === 'right' && cell !== nameCell && cell !== cells[cells.length-1])
+              .filter(cell => cell.getAttribute('align') === 'right' && cell !== nameCell && cell !== cells[cells.length - 1])
               .map(cell => {
                 const text = cell.textContent.trim().replace(/,/g, '');
                 return parseFloat(text) || 0;
               });
-            
+
             if (values.length >= 5) {
               data.push({
                 account: name,

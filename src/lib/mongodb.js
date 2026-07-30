@@ -22,12 +22,12 @@ export async function connectToDatabase() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
-      // 🚀 Connection Pooling للأداء العالي
-      maxPoolSize: 10, // عدد الاتصالات المتزامنة (افتراضي: 100، نخفضه لتوفير الموارد)
-      minPoolSize: 2, // الحد الأدنى من الاتصالات الجاهزة
-      serverSelectionTimeoutMS: 5000, // وقت الانتظار لاختيار Server
-      socketTimeoutMS: 45000, // وقت انتهاء Socket
-      family: 4, // استخدام IPv4 فقط (أسرع)
+      // 🚀 Connection Pooling for High Performance
+      maxPoolSize: 10, // Number of concurrent connections (default: 100, reduced to save resources)
+      minPoolSize: 2, // Minimum ready connections
+      serverSelectionTimeoutMS: 5000, // Server selection timeout
+      socketTimeoutMS: 45000, // Socket timeout
+      family: 4, // Use IPv4 only (faster)
     };
 
     cached.promise = mongoose.connect(uri, opts).then((mongoose) => {

@@ -30,7 +30,7 @@ export function getTokenFromReq(req) {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
-// 🔒 JWT Secret - يجب أن يتم تعيينه في متغيرات البيئة فقط
+// 🔒 JWT Secret - Must be set in environment variables only
 // في بيئة الإنتاج، لا تتركه بدون قيمة!
 const JWT_SECRET = process.env.JWT_SECRET;
 

@@ -1,6 +1,5 @@
 /**
  * Format large numbers with Arabic abbreviations
- * تنسيق الأرقام الكبيرة باستخدام الاختصارات العربية
  */
 
 /**
@@ -26,13 +25,13 @@ export function formatLargeNumber(num, decimals = 2) {
   // Handle millions (مليون)
   if (absNum >= 1000000) {
     const formatted = (absNum / 1000000).toFixed(decimals);
-    return `${sign}${formatted} م`;
+    return `${sign}${formatted} M`;
   }
 
-  // Handle thousands (ألف) - only for numbers >= 500,000
+  // Handle thousands - only for numbers >= 500,000
   if (absNum >= 500000) {
     const formatted = (absNum / 1000).toFixed(decimals);
-    return `${sign}${formatted} ك`;
+    return `${sign}${formatted} K`;
   }
 
   // Handle regular numbers (less than 500,000)

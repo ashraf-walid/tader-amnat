@@ -8,20 +8,20 @@
 import Dexie from 'dexie';
 import { normalizeArabicText } from './search-utils';
 
-// ─── إنشاء قاعدة البيانات ────────────────────────────────────────────────────
+// ─── Database Creation ────────────────────────────────────────────────────
 const db = new Dexie('amanat_db');
 
-// ─── تعريف الجداول والـ Schema ────────────────────────────────────────────────
+// ─── Tables and Schema Definition ────────────────────────────────────────────────
 db.version(1).stores({
-  // جدول الحسابات
+  // Accounts table
   accounts: 'accountCode, account, *transactions.date', // accountCode = Primary Key
 
-  // جدول البيانات الوصفية (metadata)
-  metadata: 'key', // key = Primary Key (مثل: lastSync, dateRange)
+  // Metadata table
+  metadata: 'key', // key = Primary Key (e.g.: lastSync, dateRange)
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 📖 عمليات القراءة (Read Operations)
+// 📖 Read Operations
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
@@ -34,7 +34,7 @@ export async function isDBEmpty() {
     return count === 0;
   } catch (error) {
     console.error('Error checking if DB is empty:', error);
-    return true; 
+    return true;
   }
 }
 
@@ -80,7 +80,7 @@ export async function searchAccounts(query) {
 
     const normalizedQuery = normalizeArabicText(query);
 
-    // البحث في كل من اسم الحساب وكود الحساب
+    // Search in both account name and account code
     const results = await db.accounts
       .filter(account => {
         const normalizedAccountName = normalizeArabicText(account.account || '');
@@ -151,7 +151,7 @@ export async function getAccountsPaginated(page = 1, limit = 50, searchQuery = '
       });
     }
 
-    // حساب الإجمالي
+    // Calculate total
     const total = await query.count();
     const totalPages = Math.ceil(total / limit) || 1;
 
@@ -192,7 +192,7 @@ export async function getAccountsPaginated(page = 1, limit = 50, searchQuery = '
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// ✏️ عمليات الكتابة (Write Operations)
+// ✏️ Write operations (Write Operations)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
@@ -202,10 +202,10 @@ export async function getAccountsPaginated(page = 1, limit = 50, searchQuery = '
  */
 export async function saveAllAccounts(accounts) {
   try {
-    // مسح البيانات القديمة أولاً
+    // Clear old data first
     await db.accounts.clear();
 
-    // إضافة البيانات الجديدة
+    // Add new data
     await db.accounts.bulkAdd(accounts);
 
     console.log(`✅ تم حفظ ${accounts.length} حساب في IndexedDB`);

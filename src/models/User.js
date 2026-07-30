@@ -61,16 +61,16 @@ const UserSchema = new mongoose.Schema(
   },
 );
 
-// ─── Database Indexes للأداء العالي ───────────────────────────────────────
-// 1️⃣ username: مفهرس تلقائياً بسبب unique: true
-// 2️⃣ _id: مفهرس تلقائياً من MongoDB
-// 3️⃣ Indexes إضافية للاستعلامات الشائعة:
+// ─── Database Indexes for High Performance ───────────────────────────────────────
+// 1️⃣ username: automatically indexed because of unique: true
+// 2️⃣ _id: automatically indexed by MongoDB
+// 3️⃣ Additional indexes for common queries:
 
-UserSchema.index({ createdAt: -1 }); // لترتيب الحسابات حسب تاريخ الإنشاء
-UserSchema.index({ role: 1 }); // للبحث حسب الدور (admin, client, etc.)
-UserSchema.index({ accountCode: 1 }); // للبحث حسب كود الحساب
-UserSchema.index({ isActive: 1, attempts: -1 }); // للبحث عن الحسابات النشطة حسب المحاولات
-UserSchema.index({ username: 1, role: 1 }); // Compound index للبحث المركب
+UserSchema.index({ createdAt: -1 }); // Sort accounts by creation date
+UserSchema.index({ role: 1 }); // Search by role (admin, client, etc.)
+UserSchema.index({ accountCode: 1 }); // Search by account code
+UserSchema.index({ isActive: 1, attempts: -1 }); // Search active accounts by attempts
+UserSchema.index({ username: 1, role: 1 }); // Compound index for combined search
 
 // Hash password before saving
 UserSchema.pre("save", async function () {
