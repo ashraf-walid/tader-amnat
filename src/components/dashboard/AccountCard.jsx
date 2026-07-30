@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Check, History, Copy } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { formatLargeNumber, getFullNumberTooltip } from "@/lib/formatUtils";
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -96,14 +97,23 @@ export default function AccountCard({
                   )}
                 </button>
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-800 text-slate-400 rounded border border-slate-700">
-                    سابق: {openingBalanceVal.toLocaleString()}
+                  <span
+                    className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-800 text-slate-400 rounded border border-slate-700"
+                    title={getFullNumberTooltip(openingBalanceVal)}
+                  >
+                    سابق: {formatLargeNumber(openingBalanceVal)}
                   </span>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 bg-green-900/10 text-green-500 rounded border border-green-900/20">
-                    إيداع: +{movementDebit.toLocaleString()}
+                  <span
+                    className="text-[9px] font-bold px-1.5 py-0.5 bg-green-900/10 text-green-500 rounded border border-green-900/20"
+                    title={getFullNumberTooltip(movementDebit)}
+                  >
+                    إيداع: +{formatLargeNumber(movementDebit)}
                   </span>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 bg-orange-900/10 text-orange-500 rounded border border-orange-900/20">
-                    سحب: -{movementCredit.toLocaleString()}
+                  <span
+                    className="text-[9px] font-bold px-1.5 py-0.5 bg-orange-900/10 text-orange-500 rounded border border-orange-900/20"
+                    title={getFullNumberTooltip(movementCredit)}
+                  >
+                    سحب: -{formatLargeNumber(movementCredit)}
                   </span>
                 </div>
               </div>
@@ -121,8 +131,9 @@ export default function AccountCard({
                       ? "text-green-600"
                       : "text-red-500",
                   )}
+                  title={getFullNumberTooltip(finalBalance)}
                 >
-                  {finalBalance.toLocaleString()}
+                  {formatLargeNumber(finalBalance)}
                 </div>
               </div>
             </div>

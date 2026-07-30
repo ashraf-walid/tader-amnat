@@ -10,6 +10,7 @@ import {
   setDateRange as setDateRangeDB,
   getDateRange as getDateRangeDB,
   isIndexedDBSupported,
+  clearAllData,
 } from "@/lib/localDB";
 import { parseAccountingHTML } from "@/lib/parser";
 import { mergeHTMLWithBaseBalances, checkBaseBalancesExists } from "@/lib/mergeBalances";
@@ -23,7 +24,7 @@ export function useAccountData() {
   const [errorStatus, setErrorStatus] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Fetch data and save to IndexedDB
+  // جلب البيانات وحفظها في IndexedDB
   const fetchDataFromMongoDB = useCallback(async () => {
     setLoading(true);
     try {
@@ -31,7 +32,7 @@ export function useAccountData() {
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const result = await res.json();
       if (result && Array.isArray(result.data)) {
-        // Save data to IndexedDB
+        // حفظ البيانات في IndexedDB
         await saveAllAccounts(result.data);
         if (result.dateRange) await setDateRangeDB(result.dateRange);
         await setLastSyncTimestamp(Date.now());
@@ -50,36 +51,73 @@ export function useAccountData() {
     }
   }, []);
 
-  // Load data from IndexedDB First or fallback to MongoDB
+  // التحقق من تطابق dateRange في MongoDB مع IndexedDB المحلي
+  const checkDateRangeSync = useCallback(async () => {
+    try {
+      const response = await fetch('/api/settings/dateRange');
+      const result = await response.json();
+
+      if (!result.success) {
+        console.warn("Failed to fetch dateRange from MongoDB");
+        return true; // افتراض المزامنة في حالة عدم القدرة على التحقق
+      }
+
+      const mongoDateRange = result.dateRange || "";
+      const localDateRange = await getDateRangeDB();
+
+      console.log("DateRange comparison:", {
+        mongo: mongoDateRange,
+        local: localDateRange,
+        isMatch: mongoDateRange === localDateRange
+      });
+
+      return mongoDateRange === localDateRange;
+    } catch (error) {
+      console.error("Error checking dateRange sync:", error);
+      return true; // افتراض المزامنة في حالة حدوث خطأ
+    }
+  }, []);
+
+  // تحميل البيانات من IndexedDB أولاً أو الرجوع إلى MongoDB
   const loadDataSmart = useCallback(async () => {
     setLoading(true);
 
     try {
-      // Check if IndexedDB is supported
+      // فحص دعم IndexedDB
       if (!isIndexedDBSupported()) {
         console.warn("⚠️ IndexedDB not supported, using MongoDB directly");
         await fetchDataFromMongoDB();
         return;
       }
 
-      // Check if IndexedDB is empty
+      // فحص ما إذا كانت IndexedDB فارغة
       const isEmpty = await isDBEmpty();
 
       if (isEmpty) {
-        // IndexedDB is empty → Load from MongoDB
-        console.log("📡 IndexedDB is empty, loading from from MongoDB...");
+        // IndexedDB فارغة → تحميل من MongoDB
+        console.log("📡 IndexedDB is empty, loading from MongoDB...");
         await fetchDataFromMongoDB();
       } else {
-        // IndexedDB is not empty → Load from IndexedDB
-        console.log("⚡ Loading from IndexedDB...");
-        const localData = await getAllAccounts();
-        const localDateRange = await getDateRangeDB();
+        // IndexedDB تحتوي على بيانات → فحص مزامنة dateRange
+        const isDateRangeSync = await checkDateRangeSync();
 
-        setAllAccounts(localData); // تحديث الحالة الرئيسية
-        setData(localData);
-        setDateRange(localDateRange);
-        setLastUpdated(new Date().toLocaleTimeString());
-        setErrorStatus(null);
+        if (!isDateRangeSync) {
+          // DateRange غير متطابق → مسح البيانات المحلية وإعادة التحميل من MongoDB
+          console.log("🔄 DateRange mismatch detected, clearing local data and reloading...");
+          await clearAllData();
+          await fetchDataFromMongoDB();
+        } else {
+          // DateRange متطابق → تحميل من IndexedDB
+          console.log("⚡ Loading from IndexedDB (dateRange synced)...");
+          const localData = await getAllAccounts();
+          const localDateRange = await getDateRangeDB();
+
+          setAllAccounts(localData);
+          setData(localData);
+          setDateRange(localDateRange);
+          setLastUpdated(new Date().toLocaleTimeString());
+          setErrorStatus(null);
+        }
       }
     } catch (err) {
       console.error("Error loading data:", err);
@@ -87,9 +125,9 @@ export function useAccountData() {
     } finally {
       setLoading(false);
     }
-  }, [fetchDataFromMongoDB]);
+  }, [fetchDataFromMongoDB, checkDateRangeSync]);
 
-  // Process file with merge (HTML + base balances)
+  // معالجة الملف مع الدمج (HTML + الأرصدة الأساسية)
   const processFileWithMerge = async (file) => {
     setLoading(true);
     try {
@@ -117,11 +155,19 @@ export function useAccountData() {
       }));
 
       // ✅ 1. حفظ في IndexedDB أولاً (فوري)
-      await saveAllAccounts(preparedResults);
-      if (extractedDateRange) await setDateRangeDB(extractedDateRange);
+      try {
+        await clearAllData(); // حذف البيانات القديمة
+        await saveAllAccounts(preparedResults);
+        if (extractedDateRange) await setDateRangeDB(extractedDateRange);
+      } catch (error) {
+        console.error('Failed to save data to IndexedDB:', error);
+        // في حالة الفشل، محاولة استعادة البيانات من MongoDB
+        await fetchDataFromMongoDB();
+        throw error;
+      }
 
       // ✅ 2. تحديث الواجهة فوراً
-      setAllAccounts(preparedResults);
+      setAllAccounts(preparedResults); // تحديث الحالة الرئيسية
       setData(preparedResults);
       if (extractedDateRange) setDateRange(extractedDateRange);
 
@@ -132,13 +178,13 @@ export function useAccountData() {
         dateRange: extractedDateRange,
         clearTransactions: true, // ⚠️ علامة لحذف المعاملات القديمة
       };
-      
+
       console.log("🔍 Sending merge request to API:", {
         accountsCount: preparedResults.length,
         clearTransactions: payload.clearTransactions,
         firstAccountHasTransactions: preparedResults[0]?.transactions?.length || 0
       });
-      
+
       fetch("/api/data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -146,7 +192,7 @@ export function useAccountData() {
       })
         .then(async (response) => {
           const result = await response.json();
-          console.log("✅ تمت المزامنة مع MongoDB:", result);
+          console.log("✅ تمت المزامنة مع MongoDB بنجاح:", result);
           await setLastSyncTimestamp(Date.now());
         })
         .catch((err) => console.error("⚠️ فشلت المزامنة مع MongoDB:", err));
@@ -164,7 +210,7 @@ export function useAccountData() {
     } catch (err) {
       alert(
         err.message ||
-          "حدث خطأ أثناء دمج الملفات. يرجى التأكد من صحة الملف.",
+        "حدث خطأ أثناء دمج الملفات. يرجى التأكد من صحة الملف.",
       );
       return { success: false, error: err.message };
     } finally {
@@ -172,7 +218,7 @@ export function useAccountData() {
     }
   };
 
-  // Process file (HTML or JSON backup)
+  // معالجة الملف (HTML أو JSON للنسخ الاحتياطية)
   const processFile = async (file) => {
     setLoading(true);
     try {
@@ -196,8 +242,16 @@ export function useAccountData() {
 
         if (Array.isArray(dataToRestore)) {
           // ✅ 1. حفظ في IndexedDB أولاً (فوري)
-          await saveAllAccounts(dataToRestore);
-          if (restoredDateRange) await setDateRangeDB(restoredDateRange);
+          try {
+            await clearAllData(); // حذف البيانات القديمة
+            await saveAllAccounts(dataToRestore);
+            if (restoredDateRange) await setDateRangeDB(restoredDateRange);
+          } catch (error) {
+            console.error('Failed to save data to IndexedDB:', error);
+            // في حالة الفشل، محاولة استعادة البيانات من MongoDB
+            await fetchDataFromMongoDB();
+            throw error;
+          }
 
           // ✅ 2. تحديث الواجهة فوراً
           setAllAccounts(dataToRestore); // تحديث الحالة الرئيسية
@@ -214,10 +268,10 @@ export function useAccountData() {
             }),
           })
             .then(() => {
-              console.log("✅ تمت المزامنة مع MongoDB");
+              console.log("✅ تمت المزامنة مع MongoDB بنجاح");
               setLastSyncTimestamp(Date.now());
             })
-            .catch((err) => console.error("⚠️ فشلت المزامنة مع MongoDB:", err));
+            .catch((err) => console.error("⚠️ MongoDB sync failed:", err));
 
           return { success: true };
         } else {
@@ -238,8 +292,16 @@ export function useAccountData() {
       }));
 
       // ✅ 1. حفظ في IndexedDB أولاً (فوري)
-      await saveAllAccounts(preparedResults);
-      if (extractedDateRange) await setDateRangeDB(extractedDateRange);
+      try {
+        await clearAllData(); // حذف البيانات القديمة
+        await saveAllAccounts(preparedResults);
+        if (extractedDateRange) await setDateRangeDB(extractedDateRange);
+      } catch (error) {
+        console.error('Failed to save data to IndexedDB:', error);
+        // في حالة الفشل، محاولة استعادة البيانات من MongoDB
+        await fetchDataFromMongoDB();
+        throw error;
+      }
 
       // ✅ 2. تحديث الواجهة فوراً
       setAllAccounts(preparedResults); // تحديث الحالة الرئيسية
@@ -256,16 +318,16 @@ export function useAccountData() {
         }),
       })
         .then(() => {
-          console.log("✅ تمت المزامنة مع MongoDB");
+          console.log("✅ تمت المزامنة مع MongoDB بنجاح");
           setLastSyncTimestamp(Date.now());
         })
-        .catch((err) => console.error("⚠️ فشلت المزامنة مع MongoDB:", err));
+        .catch((err) => console.error("⚠️ MongoDB sync failed:", err));
 
       return { success: true };
     } catch (err) {
       alert(
         err.message ||
-          "حدث خطأ أثناء معالجة الملف. يرجى التأكد من أنه ملف صحيح.",
+        "حدث خطأ أثناء معالجة الملف. يرجى التأكد من أنه ملف صحيح.",
       );
       return { success: false, error: err.message };
     } finally {
@@ -335,19 +397,19 @@ export function useAccountData() {
     }
   };
 
-  // Commit transaction changes
+  // تنفيذ تغييرات المعاملات
   const commitTransactionChanges = async (
     accountCode,
     transactions,
     pendingChanges,
   ) => {
-    // Find the account to update
+    // العثور على الحساب المراد تحديثه
     const accountToUpdate = data.find(
       (item) => item.accountCode === accountCode,
     );
     if (!accountToUpdate) return;
 
-    // Build new transactions array
+    // بناء مصفوفة المعاملات الجديدة
     const newTransactions = [...(accountToUpdate.transactions || [])];
     if (pendingChanges.manualAddition > 0) {
       newTransactions.push({
@@ -392,18 +454,18 @@ export function useAccountData() {
       .then(async (response) => {
         const result = await response.json();
         if (result.success) {
-          console.log(`✅ تمت مزامنة الحساب ${accountCode} مع MongoDB`);
+          console.log(`✅ تمت مزامنة الحساب ${accountCode} مع MongoDB بنجاح`);
           await setLastSyncTimestamp(Date.now());
         } else {
           console.error(`⚠️ فشلت مزامنة الحساب ${accountCode}:`, result.error);
         }
       })
       .catch((err) => {
-        console.error("⚠️ فشلت المزامنة مع MongoDB:", err);
+        console.error("⚠️ MongoDB sync failed:", err);
       });
   };
 
-  // Initialize data
+  // تهيئة البيانات
   useEffect(() => {
     loadDataSmart();
   }, [loadDataSmart]);

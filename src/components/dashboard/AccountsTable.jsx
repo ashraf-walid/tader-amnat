@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Check, History, Copy } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { formatLargeNumber, getFullNumberTooltip } from "@/lib/formatUtils";
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -148,8 +149,9 @@ export default function AccountsTable({
                         ? "text-slate-400"
                         : "text-red-400 bg-red-950/20",
                     )}
+                    title={getFullNumberTooltip(openingBalanceVal)}
                   >
-                    {openingBalanceVal.toLocaleString()}
+                    {formatLargeNumber(openingBalanceVal)}
                   </span>
                 </td>
 
@@ -161,9 +163,10 @@ export default function AccountsTable({
                         ? "text-green-400 bg-green-900/20"
                         : "text-slate-700",
                     )}
+                    title={getFullNumberTooltip(movementDebit)}
                   >
                     {movementDebit > 0 ? "+" : ""}
-                    {movementDebit.toLocaleString()}
+                    {formatLargeNumber(movementDebit)}
                   </span>
                 </td>
 
@@ -175,9 +178,10 @@ export default function AccountsTable({
                         ? "text-orange-500 bg-orange-950/20"
                         : "text-slate-700",
                     )}
+                    title={getFullNumberTooltip(movementCredit)}
                   >
                     {movementCredit > 0 ? "-" : ""}
-                    {movementCredit.toLocaleString()}
+                    {formatLargeNumber(movementCredit)}
                   </span>
                 </td>
 
@@ -229,8 +233,9 @@ export default function AccountsTable({
                         ? "bg-green-600 text-white"
                         : "bg-red-600 text-white shadow-lg",
                     )}
+                    title={getFullNumberTooltip(finalBalance)}
                   >
-                    {finalBalance.toLocaleString()}
+                    {formatLargeNumber(finalBalance)}
                   </div>
                 </td>
               </tr>
