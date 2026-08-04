@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
-import { RefreshCw, Download, Upload } from "lucide-react";
+import React, { useState } from "react";
+import { RefreshCw, Download, Upload, Trash2 } from "lucide-react";
+import { clearAllData } from "@/lib/localDB";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -21,6 +22,44 @@ export default function DashboardHeader({
   data,
   search,
 }) {
+  const [clearing, setClearing] = useState(false);
+
+  // دالة حذف قاعدة البيانات المحلية
+  const handleClearDB = async () => {
+    const firstConfirm = window.confirm(
+      "🗑️ حذف قاعدة البيانات المحلية\n\n" +
+      "سيتم حذف جميع البيانات المخزنة محلياً بما فيها:\n" +
+      "• جميع حسابات العملاء\n" +
+      "• جميع المعاملات والأرصدة\n" +
+      "• بيانات المزامنة\n\n" +
+      "هل أنت متأكد من المتابعة؟"
+    );
+    if (!firstConfirm) return;
+
+    const secondConfirm = window.confirm(
+      "⚠️ تأكيد نهائي\n\n" +
+      "لا يمكن التراجع عن هذه العملية.\n" +
+      "اضغط موافق للحذف النهائي."
+    );
+    if (!secondConfirm) return;
+
+    setClearing(true);
+    try {
+      const success = await clearAllData();
+      if (success) {
+        alert("✅ تم مسح قاعدة البيانات المحلية بنجاح.");
+        window.location.reload();
+      } else {
+        alert("❌ حدث خطأ أثناء الحذف. حاول مرة أخرى.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("❌ حدث خطأ غير متوقع.");
+    } finally {
+      setClearing(false);
+    }
+  };
+
   // دالة للتعامل مع رفع الملف مع التحذير
   const handleMergeWithWarning = (e) => {
     const file = e.target.files?.[0];
@@ -151,6 +190,21 @@ export default function DashboardHeader({
           >
             <Download size={14} className="text-blue-400" />
             نسخة احتياطية
+          </button>
+
+          <button
+            onClick={handleClearDB}
+            disabled={clearing || loading}
+            className={cn(
+              "px-3 py-2.5 sm:py-2 text-sm font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border",
+              clearing || loading
+                ? "bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed"
+                : "bg-slate-900 text-red-400 border-red-900/30 hover:bg-red-950/40",
+            )}
+            title="مسح جميع البيانات من قاعدة البيانات المحلية"
+          >
+            <Trash2 size={14} className={cn(clearing && "animate-pulse")} />
+            {clearing ? "جارٍ الحذف..." : "حذف البيانات المحليه"}
           </button>
         </div>
       )}
