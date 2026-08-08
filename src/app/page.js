@@ -59,7 +59,7 @@ export default function AccountsDashboard() {
   const commitChanges = async (accountCode) => {
     const changes = pendingChanges[accountCode];
     if (!changes) return;
-    
+
     await commitTransactionChanges(accountCode, data, changes);
     clearPendingChanges(accountCode);
   };
@@ -83,6 +83,7 @@ export default function AccountsDashboard() {
           downloadData={downloadData}
           handleFileUpload={handleFileUpload}
           handleFileUploadWithMerge={handleFileUploadWithMerge}
+          allAccounts={allAccounts}
           data={data}
           search={search}
         />

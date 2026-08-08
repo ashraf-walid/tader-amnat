@@ -19,7 +19,7 @@ export default function DashboardHeader({
   downloadData,
   handleFileUpload,
   handleFileUploadWithMerge,
-  data,
+  allAccounts,
   search,
 }) {
   const [clearing, setClearing] = useState(false);
@@ -124,7 +124,7 @@ export default function DashboardHeader({
         </div>
       </div>
 
-      {(data.length > 0 || search) && (
+      {(allAccounts.length > 0 || search) && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
           <button
             onClick={() => fetchDataFromMongoDB()}
@@ -218,7 +218,7 @@ export default function DashboardHeader({
 
 // async function convertHTML(file) {
 //   if (!file) return;
-  
+
 //   try {
 //     await convertHTMLToBaseBalances(file);
 //     // يمكنك إضافة رسالة نجاح هنا
@@ -228,7 +228,7 @@ export default function DashboardHeader({
 //   }
 // }
 
-        {/* <label>
+{/* <label>
             <Upload size={14} />
              الجديد
             <input
