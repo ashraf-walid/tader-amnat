@@ -1,4 +1,4 @@
-const CACHE_NAME = 'amanat-cache-v26';
+const CACHE_NAME = 'amanat-cache-v27';
 const RUNTIME_CACHE = 'amanat-runtime-v1';
 
 self.addEventListener('install', (event) => {

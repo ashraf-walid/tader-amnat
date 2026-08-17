@@ -7,7 +7,7 @@ import { ROLES, getRoleInfo, EMPTY_FORM } from "@/lib/adminConstants";
 import ReportsTab from "@/components/admin/ReportsTab";
 import { useAccountsStore } from "@/store/useAccountsStore";
 
-// ─── مكوّن حقل الإدخال ────────────────────────────────────────────────────────
+// ─── Input Field ────────────────────────────────────────────────────────
 function Field({ label, icon: IconComp, error, children }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -21,7 +21,7 @@ function Field({ label, icon: IconComp, error, children }) {
   );
 }
 
-// ─── حقل نصي موحّد ────────────────────────────────────────────────────────────
+// ─── Input Field ────────────────────────────────────────────────────────────
 function Input({ value, onChange, placeholder, type = "text", step, min, suffix, focusClass = "admin-input", extraPadLeft }) {
   return (
     <div className="relative flex items-center">
@@ -38,7 +38,7 @@ function Input({ value, onChange, placeholder, type = "text", step, min, suffix,
   );
 }
 
-// ─── زر رئيسي ─────────────────────────────────────────────────────────────────
+// ─── Main Button ─────────────────────────────────────────────────────────────────
 const BTN_BASE = "font-semibold text-white border-none rounded-[7px] inline-flex items-center gap-1.5 transition-all duration-150 whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed";
 const VARIANTS = {
   primary: "bg-sky-500 shadow-[0_4px_12px_rgba(14,165,233,0.3)] hover:bg-sky-600 active:scale-[0.97]",
@@ -82,7 +82,7 @@ function Modal({ open, onClose, title, children }) {
   );
 }
 
-// ─── شارة الدور ───────────────────────────────────────────────────────────────
+// ─── Role Badge ───────────────────────────────────────────────────────────────
 function RoleBadge({ role }) {
   const r = getRoleInfo(role);
   return (
@@ -93,7 +93,7 @@ function RoleBadge({ role }) {
   );
 }
 
-// ─── شارة المحاولات ───────────────────────────────────────────────────────────
+// ─── Attempts Badge ───────────────────────────────────────────────────────────
 function AttemptsBadge({ attempts }) {
   const isZero = attempts === 0;
   const isLow = !isZero && attempts <= 3;
@@ -157,7 +157,7 @@ function AccountDetails({ account }) {
   );
 }
 
-// ─── نموذج الحساب ─────────────────────────────────────────────────────────────
+// ─── Account Form ─────────────────────────────────────────────────────────────
 function AccountForm({ initial, onSubmit, onCancel, isSaving, visibleRoles }) {
   const [form, setForm] = useState(() => {
     if (initial) {
@@ -243,7 +243,7 @@ function AccountForm({ initial, onSubmit, onCancel, isSaving, visibleRoles }) {
   );
 }
 
-// ─── مؤشر التحميل ─────────────────────────────────────────────────────────────
+// ─── Loading Spinner ─────────────────────────────────────────────────────────────
 function Spinner({ size = 14 }) {
   return (
     <div className="rounded-full border-2 border-white/25 border-t-white shrink-0 animate-spin"
@@ -267,7 +267,7 @@ function Toast({ msg, onDone }) {
   );
 }
 
-// ─── الصفحة الرئيسية ──────────────────────────────────────────────────────────
+// ─── Admin Page ──────────────────────────────────────────────────────────
 export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [userRole, setUserRole] = useState(null);
@@ -332,7 +332,8 @@ export default function AdminPage() {
       .catch(() => {}).finally(() => setRL(false));
   }, []);
 
-  useEffect(() => { if (accounts.length === 0) fetchAccounts(); }, []); // يجلب فقط عند عدم وجود بيانات مخزّنة
+  // ─── Fetch Accounts Data ──────────────────────────────────────────────────
+  useEffect(() => { if (accounts.length === 0) fetchAccounts(); }, []); 
 
   // ─── Employee CRUD ─────────────────────────────────────────────────────────
   const loadEmployees = () => {
@@ -507,7 +508,7 @@ export default function AdminPage() {
 
 
       <div className="max-w-[960px] mx-auto px-4 py-6">
-        {/* ─── رأس الصفحة ─── */}
+        {/* ─── Page Header ─── */}
         <div className="mb-7">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2.5 md:gap-2.5 mb-1">
             <div className="flex items-center gap-2.5">
@@ -522,7 +523,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* ─── بطاقات الإحصاء ─── */}
+        {/* ─── Statistics Cards ─── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-6">
           {[
             { label: "عملاء مسجلون", value: stats.clients, color: "#60a5fa", icon: Icon.User, unit: "عميل" },
@@ -545,7 +546,7 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {/* ─── تبويبات ─── */}
+        {/* ─── Taps ─── */}
         <div className="flex gap-2 mb-5 flex-wrap">
           {[
             { id: "accounts", icon: <Icon.Users />, label: "إدارة الحسابات" },
@@ -564,7 +565,7 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {/* ═══ تبويب: إدارة الحسابات ═══ */}
+        {/* ═══ Accounts Management ═══ */}
         {tab === "accounts" && (
           <div className="bg-slate-900 rounded-2xl border border-white/[0.08] overflow-hidden">
             <div className="px-5 py-4 border-b border-white/[0.07] flex flex-wrap gap-2.5 items-center">
@@ -642,7 +643,7 @@ export default function AdminPage() {
                               </span>
                             ) : (
                               <span className="text-red-400 text-lg" title="لم يتم التثبيت بعد">
-                                ❌
+                                --
                               </span>
                             )}
                           </div>
@@ -706,7 +707,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ═══ تبويب: سعر الصرف ═══ */}
+        {/* ═══ Exchange Rate ═══ */}
         {tab === "rate" && (
           <div className="bg-slate-900 rounded-2xl border border-white/[0.08] p-7 max-w-[480px]">
             <div className="flex items-center gap-2.5 mb-1.5">
@@ -745,7 +746,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ═══ تبويب: الموظفين المتاحين ═══ */}
+        {/* ═══ Available Employees ═══ */}
         {tab === "employees" && (
           <div className="bg-slate-900 rounded-2xl border border-white/[0.08] overflow-hidden">
             <div className="px-5 py-4 border-b border-white/[0.07] flex flex-wrap gap-2.5 items-center">
@@ -826,10 +827,10 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ═══ تبويب: التقارير ═══ */}
-        {tab === "reports" && userRole === "owner" && <ReportsTab />}
+        {/* ═══ Reports Tab ═══ */}
+        {tab === "reports" && <ReportsTab />}
 
-        {/* ═══ تبويب: بيانات المشروع ═══ */}
+        {/* ═══ Project Data Tab ═══ */}
         {tab === "data" && (
           <div className="bg-slate-900 rounded-2xl border border-white/[0.08] p-5 flex flex-col gap-4">
             <div className="flex items-center gap-2.5">

@@ -2,13 +2,12 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import User from "@/models/User";
 import CalculationLog from "@/models/CalculationLog";
-import { requireOwner } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 /**
  * GET /api/reports
- * Owner-only aggregation reports for the admin dashboard.
  *
  * Query params:
  *   type = "overview"              → summary stats
@@ -18,7 +17,7 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(request) {
   try {
-    requireOwner(request);
+    requireAdmin(request);
 
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type");

@@ -1,8 +1,8 @@
 /**
  * 💾 Local Database Layer using Dexie (IndexedDB)
  * 
- * هذا الملف يوفر واجهة موحدة للتعامل مع قاعدة البيانات المحلية
- * لتخزين حسابات العملاء والمعاملات المالية
+ * This file provides a unified interface for interacting with the local database
+ * for storing customer accounts and financial transactions
  */
 
 import Dexie from 'dexie';
@@ -25,7 +25,7 @@ db.version(1).stores({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * التحقق من أن قاعدة البيانات فارغة
+ * Check if the database is empty
  * @returns {Promise<boolean>}
  */
 export async function isDBEmpty() {
@@ -39,7 +39,7 @@ export async function isDBEmpty() {
 }
 
 /**
- * قراءة جميع الحسابات
+ * Get all accounts
  * @returns {Promise<Array>}
  */
 export async function getAllAccounts() {
@@ -53,8 +53,8 @@ export async function getAllAccounts() {
 }
 
 /**
- * قراءة حساب واحد بناءً على الكود
- * @param {string} accountCode - كود الحساب
+ * Get a single account by code
+ * @param {string} accountCode - account code
  * @returns {Promise<Object|null>}
  */
 export async function getAccountByCode(accountCode) {
@@ -68,8 +68,8 @@ export async function getAccountByCode(accountCode) {
 }
 
 /**
- * البحث في الحسابات (بالاسم أو الكود)
- * @param {string} query - نص البحث
+ * Search in accounts (by name or code)
+ * @param {string} query - text to search for
  * @returns {Promise<Array>}
  */
 export async function searchAccounts(query) {

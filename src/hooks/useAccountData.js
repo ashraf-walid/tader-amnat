@@ -87,51 +87,32 @@ export function useAccountData() {
     }
   }, [checkDateRangeSync]);
 
-  // Load data from IndexedDB first or fallback to MongoDB
+  // Load data strictly from IndexedDB on startup (Never connects to server on load)
   const loadDataSmart = useCallback(async () => {
     setLoading(true);
 
     try {
-      // Check IndexedDB support
       if (!isIndexedDBSupported()) {
-        console.warn("⚠️ IndexedDB not supported, using MongoDB directly");
-        await fetchDataFromMongoDB();
+        console.warn("⚠️ IndexedDB not supported");
         return;
       }
 
-      const isEmpty = await isDBEmpty();
+      // Load data strictly from IndexedDB on startup (Never connects to server on load)
+      const localData = await getAllAccounts();
+      const localDateRange = await getDateRangeDB();
 
-      if (isEmpty) {
-        console.log("📡 IndexedDB is empty, loading from MongoDB...");
-        await fetchDataFromMongoDB();
-      } else {
-        // IndexedDB contains data → Check synchronization dateRange
-        const isDateRangeSync = await checkDateRangeSync();
-
-        if (!isDateRangeSync) {
-          // DateRange Not Matched → Clear Local Data and Reload from MongoDB
-          console.log("🔄 DateRange mismatch detected, clearing local data and reloading...");
-          await clearAllData();
-          await fetchDataFromMongoDB();
-        } else {
-          console.log("⚡ Loading from IndexedDB (dateRange synced)...");
-          const localData = await getAllAccounts();
-          const localDateRange = await getDateRangeDB();
-
-          setAllAccounts(localData);
-          setData(localData);
-          setDateRange(localDateRange);
-          setLastUpdated(new Date().toLocaleTimeString());
-          setErrorStatus(null);
-        }
-      }
+      setAllAccounts(localData || []);
+      setData(localData || []);
+      setDateRange(localDateRange || "");
+      setLastUpdated(new Date().toLocaleTimeString());
+      setErrorStatus(null);
     } catch (err) {
-      console.error("Error loading data:", err);
+      console.error("Error loading data from IndexedDB:", err);
       setErrorStatus(err.message);
     } finally {
       setLoading(false);
     }
-  }, [fetchDataFromMongoDB, checkDateRangeSync]);
+  }, []);
 
   // File processing with integration (HTML + basic balances)
   const processFileWithMerge = async (file) => {
