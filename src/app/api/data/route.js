@@ -43,7 +43,7 @@ export async function GET(request) {
       );
     }
     return NextResponse.json(
-      { data: [], timestamp: Date.now() },
+      { data: [], timestamp: Date.now(), error: error.message || String(error) },
       { status: 500 },
     );
   }
