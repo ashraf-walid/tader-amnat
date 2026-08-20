@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { RefreshCw, Upload, Trash2, CalendarX, X, AlertTriangle } from "lucide-react";
 import { clearAllData } from "@/lib/localDB";
 import { clsx } from "clsx";
@@ -26,6 +27,11 @@ export default function DashboardHeader({
   const [isDeleteDateModalOpen, setIsDeleteDateModalOpen] = useState(false);
   const [selectedTargetDate, setSelectedTargetDate] = useState(null);
   const [isDeletingDate, setIsDeletingDate] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // دالة حذف المعاملات بتاريخ محدد
   const handleDeleteByDate = async (e) => {
@@ -300,8 +306,8 @@ export default function DashboardHeader({
       {/* ──────────────────────────────────────────────────────────────────────────── */}
 
       {/* Delete Transactions by Date Modal */}
-      {isDeleteDateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xs p-4 animate-in fade-in">
+      {mounted && isDeleteDateModalOpen && createPortal(
+        <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-slate-950/80 backdrop-blur-xs p-4 animate-in fade-in">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl relative">
             <button
               onClick={() => !isDeletingDate && setIsDeleteDateModalOpen(false)}
@@ -335,7 +341,6 @@ export default function DashboardHeader({
                   selected={selectedTargetDate}
                   onChange={(date) => setSelectedTargetDate(date)}
                   placeholderText="يوم / شهر / سنة"
-                  portalId="root-portal"
                 />
               </div>
 
@@ -371,7 +376,8 @@ export default function DashboardHeader({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </header>
   );
