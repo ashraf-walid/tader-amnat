@@ -56,8 +56,12 @@ export function useAccountData() {
     setLoading(true);
     try {
       const res = await fetch(`/api/data`, { cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(`HTTP error! status: ${res.status} - Detail: ${errJson.error || "Unknown"}`);
+      }
       const result = await res.json();
+
       if (result && Array.isArray(result.data)) {
         // Check dateRange sync before saving
         const isDateRangeSync = await checkDateRangeSync();
