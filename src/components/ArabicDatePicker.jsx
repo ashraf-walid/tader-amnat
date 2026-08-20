@@ -133,7 +133,7 @@ function CustomHeader({ date, decreaseMonth, increaseMonth, prevMonthButtonDisab
   );
 }
 
-export default function ArabicDatePicker({ selected, onChange, label, placeholderText='يوم / شهر / سنة', minDate, maxDate, id }) {
+export default function ArabicDatePicker({ selected, onChange, label, placeholderText='يوم / شهر / سنة', minDate, maxDate, id, portalId }) {
   return (
     <>
       <InjectPickerCSS />
@@ -147,6 +147,7 @@ export default function ArabicDatePicker({ selected, onChange, label, placeholde
             placeholderText={placeholderText}
             minDate={minDate} maxDate={maxDate}
             popperClassName="adp-popper"
+            portalId={portalId}
             renderCustomHeader={CustomHeader}
             showPopperArrow={false} autoComplete="off"
             onFocus={(e) => {

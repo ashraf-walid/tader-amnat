@@ -335,6 +335,7 @@ export default function DashboardHeader({
                   selected={selectedTargetDate}
                   onChange={(date) => setSelectedTargetDate(date)}
                   placeholderText="يوم / شهر / سنة"
+                  portalId="root-portal"
                 />
               </div>
 
