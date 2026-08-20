@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { RefreshCw, Download, Upload, Trash2 } from "lucide-react";
+import { RefreshCw, Upload, Trash2, CalendarX, X, AlertTriangle } from "lucide-react";
 import { clearAllData } from "@/lib/localDB";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import ArabicDatePicker from "@/components/ArabicDatePicker";
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -16,13 +17,75 @@ export default function DashboardHeader({
   lastUpdated,
   loading,
   fetchDataFromMongoDB,
-  downloadData,
   handleFileUpload,
   handleFileUploadWithMerge,
   allAccounts,
   search,
 }) {
   const [clearing, setClearing] = useState(false);
+  const [isDeleteDateModalOpen, setIsDeleteDateModalOpen] = useState(false);
+  const [selectedTargetDate, setSelectedTargetDate] = useState(null);
+  const [isDeletingDate, setIsDeletingDate] = useState(false);
+
+  // دالة حذف المعاملات بتاريخ محدد
+  const handleDeleteByDate = async (e) => {
+    e.preventDefault();
+    if (!selectedTargetDate) {
+      alert("⚠️ يرجى اختيار التاريخ أولاً.");
+      return;
+    }
+
+    // تحويل Date إلى صيغة YYYY-MM-DD
+    const dateStr = selectedTargetDate.toLocaleDateString("en-CA"); // en-CA → YYYY-MM-DD
+
+    const confirmDelete = window.confirm(
+      `⚠️ تأكيد حذف المعاملات\n\n` +
+      `هل أنت متأكد من حذف جميع المعاملات (الإضافات والخصومات) بتاريخ:\n` +
+      `📅 ${dateStr}\n\n` +
+      `سيتم إعادة حساب مجاميع وأرصدة الحسابات تلقائياً. لا يمكن التراجع عن هذا الإجراء.`
+    );
+
+    if (!confirmDelete) return;
+
+    setIsDeletingDate(true);
+    try {
+      const response = await fetch("/api/data/delete-transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetDate: dateStr }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "فشلت عملية الحذف");
+      }
+
+      if (result.totalDeletedTransactions === 0) {
+        alert(`ℹ️ لم يتم العثور على أي معاملات مسجلة في تاريخ ${dateStr}.`);
+      } else {
+        const additions = (result.totalDeletedAmount?.additions || 0).toLocaleString("ar-EG");
+        const deductions = (result.totalDeletedAmount?.deductions || 0).toLocaleString("ar-EG");
+        alert(
+          `✅ تم مسح المعاملات بنجاح!\n\n` +
+          `📊 إجمالي المعاملات المحذوفة: ${result.totalDeletedTransactions}\n` +
+          `👥 عدد الحسابات المتأثرة: ${result.affectedAccountsCount}\n` +
+          `➕ إجمالي الإضافات المحذوفة: ${additions}\n` +
+          `➖ إجمالي الخصومات المحذوفة: ${deductions}`
+        );
+
+        setIsDeleteDateModalOpen(false);
+        // جلب البيانات المحدثة وإعادة تحميل الصفحة
+        await fetchDataFromMongoDB();
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error("Error deleting transactions by date:", err);
+      alert(`❌ حدث خطأ: ${err.message}`);
+    } finally {
+      setIsDeletingDate(false);
+    }
+  };
 
   // دالة حذف قاعدة البيانات المحلية
   const handleClearDB = async () => {
@@ -125,7 +188,7 @@ export default function DashboardHeader({
       </div>
 
       {(allAccounts.length > 0 || search) && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
           <button
             onClick={() => fetchDataFromMongoDB()}
             disabled={loading}
@@ -164,32 +227,19 @@ export default function DashboardHeader({
             />
           </label>
 
-          {/* <label
-            className={cn(
-              "px-3 py-2.5 sm:py-2 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border cursor-pointer",
-              loading
-                ? "bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed"
-                : "bg-slate-900 text-emerald-400 border-emerald-900/30 hover:bg-slate-800",
-            )}
-            title="دمج ملف HTML جديد مع أرصدة 30/06 (⚠️ سيتم حذف المعاملات اليدوية القديمة)"
-          >
-            <Upload size={14} />
-            دمج مع أرصدة 30/06
-            <input
-              type="file"
-              className="hidden"
-              accept=".html,.htm"
-              onChange={handleMergeWithWarning}
-              disabled={loading}
-            />
-          </label> */}
-
           <button
-            onClick={downloadData}
-            className="px-3 py-2.5 sm:py-2 text-sm md:text-sm font-bold text-slate-300 bg-slate-900 border border-slate-800 hover:bg-slate-800 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
+            onClick={() => setIsDeleteDateModalOpen(true)}
+            disabled={loading || clearing || isDeletingDate}
+            className={cn(
+              "px-3 py-2.5 sm:py-2 text-xs md:text-sm font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border",
+              loading || clearing || isDeletingDate
+                ? "bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed"
+                : "bg-slate-900 text-rose-400 border-rose-900/30 hover:bg-slate-800 hover:text-rose-300",
+            )}
+            title="حذف جميع المعاملات بتاريخ محدد"
           >
-            <Download size={14} className="text-blue-400" />
-            نسخة احتياطية
+            <CalendarX size={14} />
+            حذف معاملات تاريخ
           </button>
 
           <button
@@ -208,40 +258,123 @@ export default function DashboardHeader({
           </button>
         </div>
       )}
+
+      {/* ─── saved for future use ───────────────────────────────────────────────────────────────── */}
+      {/* <label>
+        <Upload size={14} />
+        الجديد
+        <input
+          type="file"
+          className="hidden"
+          accept=".html,.htm,.json"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              convertHTML(file);
+
+              e.target.value = '';
+            }
+          }}
+        />
+      </label> */}
+
+      {/* <label
+        className={cn(
+          "px-3 py-2.5 sm:py-2 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border cursor-pointer",
+          loading
+            ? "bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed"
+            : "bg-slate-900 text-emerald-400 border-emerald-900/30 hover:bg-slate-800",
+        )}
+        title="دمج ملف HTML جديد مع أرصدة 30/06 (⚠️ سيتم حذف المعاملات اليدوية القديمة)"
+      >
+        <Upload size={14} />
+        دمج مع أرصدة 30/06
+        <input
+          type="file"
+          className="hidden"
+          accept=".html,.htm"
+          onChange={handleMergeWithWarning}
+          disabled={loading}
+        />
+      </label> */}
+      {/* ──────────────────────────────────────────────────────────────────────────── */}
+
+      {/* Delete Transactions by Date Modal */}
+      {isDeleteDateModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl relative">
+            <button
+              onClick={() => !isDeletingDate && setIsDeleteDateModalOpen(false)}
+              className="absolute top-4 left-4 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+              disabled={isDeletingDate}
+            >
+              <X size={18} />
+            </button>
+
+            <div className="flex items-center gap-3 text-rose-400 mb-4">
+              <div className="p-3 bg-rose-950/40 border border-rose-900/30 rounded-2xl">
+                <CalendarX size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">
+                  حذف المعاملات بتاريخ محدد
+                </h3>
+                <p className="text-xs text-slate-400">
+                  إزالة العمليات اليدوية وإعادة حساب الأرصدة
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleDeleteByDate} className="space-y-4">
+              <div style={{ "--acc": "#fb7185", "--inp": "#0f172a", "--brd": "rgba(251,113,133,0.25)", "--txt": "#f1f5f9", "--muted": "#64748b" }}>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  اختر التاريخ المطلوب حذفه:
+                </label>
+                <ArabicDatePicker
+                  id="delete-target-date"
+                  selected={selectedTargetDate}
+                  onChange={(date) => setSelectedTargetDate(date)}
+                  placeholderText="يوم / شهر / سنة"
+                />
+              </div>
+
+              <div className="bg-rose-950/20 border border-rose-900/30 rounded-xl p-3 flex gap-2.5 text-xs text-rose-300">
+                <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+                <p>
+                  تحذير: سيتم حذف كافة الإضافات والخصومات المسجلة في هذا التاريخ من السيرفر، وإعادة احتساب أرصدة الحسابات تلقائياً.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="submit"
+                  disabled={isDeletingDate || !selectedTargetDate}
+                  className={cn(
+                    "flex-1 py-3 px-4 rounded-xl font-bold text-white transition-all shadow-lg flex items-center justify-center gap-2",
+                    isDeletingDate || !selectedTargetDate
+                      ? "bg-slate-800 text-slate-500 cursor-not-allowed"
+                      : "bg-rose-600 hover:bg-rose-700 shadow-rose-900/30 active:scale-95 cursor-pointer"
+                  )}
+                >
+                  <Trash2 size={16} className={cn(isDeletingDate && "animate-spin")} />
+                  {isDeletingDate ? "جارٍ الحذف..." : "تأكيد ومسح المعاملات"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsDeleteDateModalOpen(false)}
+                  disabled={isDeletingDate}
+                  className="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-xl transition-colors cursor-pointer"
+                >
+                  إلغاء
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
 
 
-// import { convertHTMLToBaseBalances } from '@/lib/convertToBaseBalances';
 
-
-// async function convertHTML(file) {
-//   if (!file) return;
-
-//   try {
-//     await convertHTMLToBaseBalances(file);
-//     // يمكنك إضافة رسالة نجاح هنا
-//     console.log('تم تحويل الملف بنجاح');
-//   } catch (error) {
-//     console.error('خطأ أثناء التحويل:', error);
-//   }
-// }
-
-{/* <label>
-            <Upload size={14} />
-             الجديد
-            <input
-              type="file"
-              className="hidden"
-              accept=".html,.htm,.json"
-              onChange={(e) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        convertHTML(file);
-        
-        e.target.value = '';
-      }
-    }}
-            />
-          </label> */}

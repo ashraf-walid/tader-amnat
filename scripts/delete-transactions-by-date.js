@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
 
-// قراءة متغيرات البيئة يدوياً
+// read environment variables
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const envPath = join(__dirname, '..', '.env.local');
@@ -27,22 +27,22 @@ if (fs.existsSync(envPath)) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════════
-// 🗑️ سكريبت لحذف المعاملات بتاريخ معين مع إعادة حساب الأرصدة
+// script to delete transactions from a specific date and recalculate the balances
 // ════════════════════════════════════════════════════════════════════════════════
 
-// 📅 ضع التاريخ المطلوب حذف معاملاته هنا (بصيغة YYYY-MM-DD)
-const TARGET_DATE = '2026-08-18'; // غيّر هذا التاريخ حسب الحاجة
+// 📅 set the date you want to delete transactions from here (in YYYY-MM-DD format)
+const TARGET_DATE = '2026-08-18'; // change this date as needed
 
 // ════════════════════════════════════════════════════════════════════════════════
 
 /**
- * يحسب التوازنات المحدثة بعد إزالة المعاملات
- * يتبع نفس منطق حساب الأرصدة في النظام الأساسي
+ * calculates the updated balances after removing the transactions
+ * follows the same logic of calculating the balances in the main system
  */
 function recalculateBalances(account) {
   const transactions = account.transactions || [];
 
-  // حساب مجموع الإضافات والخصومات من المعاملات المتبقية
+  // calculating the sum of additions and deductions from the remaining transactions
   const manualAdditions = transactions
     .filter(t => t.type === 'addition')
     .reduce((sum, t) => sum + (t.amount || 0), 0);
@@ -51,14 +51,14 @@ function recalculateBalances(account) {
     .filter(t => t.type === 'deduction')
     .reduce((sum, t) => sum + (t.amount || 0), 0);
 
-  // تحديث حقول totals لتعكس المعاملات المتبقية
+  // updating the totals fields to reflect the remaining transactions
   account.totals = {
     debit: manualAdditions,
     credit: manualDeductions
   };
 
-  // لا نغير closingBalance لأنه يحسب تلقائياً في العرض
-  // النظام يحسب الرصيد النهائي كالتالي:
+  // we don't change closingBalance because it is calculated automatically in the display
+  // the system calculates the final balance as follows:
   // adjustedClosingDebit = closingBalance.debit + manualAdditions - manualDeductions
   // finalBalance = adjustedClosingDebit - closingBalance.credit
 
@@ -67,22 +67,22 @@ function recalculateBalances(account) {
 
 async function deleteTransactionsByDate() {
   try {
-    // الاتصال بقاعدة البيانات باستخدام نفس نظام المشروع
+    // connecting to the database using the same system project
     await connectToDatabase();
     console.log('✅ تم الاتصال بقاعدة البيانات بنجاح');
 
-    // تحويل التاريخ المطلوب إلى تاريخ بداية ونهاية اليوم
+    // converting the target date to the start and end of the day
     const startOfDay = new Date(TARGET_DATE);
     startOfDay.setHours(0, 0, 0, 0);
 
     const endOfDay = new Date(TARGET_DATE);
     endOfDay.setHours(23, 59, 59, 999);
 
-    console.log(`🔍 البحث عن المعاملات في التاريخ: ${TARGET_DATE}`);
-    console.log(`📅 من: ${startOfDay.toISOString()}`);
-    console.log(`📅 إلى: ${endOfDay.toISOString()}`);
+    console.log(`🔍 searching for transactions in the date: ${TARGET_DATE}`);
+    console.log(`📅 from: ${startOfDay.toISOString()}`);
+    console.log(`📅 to: ${endOfDay.toISOString()}`);
 
-    // العثور على جميع الحسابات التي تحتوي على معاملات في هذا التاريخ
+    // finding all accounts that contain transactions in this date
     const accountsWithTransactions = await AccountData.find({
       'transactions.date': {
         $gte: startOfDay,
@@ -90,27 +90,27 @@ async function deleteTransactionsByDate() {
       }
     });
 
-    console.log(`📊 تم العثور على ${accountsWithTransactions.length} حساب يحتوي على معاملات في هذا التاريخ`);
+    console.log(`📊 found ${accountsWithTransactions.length} accounts containing transactions in this date`);
 
     if (accountsWithTransactions.length === 0) {
-      console.log('ℹ️  لا توجد معاملات للحذف في هذا التاريخ');
+      console.log('ℹ️  no transactions found in this date');
       return;
     }
 
     let totalDeletedTransactions = 0;
     let totalDeletedAmount = { additions: 0, deductions: 0 };
 
-    // حذف المعاملات من كل حساب وإعادة حساب الأرصدة
+    // deleting transactions from each account and recalculating the balances
     for (const account of accountsWithTransactions) {
       const originalTransactions = [...account.transactions];
 
-      // حساب المعاملات التي سيتم حذفها للإحصائيات
+      // calculating the transactions to be deleted for statistics
       const transactionsToDelete = account.transactions.filter(transaction => {
         const transactionDate = new Date(transaction.date);
         return transactionDate >= startOfDay && transactionDate <= endOfDay;
       });
 
-      // حساب مجموع المبالغ المحذوفة
+      // calculating the sum of additions and deductions from the remaining transactions
       transactionsToDelete.forEach(t => {
         if (t.type === 'addition') {
           totalDeletedAmount.additions += t.amount || 0;
@@ -119,7 +119,7 @@ async function deleteTransactionsByDate() {
         }
       });
 
-      // فلترة المعاملات لإزالة المعاملات في التاريخ المحدد
+      // filtering transactions to remove transactions on the specified date
       account.transactions = account.transactions.filter(transaction => {
         const transactionDate = new Date(transaction.date);
         return !(transactionDate >= startOfDay && transactionDate <= endOfDay);
@@ -129,75 +129,40 @@ async function deleteTransactionsByDate() {
       totalDeletedTransactions += deletedCount;
 
       if (deletedCount > 0) {
-        // إعادة حساب الأرصدة
+        // recalculate the balances
         recalculateBalances(account);
 
-        // حفظ التغييرات
+        // save the changes
         await account.save();
 
-        console.log(`🗑️  حذف ${deletedCount} معاملة من الحساب: ${account.account} (${account.accountCode})`);
-        console.log(`   📈 المعاملات المتبقية: ${account.transactions.length}`);
-        console.log(`   💰 المجاميع الجديدة: إضافات ${account.totals.debit}, خصومات ${account.totals.credit}`);
+        console.log(`🗑️  deleted ${deletedCount} transactions from the account: ${account.account} (${account.accountCode})`);
+        console.log(`   📈 remaining transactions: ${account.transactions.length}`);
+        console.log(`   💰 new totals: additions ${account.totals.debit}, deductions ${account.totals.credit}`);
       }
     }
 
     console.log('═══════════════════════════════════════════════════════════');
-    console.log('✅ تمت العملية بنجاح!');
-    console.log(`📊 إجمالي المعاملات المحذوفة: ${totalDeletedTransactions}`);
-    console.log(`📊 الحسابات المتأثرة: ${accountsWithTransactions.length}`);
-    console.log(`💰 مجموع الإضافات المحذوفة: ${totalDeletedAmount.additions}`);
-    console.log(`💰 مجموع الخصومات المحذوفة: ${totalDeletedAmount.deductions}`);
-    console.log(`💱 صافي التأثير: ${totalDeletedAmount.additions - totalDeletedAmount.deductions}`);
+    console.log('✅ process completed successfully!');
+    console.log(`📊 total deleted transactions: ${totalDeletedTransactions}`);
+    console.log(`📊 affected accounts: ${accountsWithTransactions.length}`);
+    console.log(`💰 total additions deleted: ${totalDeletedAmount.additions}`);
+    console.log(`💰 total deductions deleted: ${totalDeletedAmount.deductions}`);
+    console.log(`💱 net effect: ${totalDeletedAmount.additions - totalDeletedAmount.deductions}`);
     console.log('═══════════════════════════════════════════════════════════');
 
-    // إرسال إشعار للأجهزة المحلية لتحديث IndexedDB
-    // try {
-    //   console.log('\n🔔 إرسال إشعار مزامنة للأجهزة المحلية...');
-
-    //   const notificationPayload = {
-    //     title: 'تحديث البيانات',
-    //     message: `تم حذف ${totalDeletedTransactions} معاملة من تاريخ ${TARGET_DATE}. يرجى تحديث التطبيق.`,
-    //     data: {
-    //       type: 'TRANSACTIONS_DELETED',
-    //       targetDate: TARGET_DATE,
-    //       deletedCount: totalDeletedTransactions,
-    //       affectedAccounts: accountsWithTransactions.map(acc => acc.accountCode)
-    //     }
-    //   };
-
-    //   // إرسال إشعار عبر push notifications لجميع المستخدمين
-    //   const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/push/send`, {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //       'Authorization': `Bearer ${process.env.JWT_SECRET}` // أو أي authentication مطلوب
-    //     },
-    //     body: JSON.stringify(notificationPayload)
-    //   });
-
-    //   if (response.ok) {
-    //     console.log('✅ تم إرسال إشعار المزامنة بنجاح');
-    //   } else {
-    //     console.log('⚠️  فشل في إرسال إشعار المزامنة (غير مطلوب للنجاح)');
-    //   }
-    // } catch (error) {
-    //   console.log('⚠️  فشل في إرسال إشعار المزامنة:', error.message);
-    //   console.log('ℹ️  هذا لا يؤثر على نجاح عملية الحذف من قاعدة البيانات');
-    // }
-
   } catch (error) {
-    console.error('❌ حدث خطأ أثناء تنفيذ العملية:', error);
-    console.error('📋 تفاصيل الخطأ:', error.message);
+    console.error('❌ an error occurred during the execution of the process:', error);
+    console.error('📋 error details:', error.message);
   } finally {
-    // إغلاق الاتصال بقاعدة البيانات
+    // closing the database connection
     await mongoose.disconnect();
-    console.log('🔌 تم قطع الاتصال بقاعدة البيانات');
+    console.log('🔌 database connection closed');
     process.exit();
   }
 }
 
-// تشغيل السكريبت
-console.log('🚀 بدء عملية حذف المعاملات...');
-console.log(`🎯 التاريخ المستهدف: ${TARGET_DATE}`);
-console.log('⚠️  سيتم إعادة حساب الأرصدة تلقائياً بعد الحذف');
+// running the script
+console.log('🚀 starting the process of deleting transactions...');
+console.log(`🎯 target date: ${TARGET_DATE}`);
+console.log('⚠️  the balances will be recalculated automatically after deletion');
 deleteTransactionsByDate();

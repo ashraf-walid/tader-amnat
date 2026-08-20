@@ -82,10 +82,13 @@ export function useAccountData() {
         if (result.dateRange) setDateRange(result.dateRange);
         setLastUpdated(new Date(result.timestamp).toLocaleTimeString());
         setErrorStatus(null);
+        return true;
       }
+      return false;
     } catch (err) {
       console.error("Error fetching data:", err);
       setErrorStatus(err.message);
+      return false;
     } finally {
       setLoading(false);
     }
