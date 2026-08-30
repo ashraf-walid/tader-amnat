@@ -1,7 +1,7 @@
-// 🔒 قفل لمنع التنفيذ المتزامن للعمليات
+// 🔒 lock to prevent concurrent operations
 let isOperationInProgress = false;
 
-// دالة مساعدة: تحويل VAPID public key من Base64 إلى Uint8Array
+// helper function to convert VAPID public key from Base64 to Uint8Array
 function urlBase64ToUint8Array(base64String) {
   if (!base64String) {
     throw new Error('VAPID public key is missing or undefined.');
@@ -15,28 +15,28 @@ function urlBase64ToUint8Array(base64String) {
 export async function enableNotifications() {
   if (typeof window === 'undefined') return;
 
-  // 🔒 منع التنفيذ المتزامن
+  // 🔒 prevent multiple operations
   if (isOperationInProgress) {
-    console.log('عملية إشعارات قيد التنفيذ بالفعل، يُرجى الانتظار...');
+    console.log('operation is already in progress, please wait...');
     return;
   }
 
-  // 1. تحقق من دعم متصفح المستخدم للإشعارات الأساسية
+  // 1. checking browser support for notifications
   if (!('Notification' in window)) {
-    alert('⚠️ الإشعارات غير مدعومة في هذا المتصفح.');
+    alert('⚠️ notifications are not supported in this browser.');
     return;
   }
 
-  // 2. تحقق من دعم Service Worker و PushManager
+  // 2. checking browser support for push notifications
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    alert('⚠️ نظام إشعارات الدفع (Push) غير مدعوم في هذا المتصفح/البيئة.');
+    alert('⚠️ push notifications are not supported in this browser/environment.');
     return;
   }
 
   try {
-    isOperationInProgress = true; // 🔒 قفل العملية
+    isOperationInProgress = true; // 🔒 lock the operation
 
-    // 🔍 التحقق من أن التطبيق مثبت
+    // checking if the app is installed
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
     const isInstalled = isStandalone || window.navigator.standalone; // iOS standalone detection
     
@@ -50,12 +50,11 @@ export async function enableNotifications() {
       }
     }
 
-    // طلب الإذن من المستخدم
+    // requesting permission from the user
     const permission = await Notification.requestPermission();
     
-    // إذا لم يُمنح الإذن (رفض أو أغلق النافذة)، نخرج بهدوء بدون alert خطأ
+    // if permission is not granted, exit quietly
     if (permission !== 'granted') {
-      // المستخدم رفض أو لم يستجب — حالة عادية، لا داعي لـ alert مزعج
       console.log('Notification permission not granted:', permission);
       return;
     }
@@ -66,16 +65,16 @@ export async function enableNotifications() {
       return;
     }
 
-    // 🔍 التحقق أولاً مما إذا كان هناك اشتراك نشط بالفعل
+    // checking if there is an active subscription
     let subscription = await registration.pushManager.getSubscription();
 
     if (!subscription) {
       const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       if (!vapidPublicKey) {
-        throw new Error('مفتاح VAPID العام غير معرف في متغيرات البيئة.');
+        throw new Error('VAPID public key is missing or undefined.');
       }
 
-      // ✅ تحويل المفتاح من String إلى Uint8Array — مطلوب بواسطة pushManager
+      // converting the key from String to Uint8Array
       const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
 
       subscription = await registration.pushManager.subscribe({
@@ -91,15 +90,14 @@ export async function enableNotifications() {
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'فشل حفظ الاشتراك في قاعدة البيانات');
+    if (!res.ok) throw new Error(data.error || 'Failed to save subscription to database');
 
-    alert('✅ تم تفعيل الإشعارات بنجاح.');
+    alert('✅ Notifications enabled successfully.');
   } catch (err) {
     console.error('enableNotifications error:', err);
-    // نعرض alert فقط للأخطاء الفنية الحقيقية، وليس لرفض المستخدم
-    alert(`❌ فشل تفعيل الإشعارات: ${err.message}`);
+    alert(`❌ Failed to enable notifications: ${err.message}`);
   } finally {
-    isOperationInProgress = false; // 🔓 فك القفل دائماً
+    isOperationInProgress = false; // 🔓 unlock the operation
   }
 }
 
@@ -112,7 +110,7 @@ export async function checkSubscription() {
     return false;
   }
   try {
-    // نستخدم getRegistration لتجنب التعليق (hanging) إذا لم يكن الـ service worker مسجلاً بعد
+    // using getRegistration to avoid hanging if the service worker is not registered yet
     const registration = await navigator.serviceWorker.getRegistration();
     if (!registration || !registration.pushManager) return false;
 
@@ -127,23 +125,23 @@ export async function checkSubscription() {
 export async function disableNotifications() {
   if (typeof window === 'undefined') return;
 
-  // 🔒 منع التنفيذ المتزامن
+  // 🔒 prevent multiple operations
   if (isOperationInProgress) {
     console.log('عملية إشعارات قيد التنفيذ بالفعل، يُرجى الانتظار...');
     return;
   }
 
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    alert('⚠️ نظام إشعارات الدفع (Push) غير مدعوم في هذا المتصفح/البيئة.');
+    alert('⚠️ push notifications are not supported in this browser/environment.');
     return;
   }
 
   try {
-    isOperationInProgress = true; // 🔒 قفل العملية
+    isOperationInProgress = true; // 🔒 lock the operation
 
     const registration = await navigator.serviceWorker.ready;
     if (!registration || !registration.pushManager) {
-      alert('⚠️ خدمة إرسال الإشعارات (PushManager) غير متوفرة أو غير نشطة.');
+      alert('⚠️ push notifications are not supported in this browser/environment.');
       return;
     }
 
@@ -152,11 +150,11 @@ export async function disableNotifications() {
     if (subscription) {
       const endpoint = subscription.endpoint;
       
-      // 1. إلغاء الاشتراك من المتصفح (Push Service)
+      // 1. unsubscribe from push service
       const unsubscribed = await subscription.unsubscribe();
       
       if (unsubscribed) {
-        // 2. إعلام الخادم لحذف الاشتراك من قاعدة البيانات
+        // 2. notify server to delete subscription from database
         const res = await fetch('/api/push/subscribe', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
@@ -175,6 +173,6 @@ export async function disableNotifications() {
     console.error('disableNotifications error:', err);
     alert(`❌ فشل إلغاء تفعيل الإشعارات: ${err.message}`);
   } finally {
-    isOperationInProgress = false; // 🔓 فك القفل دائماً
+    isOperationInProgress = false; // 🔓 unlock the operation
   }
 }

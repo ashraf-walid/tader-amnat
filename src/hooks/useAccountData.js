@@ -259,6 +259,7 @@ export function useAccountData() {
             body: JSON.stringify({
               data: dataToRestore,
               dateRange: restoredDateRange,
+              clearTransactions: true,
             }),
           })
             .then(() => {
@@ -309,6 +310,7 @@ export function useAccountData() {
         body: JSON.stringify({
           data: preparedResults,
           dateRange: extractedDateRange,
+          clearTransactions: true,
         }),
       })
         .then(() => {
