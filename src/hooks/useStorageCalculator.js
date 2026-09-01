@@ -51,10 +51,10 @@ export function useStorageCalculator(adminExchangeRate) {
   const exchangeRate = isRateOverridden ? (Number(customRate) || adminExchangeRate) : adminExchangeRate;
 
   // ── Init state ──
-  const [isInitializing, setIsInitializing] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(false);
   const [initError, setInitError] = useState('');
 
-  // ── Attempts ──
+  // ── Attempts (Temporarily suspended) ──
   const [remainingAttempts, setRemainingAttempts] = useState(null);
   const [attemptsLoading, setAttemptsLoading] = useState(false);
 
@@ -145,8 +145,9 @@ export function useStorageCalculator(adminExchangeRate) {
     isLCLStorage ||
     Object.values(services).some(Boolean);
 
-  // Initialize attempts
+  // Initialize attempts (Temporarily suspended)
   const initializeAttempts = useCallback(async () => {
+    /*
     setIsInitializing(true);
     setInitError('');
     try {
@@ -162,11 +163,14 @@ export function useStorageCalculator(adminExchangeRate) {
     } finally {
       setIsInitializing(false);
     }
+    */
   }, []);
 
+  /*
   useEffect(() => {
     initializeAttempts();
   }, [initializeAttempts]);
+  */
 
   // Service toggle
   function toggleService(id) {
@@ -230,7 +234,8 @@ export function useStorageCalculator(adminExchangeRate) {
       return;
     }
 
-    // Use one attempt and track calculation (combined API)
+    // Use one attempt and track calculation (Attempts API call is temporarily suspended)
+    /*
     setAttemptsLoading(true);
     try {
       const attemptRes = await fetch('/api/attempts/use', { method: 'POST' });
@@ -247,6 +252,12 @@ export function useStorageCalculator(adminExchangeRate) {
       return;
     }
     setAttemptsLoading(false);
+    */
+
+    // Track calculation count and history
+    fetch('/api/calculator/track', { method: 'POST' }).catch((err) => {
+      console.error('Failed to track calculation:', err);
+    });
 
     const maxDays = days || 0;
     if (billingType === "RENEWAL" && effectivePrevDays > maxDays) {

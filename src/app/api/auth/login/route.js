@@ -62,8 +62,6 @@ export async function POST(request) {
     const isPasswordValid = await user.comparePassword(password);
 
     if (!isPasswordValid) {
-      // Decrement attempts
-      await user.decrementAttempts();
 
       return NextResponse.json(
         {

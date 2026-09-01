@@ -13,7 +13,6 @@ export const dynamic = 'force-dynamic';
  */
 export async function PATCH(request, { params }) {
   try {
-    // 🔒 تحقق من صلاحيات المدير
     requireAdmin(request);
 
     const { id } = await params;
@@ -53,7 +52,6 @@ export async function PATCH(request, { params }) {
 
     console.log(`✅ User attempts updated: ${user.username} → ${attempts}`);
 
-    // 🔥 مسح الـ Cache لأن البيانات تغيرت
     invalidateCache("accounts:");
     console.log("🗑️ Accounts cache invalidated");
 

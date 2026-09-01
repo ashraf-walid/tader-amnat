@@ -175,7 +175,7 @@ function AccountForm({ initial, onSubmit, onCancel, isSaving, visibleRoles }) {
     if (!form.username.trim()) e.username = "مطلوب";
     if (!initial && !form.password) e.password = "مطلوب";
     if (form.phone && !/^[0-9+\-\s]{7,15}$/.test(form.phone)) e.phone = "رقم غير صحيح";
-    if (!form.attempts || form.attempts < 0) e.attempts = "قيمة غير صحيحة";
+    // if (!form.attempts || form.attempts < 0) e.attempts = "قيمة غير صحيحة";
     if (form.accountCode && isNaN(Number(form.accountCode))) e.accountCode = "قيمة غير صحيحة";
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -228,9 +228,9 @@ function AccountForm({ initial, onSubmit, onCancel, isSaving, visibleRoles }) {
         </select>
       </Field>
 
-      <Field label="عدد المحاولات المتاحة" icon={Icon.Hash} error={errors.attempts}>
+      {/* <Field label="عدد المحاولات المتاحة" icon={Icon.Hash} error={errors.attempts}>
         <Input type="number" min="0" step="1" value={form.attempts} onChange={set("attempts")} placeholder="5" suffix="محاولة" />
-      </Field>
+      </Field> */}
 
       <div className="flex gap-2.5 mt-1.5 justify-end">
         <Btn variant="ghost" onClick={onCancel}>إلغاء</Btn>
@@ -311,6 +311,7 @@ export default function AdminPage() {
   };
 
   const COLUMNS = [
+    { key: "index", label: "م", sortable: false },
     { key: "username", label: "اسم المستخدم", sortable: true },
     { key: "role", label: "الدور", sortable: true },
     { key: "pwaStatus", label: "مثبت", sortable: false },
@@ -434,6 +435,8 @@ export default function AdminPage() {
     } catch { notify("فشل الاتصال", "error"); } finally { setIsSaving(false); }
   };
 
+  // Attempts renewal (Temporarily suspended)
+  /*
   const renewAttempts = async () => {
     const n = Number(newAttempts);
     if (!n || n < 0) return notify("أدخل رقماً صحيحاً", "error");
@@ -445,6 +448,7 @@ export default function AdminPage() {
       else notify(d.error || "خطأ", "error");
     } catch { notify("فشل الاتصال", "error"); } finally { setIsSaving(false); }
   };
+  */
 
   const clearFinancialData = async () => {
     setDataClearing(true);
@@ -624,6 +628,9 @@ export default function AdminPage() {
                     {filtered.map((acc, idx) => (
                       <tr key={acc.id}
                         className={`border-b border-white/5 transition-colors duration-150 hover:bg-blue-500/[0.06] ${idx % 2 ? "bg-white/[0.015]" : ""}`}>
+                        <td className="px-4 py-3.5 text-xs text-slate-400 font-semibold text-center w-12">
+                          {idx + 1}
+                        </td>
                         <td className="px-4 py-3.5">
                           <button
                             type="button"
@@ -680,9 +687,9 @@ export default function AdminPage() {
                         </td>
                         <td className="px-4 py-3.5">
                           <div className="flex gap-1.5">
-                            <Btn size="xs" variant="ghost" title="تجديد المحاولات" onClick={() => { setSelected(acc); setNewAttempts(""); setModal("attempts"); }}>
+                            {/* <Btn size="xs" variant="ghost" title="تجديد المحاولات" onClick={() => { setSelected(acc); setNewAttempts(""); setModal("attempts"); }}>
                               <Icon.Refresh />
-                            </Btn>
+                            </Btn> */}
                             <Btn size="xs" variant="ghost" title="تعديل" onClick={() => { setSelected(acc); setModal("edit"); }}>
                               <Icon.Edit />
                             </Btn>
@@ -910,6 +917,8 @@ export default function AdminPage() {
           </div>
         </div>
       </Modal>
+      {/* Attempts Modal (Temporarily suspended) */}
+      {/*
       <Modal open={modal === "attempts"} onClose={() => setModal(null)} title="تجديد المحاولات">
         {selected && (
           <div>
@@ -945,6 +954,7 @@ export default function AdminPage() {
           </div>
         )}
       </Modal>
+      */}
 
       {/* ═══ Employee Modals ═══ */}
       <Modal open={empModal === "addEmp" || empModal === "editEmp"} onClose={() => setEmpModal(null)} title={empModal === "addEmp" ? "إضافة موظف جديد" : "تعديل بيانات الموظف"}>

@@ -194,12 +194,12 @@ export default function DashboardHeader({
       </div>
 
       {(allAccounts.length > 0 || search) && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
           <button
             onClick={() => fetchDataFromMongoDB()}
             disabled={loading}
             className={cn(
-              "px-3 py-2.5 sm:py-2 text-sm md:text-sm font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border",
+              "px-3 py-2.5 sm:py-3 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border",
               loading
                 ? "bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed"
                 : "bg-slate-900 text-blue-400 border-blue-900/30 hover:bg-slate-800",
@@ -223,7 +223,7 @@ export default function DashboardHeader({
             title="استبدال الحسابات الحالية بملف جديد"
           >
             <Upload size={14} />
-            استبدال الحسابات بالملف الجديد
+            استبدال بالملف الجديد
             <input
               type="file"
               className="hidden"
@@ -237,7 +237,7 @@ export default function DashboardHeader({
             onClick={() => setIsDeleteDateModalOpen(true)}
             disabled={loading || clearing || isDeletingDate}
             className={cn(
-              "px-3 py-2.5 sm:py-2 text-xs md:text-sm font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border",
+              "px-3 py-2.5 sm:py-2 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border",
               loading || clearing || isDeletingDate
                 ? "bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed"
                 : "bg-slate-900 text-rose-400 border-rose-900/30 hover:bg-slate-800 hover:text-rose-300",
@@ -252,7 +252,7 @@ export default function DashboardHeader({
             onClick={handleClearDB}
             disabled={clearing || loading}
             className={cn(
-              "px-3 py-2.5 sm:py-2 text-sm font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border",
+              "px-3 py-2.5 sm:py-2 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border",
               clearing || loading
                 ? "bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed"
                 : "bg-slate-900 text-red-400 border-red-900/30 hover:bg-red-950/40",
@@ -307,7 +307,7 @@ export default function DashboardHeader({
 
       {/* Delete Transactions by Date Modal */}
       {mounted && isDeleteDateModalOpen && createPortal(
-        <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-slate-950/80 backdrop-blur-xs p-4 animate-in fade-in">
+        <div dir='rtl' className="fixed inset-0 z-[999999] flex items-center justify-center bg-slate-950/80 backdrop-blur-xs p-4 animate-in fade-in">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl relative">
             <button
               onClick={() => !isDeletingDate && setIsDeleteDateModalOpen(false)}
