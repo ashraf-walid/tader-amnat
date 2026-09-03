@@ -84,6 +84,9 @@ export function useStorageCalculator(adminExchangeRate) {
   const clearResult = useCalculatorStore((state) => state.clearResult);
   const [error, setError] = useState("");
 
+  // ── Dirty flag: true = form changed since last calculation ──
+  const [isFormDirty, setIsFormDirty] = useState(true);
+
   // Derived state
   const days = calculateLiveDays(arrDate, relDate);
   const renewalPrevDays = calculateLiveDays(arrDate, firstInvoiceDate) || 0;
@@ -468,6 +471,7 @@ export function useStorageCalculator(adminExchangeRate) {
       }
 
       setResult(invoice);
+      setIsFormDirty(false);
     } catch (err) {
       setError(err.message);
     }
@@ -478,6 +482,18 @@ export function useStorageCalculator(adminExchangeRate) {
     isHolidayRelease, hasDangerYard20, hasDangerYard40,
     services, serviceQuantities,
     exchangeRate, days, effectivePrevDays, nsMultiplier20, nsMultiplier40, cargoExitDate
+  ]);
+
+  // Reset dirty flag when any form input changes
+  useEffect(() => {
+    setIsFormDirty(true);
+  }, [
+    arrDate, relDate, billingType, firstInvoiceDate, twentyCount, fortyCount,
+    twentyCargoType, fortyCargoType, nonStdType20, nonStdType40,
+    hasCargoStripping, hasCargoStorage, isExternalStorage, isLCLStorage,
+    isHolidayRelease, hasDangerYard20, hasDangerYard40,
+    services, serviceQuantities,
+    exchangeRate, cargoExitDate
   ]);
 
   // Auto effects
@@ -559,6 +575,7 @@ export function useStorageCalculator(adminExchangeRate) {
     nsMultiplier20, nsMultiplier40,
     nsMultiplier, // backward compat alias for shared services display
     hasAdvanced,
+    isFormDirty,
 
     // Methods
     calculate,

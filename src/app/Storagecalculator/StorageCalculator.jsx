@@ -1,5 +1,7 @@
 'use client';
 
+import { useRef, useEffect } from 'react';
+
 import Link from 'next/link';
 import { InfoIcon } from '@/components/Icons';
 
@@ -16,6 +18,7 @@ import ResultSection from '@/components/storage-calculator/ResultSection';
 
 
 export default function StorageCalculator({ adminExchangeRate }) {
+  const resultRef = useRef(null);
   const {
     // Primary
     arrDate, setArrDate,
@@ -73,6 +76,7 @@ export default function StorageCalculator({ adminExchangeRate }) {
     nsMultiplier20, nsMultiplier40,
     nsMultiplier,
     hasAdvanced,
+    isFormDirty,
 
     // Methods
     calculate,
@@ -80,6 +84,12 @@ export default function StorageCalculator({ adminExchangeRate }) {
     resetForm,
     formatNumber
   } = useStorageCalculator(adminExchangeRate);
+
+  useEffect(() => {
+    if (result && resultRef.current) {
+      resultRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [result]);
 
 
 
@@ -225,6 +235,7 @@ export default function StorageCalculator({ adminExchangeRate }) {
               calculate={calculate}
               attemptsLoading={attemptsLoading}
               remainingAttempts={remainingAttempts}
+              isFormDirty={isFormDirty}
             />
 
             {error && (
@@ -235,16 +246,18 @@ export default function StorageCalculator({ adminExchangeRate }) {
             )}
 
             {result && (
-              <ResultSection
-                result={result}
-                twentyCargoType={twentyCargoType}
-                fortyCargoType={fortyCargoType}
-                nonStdType20={nonStdType20}
-                nonStdType40={nonStdType40}
-                formatNumber={formatNumber}
-                resetForm={resetForm}
-                billingType={billingType}
-              />
+              <div ref={resultRef}>
+                <ResultSection
+                  result={result}
+                  twentyCargoType={twentyCargoType}
+                  fortyCargoType={fortyCargoType}
+                  nonStdType20={nonStdType20}
+                  nonStdType40={nonStdType40}
+                  formatNumber={formatNumber}
+                  resetForm={resetForm}
+                  billingType={billingType}
+                />
+              </div>
             )}
           </>
         )}
