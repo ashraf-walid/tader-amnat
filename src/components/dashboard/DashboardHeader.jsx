@@ -151,7 +151,7 @@ export default function DashboardHeader({
   };
 
   return (
-    <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in">
+    <header className="flex flex-col md:flex-row md:items-center justify-between gap-3 animate-in">
       <div>
         <h1 className="text-xl sm:text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-400 to-indigo-400">
           أمانات | تحليل حسابات العملاء
@@ -194,7 +194,7 @@ export default function DashboardHeader({
       </div>
 
       {(allAccounts.length > 0 || search) && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1">
           <button
             onClick={() => fetchDataFromMongoDB()}
             disabled={loading}
@@ -277,14 +277,13 @@ export default function DashboardHeader({
             const file = e.target.files?.[0];
             if (file) {
               convertHTML(file);
-
               e.target.value = '';
             }
           }}
         />
       </label> */}
 
-      {/* <label
+      <label
         className={cn(
           "px-3 py-2.5 sm:py-2 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border cursor-pointer",
           loading
@@ -302,7 +301,7 @@ export default function DashboardHeader({
           onChange={handleMergeWithWarning}
           disabled={loading}
         />
-      </label> */}
+      </label>
       {/* ──────────────────────────────────────────────────────────────────────────── */}
 
       {/* Delete Transactions by Date Modal */}
