@@ -470,7 +470,7 @@ export default function AdminPage() {
       (notificationsFilter === "enabled" && a.hasNotifications) || 
       (notificationsFilter === "disabled" && !a.hasNotifications);
     const q = search.toLowerCase();
-    const matchSearch = !q || a.username.toLowerCase().includes(q) || (a.phone || "").includes(q) || (a.officeName || "").toLowerCase().includes(q);
+    const matchSearch = !q || a.username.toLowerCase().includes(q) || (a.phone || "").includes(q) || (a.officeName || "").toLowerCase().includes(q) || (a.accountCode && a.accountCode.toString().includes(q));
     return matchRole && matchPwa && matchNotifications && matchSearch;
   }).sort((a, b) => {
     let va, vb;
@@ -498,7 +498,7 @@ export default function AdminPage() {
   );
   if (!isAdmin) return null;
 
-  const inputCls = "admin-input w-full bg-slate-950 border-[1.5px] border-white/10 rounded-lg text-slate-100 text-sm rtl outline-none transition-colors duration-200";
+  const inputCls = "admin-input w-full max-w-full min-w-0 box-border bg-slate-950 border-[1.5px] border-white/10 rounded-lg text-slate-100 text-sm rtl outline-none transition-colors duration-200";
 
   return (
     <div dir="rtl" lang="ar" className="min-h-screen bg-slate-950 font-sans text-slate-100">
@@ -572,29 +572,31 @@ export default function AdminPage() {
         {/* ═══ Accounts Management ═══ */}
         {tab === "accounts" && (
           <div className="bg-slate-900 rounded-2xl border border-white/[0.08] overflow-hidden">
-            <div className="px-5 py-4 border-b border-white/[0.07] flex flex-wrap gap-2.5 items-center">
-              <div className="relative flex-1 min-w-[140px]">
+            <div className="px-5 py-4 border-b border-white/[0.07]">
+              <div className="relative flex-1 min-w-[140px] mb-2">
                 <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[13px]">🔍</span>
                 <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
-                  placeholder="بحث بالاسم أو الهاتف..." className={`${inputCls} py-2 pr-8 pl-3`} />
+                  placeholder="بحث بالاسم، الهاتف أو كود الحساب..." className={`${inputCls} py-2 pr-8 pl-3`} />
               </div>
-              <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}
-                className={`${inputCls} py-2 px-3 flex-none cursor-pointer w-auto`}>
-                <option value="all">كل الأدوار</option>
-                {(userRole === "owner" ? ROLES : ROLES.filter(r => r.value !== "owner")).map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
-              </select>
-              <select value={pwaFilter} onChange={(e) => setPwaFilter(e.target.value)}
-                className={`${inputCls} py-2 px-3 flex-none cursor-pointer w-auto`}>
-                <option value="all">كل حالات PWA</option>
-                <option value="installed">مثبت 📱</option>
-                <option value="not-installed">غير مثبت ❌</option>
-              </select>
-              <select value={notificationsFilter} onChange={(e) => setNotificationsFilter(e.target.value)}
-                className={`${inputCls} py-2 px-3 flex-none cursor-pointer w-auto`}>
-                <option value="all">كل حالات الإشعارات</option>
-                <option value="enabled">مفعل 🔔</option>
-                <option value="disabled">غير مفعل 🔕</option>
-              </select>
+              <div className="flex gap-2.5 mb-2">
+                <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}
+                  className={`${inputCls} py-2 px-3 flex-1 cursor-pointer w-full`}>
+                  <option value="all">كل الأدوار</option>
+                  {(userRole === "owner" ? ROLES : ROLES.filter(r => r.value !== "owner")).map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+                </select>
+                <select value={pwaFilter} onChange={(e) => setPwaFilter(e.target.value)}
+                  className={`${inputCls} py-2 px-3 flex-1 cursor-pointer w-full`}>
+                  <option value="all">كل حالات PWA</option>
+                  <option value="installed">مثبت 📱</option>
+                  <option value="not-installed">غير مثبت ❌</option>
+                </select>
+                <select value={notificationsFilter} onChange={(e) => setNotificationsFilter(e.target.value)}
+                  className={`${inputCls} py-2 px-3 flex-1 cursor-pointer w-full`}>
+                  <option value="all">كل حالات الإشعارات</option>
+                  <option value="enabled">مفعل 🔔</option>
+                  <option value="disabled">غير مفعل 🔕</option>
+                </select>
+              </div>
               <Btn variant="ghost" size="sm" onClick={() => fetchAccounts()}><Icon.Refresh /> تحديث</Btn>
               <Btn variant="primary" size="sm" onClick={() => setModal("add")}><Icon.Plus /> إضافة حساب</Btn>
             </div>
