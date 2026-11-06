@@ -1,8 +1,11 @@
 {
-  "crons": [
-    {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "schedules": {
+    "exchange-rate": {
+      "schedule": "0 15 * * 0-4",
+      "timezone": "Africa/Cairo",
       "path": "/api/cron/exchange-rate",
-      "schedule": "0 12 * * 0-4"
+      "requestMethod": "GET"
     }
-  ]
+  }
 }
