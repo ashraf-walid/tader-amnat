@@ -3,7 +3,12 @@ import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
 // ── Route access rules ──
-const PUBLIC_PATHS = ["/login", "/api/auth/login", "/api/auth/logout"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/api/auth/login",
+  "/api/auth/logout",
+  "/api/cron/exchange-rate", // has no session; the route checks CRON_SECRET itself
+];
 
 // Pages restricted to internal staff (owner, admin, employee)
 const STAFF_ONLY = ["/"];

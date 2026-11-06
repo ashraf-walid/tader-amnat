@@ -2,6 +2,8 @@
 
 import { EditIcon } from '@/components/Icons';
 
+const isAutoRateLive = process.env.NEXT_PUBLIC_AUTO_EXCHANGE_RATE_LIVE === 'true';
+
 export default function ExchangeRateEditor({
   adminExchangeRate,
   isRateOverridden,
@@ -29,7 +31,16 @@ export default function ExchangeRateEditor({
             {formatNumber(isRateOverridden ? exchangeRate : adminExchangeRate)}
             <span className="text-[13px] font-medium text-[#8892a4]"> ج.م / $</span>
           </div>
-          <div className="text-[11px] text-[#4a5568] mt-0.5">{isRateOverridden ? "تم التعديل بواسطة المستخدم" : "مُسجَّل بواسطة الإدارة"}</div>
+          <div className="text-[11px] text-[#4a5568] mt-0.5">
+            {isRateOverridden ? "تم التعديل بواسطة المستخدم" : isAutoRateLive ? (
+              <>
+                تحديث تلقائي · المصدر:{" "}
+                <a href="https://allratestoday.com" target="_blank" rel="noopener noreferrer" className="underline">
+                  AllRatesToday
+                </a>
+              </>
+            ) : "مُسجَّل بواسطة الإدارة"}
+          </div>
         </div>
       </div>
 

@@ -119,7 +119,7 @@ export const CacheKeys = {
  * Cache TTL Configurations (بالثواني)
  */
 export const CacheTTL = {
-  EXCHANGE_RATE: 86400, // 24 ساعة (يتغير مرة واحدة يومياً)
+  EXCHANGE_RATE: 300, // 5 دقائق (الذاكرة منفصلة لكل نسخة على Vercel، والتحديث يمسح نسخته فقط)
   DATE_RANGE: 3600, // ساعة واحدة
   ACCOUNTS_LIST: 300, // 5 دقائق (يتغير عند الإضافة/التعديل)
   ACCOUNT_DETAILS: 600, // 10 دقائق
