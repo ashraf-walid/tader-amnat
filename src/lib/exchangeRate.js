@@ -39,6 +39,9 @@ async function sendPush(filter, message) {
 export async function saveExchangeRate(value) {
   await connectToDatabase();
 
+  const currentSetting = await Settings.findOne({ key: "exchangeRate" }).lean();
+  const currentRate = Number(currentSetting?.value);
+
   const rateSetting = await Settings.findOneAndUpdate(
     { key: "exchangeRate" },
     { value },
@@ -47,6 +50,16 @@ export async function saveExchangeRate(value) {
 
   cache.delete(CacheKeys.EXCHANGE_RATE);
   cache.set(CacheKeys.EXCHANGE_RATE, rateSetting.value, CacheTTL.EXCHANGE_RATE);
+
+  // Saving the same rate again must not erase the real previous rate
+  if (currentRate > 0 && currentRate !== Number(value)) {
+    await Settings.findOneAndUpdate(
+      { key: "previousExchangeRate" },
+      { value: currentRate },
+      { upsert: true },
+    );
+    cache.set(CacheKeys.PREVIOUS_EXCHANGE_RATE, currentRate, CacheTTL.EXCHANGE_RATE);
+  }
 
   await sendPush({}, {
     title: "تحديث سعر الصرف 💱",

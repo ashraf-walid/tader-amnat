@@ -17,7 +17,7 @@ import CalculateButton from '@/components/storage-calculator/CalculateButton';
 import ResultSection from '@/components/storage-calculator/ResultSection';
 
 
-export default function StorageCalculator({ adminExchangeRate }) {
+export default function StorageCalculator({ adminExchangeRate, previousExchangeRate }) {
   const resultRef = useRef(null);
   const {
     // Primary
@@ -141,6 +141,7 @@ export default function StorageCalculator({ adminExchangeRate }) {
             {/* Exchange Rate Section */}
             <ExchangeRateEditor
               adminExchangeRate={adminExchangeRate}
+              previousExchangeRate={previousExchangeRate}
               isRateOverridden={isRateOverridden}
               setIsRateOverridden={setIsRateOverridden}
               isEditingRate={isEditingRate}

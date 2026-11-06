@@ -1,9 +1,11 @@
 'use client';
 
+import { TrendingDown, TrendingUp } from 'lucide-react';
 import { EditIcon } from '@/components/Icons';
 
 export default function ExchangeRateEditor({
   adminExchangeRate,
+  previousExchangeRate,
   isRateOverridden,
   setIsRateOverridden,
   isEditingRate,
@@ -13,6 +15,12 @@ export default function ExchangeRateEditor({
   exchangeRate,
   formatNumber
 }) {
+  const changePercent = previousExchangeRate
+    ? ((adminExchangeRate - previousExchangeRate) / previousExchangeRate) * 100
+    : 0;
+  const isRateUp = changePercent > 0;
+  const TrendIcon = isRateUp ? TrendingUp : TrendingDown;
+
   return (
     <div className="flex items-center justify-between bg-[#111827] border border-white/[0.12] rounded-2xl px-[18px] py-3.5 mb-5 gap-3 flex-wrap">
       <div className="flex items-center gap-2.5">
@@ -31,6 +39,18 @@ export default function ExchangeRateEditor({
           </div>
           {isRateOverridden && (
             <div className="text-[11px] text-[#4a5568] mt-0.5">تم التعديل بواسطة المستخدم</div>
+          )}
+          {!isRateOverridden && changePercent !== 0 && (
+            <div className="flex items-center flex-wrap gap-x-2 text-[11px] text-[#8892a4] mt-0.5">
+              <span>السعر السابق {formatNumber(previousExchangeRate)} ج.م</span>
+              <span
+                className="inline-flex items-center gap-1 font-semibold"
+                style={{ color: isRateUp ? '#34d399' : '#f87171' }}
+              >
+                <TrendIcon size={13} aria-label={isRateUp ? 'صعود' : 'هبوط'} />
+                {formatNumber(Math.abs(changePercent))}%
+              </span>
+            </div>
           )}
         </div>
       </div>

@@ -101,6 +101,7 @@ export default cache;
 export const CacheKeys = {
   // Settings
   EXCHANGE_RATE: "settings:exchangeRate",
+  PREVIOUS_EXCHANGE_RATE: "settings:previousExchangeRate",
   DATE_RANGE: "settings:dateRange",
 
   // Accounts

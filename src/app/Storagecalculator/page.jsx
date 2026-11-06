@@ -12,6 +12,7 @@ const DEFAULT_RATE = STORAGE_CONFIG.GLOBAL.DEFAULT_EXCHANGE_RATE;
 
 export default async function Page() {
   let exchangeRate = DEFAULT_RATE;
+  let previousExchangeRate = null;
 
   try {
     console.log('🔄 [StorageCalc] Loading exchange rate...');
@@ -41,10 +42,31 @@ export default async function Page() {
     }
 
     console.log("✅ [StorageCalc] Final exchange rate:", exchangeRate);
+
+    previousExchangeRate = cache.get(CacheKeys.PREVIOUS_EXCHANGE_RATE);
+    if (previousExchangeRate === null) {
+      await connectToDatabase();
+      const previousSetting = await Settings.findOne({ key: "previousExchangeRate" }).lean();
+      // Rates saved before previousExchangeRate existed are only in the automatic history
+      const autoSetting = previousSetting
+        ? null
+        : await Settings.findOne({ key: "exchangeRateAuto" }).lean();
+      const previousValue = previousSetting?.value ?? autoSetting?.value?.history?.at(-1)?.previousRate;
+
+      if (previousValue) {
+        previousExchangeRate = Number(previousValue);
+        cache.set(CacheKeys.PREVIOUS_EXCHANGE_RATE, previousExchangeRate, CacheTTL.EXCHANGE_RATE);
+      }
+    }
   } catch (error) {
     console.error("❌ [StorageCalc] Failed to fetch exchange rate:", error);
     // Fall back to DEFAULT_RATE — the client will still work
   }
 
-  return <StorageCalculator adminExchangeRate={exchangeRate} />;
+  return (
+    <StorageCalculator
+      adminExchangeRate={exchangeRate}
+      previousExchangeRate={previousExchangeRate}
+    />
+  );
 }
