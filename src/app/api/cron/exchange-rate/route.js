@@ -35,18 +35,16 @@ async function fetchUsdSellRate() {
 async function updateRate(isLive) {
   const { rate, rateDate } = await fetchUsdSellRate();
 
-  // Fridays, Saturdays and holidays publish nothing, so the date stays old
-  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Cairo" });
-  if (rateDate !== today) {
-    return { status: "no-new-rate", rateDate };
-  }
-
   await connectToDatabase();
 
   const autoSetting = await Settings.findOne({ key: AUTO_SETTING_KEY }).lean();
   const history = autoSetting?.value?.history ?? [];
-  if (history.at(-1)?.rateDate === rateDate) {
-    return { status: "already-processed", rateDate };
+
+  // Fridays, Saturdays and holidays publish nothing, so the date stays old.
+  // Comparing to the last run, not to today, also catches up on a missed day.
+  const lastRateDate = history.at(-1)?.rateDate;
+  if (lastRateDate && rateDate <= lastRateDate) {
+    return { status: "no-new-rate", rateDate };
   }
 
   const currentSetting = await Settings.findOne({ key: "exchangeRate" }).lean();
