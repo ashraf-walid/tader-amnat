@@ -32,10 +32,6 @@ export default function AdvancedOptions({
   const totalConts = twentyCount + fortyCount;
   const nsMultiplier = nsMultiplier20; // baseline for shared services
 
-  const showNonStd20 = twentyCount > 0 && twentyCargoType === "NON_STANDARD";
-  const showNonStd40 = fortyCount > 0 && fortyCargoType === "NON_STANDARD";
-  const showNonStdSection = showNonStd20 || showNonStd40;
-
   const canDangerYard20 = twentyCount > 0 && twentyCargoType !== "NON_STANDARD";
   const canDangerYard40 = fortyCount > 0 && fortyCargoType !== "NON_STANDARD";
   const showDangerYardSection = canDangerYard20 || canDangerYard40;
@@ -90,54 +86,6 @@ export default function AdvancedOptions({
 
       {advOpen && (
         <div className="bg-[#111827] border border-white/[0.07] border-t-0 rounded-b-2xl p-5 mb-4 animate-[slide-in_0.2s_ease]">
-
-          {/* ── Non-standard sub-type (per size) ── */}
-          {showNonStdSection && (
-            <>
-              <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-[#4a5568] mb-3">
-                <span className="w-0.5 h-3.5 bg-[#f0b429] rounded-sm" />
-                تصنيف الحاوية غير المنتظمة
-              </div>
-              <div className="flex flex-col gap-3 mb-4">
-                {showNonStd20 && (
-                  <div>
-                    <div className="text-[11px] text-[#4a5568] font-semibold mb-1.5">٢٠ قدم</div>
-                    <select
-                      className="w-full py-3 px-3.5 pr-9 rounded-xl border-[1.5px] border-white/[0.12] bg-[#1a2035] text-[#f0f2f8] text-[15px] font-medium text-right outline-none transition-all appearance-none focus:border-[#f0b429] focus:shadow-[0_0_0_3px_rgba(240,180,41,0.12)]"
-                      style={{
-                        direction: 'rtl',
-                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5568' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
-                        backgroundRepeat: 'no-repeat',
-                        backgroundPosition: 'left 13px center'
-                      }}
-                      value={nonStdType20}
-                      onChange={e => setNonStdType20(e.target.value)}>
-                      <option value="OOG">غير منتظم (الاسبريدر العادى) (OOG) — السعر ×٢</option>
-                      <option value="LASHING">تصبين (بالويرات) (Lashing) — السعر ×٤</option>
-                    </select>
-                  </div>
-                )}
-                {showNonStd40 && (
-                  <div>
-                    <div className="text-[11px] text-[#4a5568] font-semibold mb-1.5">٤٠ قدم</div>
-                    <select
-                      className="w-full py-3 px-3.5 pr-9 rounded-xl border-[1.5px] border-white/[0.12] bg-[#1a2035] text-[#f0f2f8] text-[15px] font-medium text-right outline-none transition-all appearance-none focus:border-[#f0b429] focus:shadow-[0_0_0_3px_rgba(240,180,41,0.12)]"
-                      style={{
-                        direction: 'rtl',
-                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5568' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
-                        backgroundRepeat: 'no-repeat',
-                        backgroundPosition: 'left 13px center'
-                      }}
-                      value={nonStdType40}
-                      onChange={e => setNonStdType40(e.target.value)}>
-                      <option value="OOG">غير منتظم (الاسبريدر العادى) (OOG) — السعر ×٢</option>
-                      <option value="LASHING">تصبين (بالويرات) (Lashing) — السعر ×٤</option>
-                    </select>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
 
           {/* ── Group 1: خدمات المشمول ── */}
           <div className="mb-4">

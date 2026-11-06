@@ -191,6 +191,10 @@ export default function StorageCalculator({ adminExchangeRate }) {
               setTwentyCargoType={setTwentyCargoType}
               fortyCargoType={fortyCargoType}
               setFortyCargoType={setFortyCargoType}
+              nonStdType20={nonStdType20}
+              setNonStdType20={setNonStdType20}
+              nonStdType40={nonStdType40}
+              setNonStdType40={setNonStdType40}
             />
 
             <AdvancedOptions

@@ -17,15 +17,31 @@ const CARGO_OPTIONS = [
   { value: 'NON_STANDARD', label: 'غير منتظمة',    short: 'غير منتظمة' },
 ];
 
-function getShortLabel(value) {
+const NON_STD_OPTIONS = [
+  {
+    value: 'LASHING',
+    label: 'تصبين (بالويرات)',
+    multiplier: 'السعر ×٤',
+  },
+  {
+    value: 'OOG',
+    label: 'الاسبريدر العادى',
+    multiplier: 'السعر ×٢',
+  },
+];
+
+function getShortLabel(value, nonStdType) {
+  if (value === 'NON_STANDARD') {
+    return nonStdType === 'OOG' ? 'غير منتظمة (×٢)' : 'غير منتظمة (×٤)';
+  }
   return CARGO_OPTIONS.find(o => o.value === value)?.short ?? value;
 }
 
 /* Small summary badge — shown inside the inactive tab */
-function TypeBadge({ value }) {
+function TypeBadge({ value, nonStdType }) {
   return (
     <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#f0b429]/15 text-[#f0b429] border border-[#f0b429]/20 leading-none shadow-sm mx-1">
-      {getShortLabel(value)}
+      {getShortLabel(value, nonStdType)}
     </span>
   );
 }
@@ -63,6 +79,10 @@ export default function CargoTypeSelector({
   setTwentyCargoType,
   fortyCargoType,
   setFortyCargoType,
+  nonStdType20,
+  setNonStdType20,
+  nonStdType40,
+  setNonStdType40,
 }) {
   const hasTwenty = twentyCount > 0;
   const hasForty  = fortyCount  > 0;
@@ -77,6 +97,9 @@ export default function CargoTypeSelector({
 
   const currentCargoType    = currentTab === '20' ? twentyCargoType    : fortyCargoType;
   const setCurrentCargoType = currentTab === '20' ? setTwentyCargoType : setFortyCargoType;
+
+  const currentNonStdType    = currentTab === '20' ? nonStdType20    : nonStdType40;
+  const setCurrentNonStdType = currentTab === '20' ? setNonStdType20 : setNonStdType40;
 
   return (
     <div className="bg-gradient-to-b from-[#111827] to-[#0d1424] border border-white/[0.08] shadow-[0_8px_30px_rgb(0,0,0,0.4)] rounded-[24px] p-6 mb-5 transition-all duration-300 hover:border-white/[0.12]">
@@ -100,7 +123,7 @@ export default function CargoTypeSelector({
             }`}
           >
             <span>٢٠ قدم</span>
-            {currentTab !== '20' && <TypeBadge value={twentyCargoType} />}
+            {currentTab !== '20' && <TypeBadge value={twentyCargoType} nonStdType={nonStdType20} />}
           </button>
 
           {/* 40ft tab */}
@@ -113,7 +136,7 @@ export default function CargoTypeSelector({
             }`}
           >
             <span>٤٠ قدم</span>
-            {currentTab !== '40' && <TypeBadge value={fortyCargoType} />}
+            {currentTab !== '40' && <TypeBadge value={fortyCargoType} nonStdType={nonStdType40} />}
           </button>
         </div>
       )}
@@ -130,6 +153,62 @@ export default function CargoTypeSelector({
         cargoType={currentCargoType}
         setCargoType={setCurrentCargoType}
       />
+
+      {/* ── NON_STANDARD sub-type selector ── */}
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          currentCargoType === 'NON_STANDARD' ? 'max-h-[300px] opacity-100 mt-5' : 'max-h-0 opacity-0 mt-0 pt-0 pointer-events-none'
+        }`}
+      >
+        <div className="p-4 rounded-2xl bg-black/40 border border-[#f0b429]/20 shadow-inner">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2 text-[10px] font-extrabold tracking-wide text-[#f0b429]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#f0b429] animate-pulse" />
+              تصنيف الحاوية غير المنتظمة {bothActive && `(${currentTab === '20' ? '٢٠ قدم' : '٤٠ قدم'})`}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {NON_STD_OPTIONS.map((opt) => {
+              const isSelected = currentNonStdType === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setCurrentNonStdType(opt.value)}
+                  className={`relative p-3.5 rounded-xl border-[1.5px] text-right cursor-pointer transition-all duration-200 flex items-center justify-between gap-3 ${
+                    isSelected
+                      ? 'border-[#f0b429] bg-[#f0b429]/10 shadow-[0_0_15px_rgba(240,180,41,0.12)] text-[#f0f2f8]'
+                      : 'border-white/[0.08] bg-white/[0.02] text-[#8892a4] hover:bg-white/[0.05] hover:border-white/[0.15] hover:text-[#f0f2f8]'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className={`w-4 h-4 rounded-full border-[1.5px] flex items-center justify-center transition-all ${
+                        isSelected ? 'border-[#f0b429] bg-[#f0b429]' : 'border-white/30 bg-transparent'
+                      }`}
+                    >
+                      {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-[#0b1120]" />}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[12px] font-bold leading-tight">{opt.label}</span>
+                    </div>
+                  </div>
+                  <span
+                    className={`text-[11px] font-extrabold px-2 py-1 rounded-lg whitespace-nowrap transition-colors ${
+                      isSelected
+                        ? 'bg-[#f0b429] text-[#0b1120] shadow-sm'
+                        : 'bg-white/[0.06] text-[#8892a4]'
+                    }`}
+                  >
+                    {opt.multiplier}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
 
       {/* ── DANGEROUS warning ── */}
       <div 
@@ -160,14 +239,14 @@ export default function CargoTypeSelector({
                 <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all ${currentTab === '20' ? 'bg-[#f0b429]/10 border border-[#f0b429]/25 shadow-sm' : ''}`}>
                     <span className="text-[#64748b] font-medium">٢٠ قدم:</span>
                     <span className={`font-bold ${currentTab === '20' ? 'text-[#f0b429]' : 'text-[#e2e8f0]'}`}>
-                        {getShortLabel(twentyCargoType)}
+                        {getShortLabel(twentyCargoType, nonStdType20)}
                     </span>
                 </div>
                 <div className="w-px h-5 bg-white/10"></div>
                 <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all ${currentTab === '40' ? 'bg-[#f0b429]/10 border border-[#f0b429]/25 shadow-sm' : ''}`}>
                     <span className="text-[#64748b] font-medium">٤٠ قدم:</span>
                     <span className={`font-bold ${currentTab === '40' ? 'text-[#f0b429]' : 'text-[#e2e8f0]'}`}>
-                        {getShortLabel(fortyCargoType)}
+                        {getShortLabel(fortyCargoType, nonStdType40)}
                     </span>
                 </div>
             </div>

@@ -38,8 +38,8 @@ export function useStorageCalculator(adminExchangeRate) {
   const [fortyCargoType, setFortyCargoType] = useState("FULL");
 
   // ── Per-size non-standard sub-type ──
-  const [nonStdType20, setNonStdType20] = useState("OOG");
-  const [nonStdType40, setNonStdType40] = useState("OOG");
+  const [nonStdType20, setNonStdType20] = useState("LASHING");
+  const [nonStdType40, setNonStdType40] = useState("LASHING");
 
   // ── Exchange rate ──
   const [isEditingRate, setIsEditingRate] = useState(false);
@@ -193,8 +193,8 @@ export function useStorageCalculator(adminExchangeRate) {
     setFortyCount(0);
     setTwentyCargoType("FULL");
     setFortyCargoType("FULL");
-    setNonStdType20("OOG");
-    setNonStdType40("OOG");
+    setNonStdType20("LASHING");
+    setNonStdType40("LASHING");
     setPrevDays(0);
     setCargoExitDate(null);
     setIsLCLStorage(false);
