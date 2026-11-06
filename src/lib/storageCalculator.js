@@ -1,28 +1,33 @@
+import { differenceInCalendarDays } from 'date-fns';
+
 /**
  * Date Helper
  * Calculates total days between two dates (Arrival and Release).
  * Includes both days in the calculation.
+ *
+ * Counts calendar days, not 24-hour blocks: a day can be 23 or 25 hours long
+ * when Egypt changes its clocks, so dividing milliseconds by a day is wrong.
  */
 export function calculateDaysBetweenDates(arrivalDate, releaseDate) {
-  // Function to handle both DD/MM/YYYY and YYYY-MM-DD
+  // Function to handle Date objects, DD/MM/YYYY and YYYY-MM-DD
   const parseDate = (str) => {
     if (!str || typeof str !== 'string') return new Date(str);
     if (str.includes('/')) {
       const [day, month, year] = str.split('/').map(Number);
       return new Date(year, month - 1, day);
     }
-    return new Date(str); // Handles YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+      // new Date('YYYY-MM-DD') would read it as UTC; the day must stay local
+      const [year, month, day] = str.split('-').map(Number);
+      return new Date(year, month - 1, day);
+    }
+    return new Date(str);
   };
 
   const arrival = parseDate(arrivalDate);
   const release = parseDate(releaseDate);
 
-  // Reset hours to ensure clean day calculation
-  arrival.setHours(0, 0, 0, 0);
-  release.setHours(0, 0, 0, 0);
-
-  const diffTime = release.getTime() - arrival.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 لتشمل يوم الوصول ويوم الصرف
+  const diffDays = differenceInCalendarDays(release, arrival) + 1; // +1 لتشمل يوم الوصول ويوم الصرف
 
   return diffDays > 0 ? diffDays : 0;
 }

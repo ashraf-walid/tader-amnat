@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { STORAGE_CONFIG, SERVICES_LIST } from '@/lib/storageConstants';
-import { calculateMultiContainerInvoice, calculateStorageFee } from '@/lib/storageCalculator';
+import { calculateDaysBetweenDates, calculateMultiContainerInvoice, calculateStorageFee } from '@/lib/storageCalculator';
 import { useCalculatorStore } from '@/store/useCalculatorStore';
 
 function formatNumber(n, dec = 2) {
@@ -13,10 +13,7 @@ function formatNumber(n, dec = 2) {
 // Calculate days between two dates
 function calculateLiveDays(arrDate, relDate) {
   if (!arrDate || !relDate) return null;
-  const a = new Date(arrDate); a.setHours(0, 0, 0, 0);
-  const r = new Date(relDate); r.setHours(0, 0, 0, 0);
-  const d = Math.ceil((r - a) / 86400000) + 1;
-  return d > 0 ? d : null;
+  return calculateDaysBetweenDates(arrDate, relDate) || null;
 }
 
 // Calculate ns multiplier for a given size
@@ -277,12 +274,7 @@ export function useStorageCalculator(adminExchangeRate) {
       // حساب أيام تخزين المشمول
       let cargoDays = 0;
       if (hasCargoStorage && cargoExitDate) {
-        const cargoExit = new Date(cargoExitDate);
-        cargoExit.setHours(0, 0, 0, 0);
-        const release = new Date(relDate);
-        release.setHours(0, 0, 0, 0);
-        cargoDays = Math.ceil((release - cargoExit) / 86400000) + 1;
-        cargoDays = cargoDays > 0 ? cargoDays : 0;
+        cargoDays = calculateDaysBetweenDates(cargoExitDate, relDate);
       }
 
       const containerGroups = [];
