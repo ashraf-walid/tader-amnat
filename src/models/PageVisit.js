@@ -11,6 +11,10 @@ const PageVisitSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    role: {
+      type: String,
+      default: "",
+    },
     page: {
       type: String,
       required: true,

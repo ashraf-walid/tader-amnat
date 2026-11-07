@@ -1,127 +1,89 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
-import { getTokenFromReq, verifyToken, requireAdmin } from "@/lib/auth";
+import { requireAuth, requireAdmin } from "@/lib/auth";
 import PageVisit from "@/models/PageVisit";
 
 export const dynamic = "force-dynamic";
 
+// Owner and admin visits are testing, not real use, so they are not counted
+const UNCOUNTED_ROLES = ["owner", "admin"];
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 /**
  * POST /api/page-visits
- * Records a page visit, incrementing the count if the user visited it recently.
+ * Records that the signed-in user opened a page.
  */
 export async function POST(request) {
   try {
+    const user = requireAuth(request);
+    const role = String(user.role || "").toLowerCase();
+    const { page } = await request.json();
+
+    if (!page || typeof page !== "string" || !page.startsWith("/")) {
+      return NextResponse.json({ success: false, error: "page is required" }, { status: 400 });
+    }
+    if (UNCOUNTED_ROLES.includes(role)) {
+      return NextResponse.json({ success: true, counted: false });
+    }
+
     await connectToDatabase();
-
-    const body = await request.json();
-    const { page } = body;
-
-    if (!page) {
-      return NextResponse.json(
-        { success: false, error: "اسم الصفحة مطلوب (page is required)" },
-        { status: 400 }
-      );
-    }
-
-    // Try to get authenticated user info. If not authenticated, we handle it as a guest visit.
-    let userId = null;
-    let username = "guest";
-
-    try {
-      const token = getTokenFromReq(request);
-      if (token) {
-        const decoded = verifyToken(token);
-        userId = decoded.id || decoded.userId;
-        username = decoded.username || "user";
-      }
-    } catch (authErr) {
-      // Not authenticated, proceed as guest
-      console.log(`[Analytics] Anonymous access or expired token: ${page}`);
-    }
-
-    // Upsert the page visit
-    const pageVisit = await PageVisit.findOneAndUpdate(
-      { userId, page },
+    await PageVisit.findOneAndUpdate(
+      { userId: user.userId || user.id, page },
       {
         $inc: { visitCount: 1 },
-        $set: { lastVisitedAt: new Date(), username }
+        $set: { lastVisitedAt: new Date(), username: user.username, role },
       },
-      { new: true, upsert: true }
+      { upsert: true },
     );
 
-    return NextResponse.json({
-      success: true,
-      data: pageVisit,
-    });
+    return NextResponse.json({ success: true, counted: true });
   } catch (error) {
+    if (error.name === "AuthError") {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
     console.error("POST /api/page-visits Error:", error);
-    return NextResponse.json(
-      { success: false, error: "حدث خطأ أثناء تسجيل زيارة الصفحة" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: "حدث خطأ أثناء تسجيل الزيارة" }, { status: 500 });
   }
 }
 
 /**
  * GET /api/page-visits
- * Get all page visit statistics (restricted to Admins / Owners)
- *
- * Query params:
- *   ?check=latest  → returns only the latest `updatedAt` timestamp (lightweight check)
- *   (no params)    → returns full visit data
+ * One row per page: last visit, users in the last 7 and 30 days, total visits.
+ * Rows saved before roles were stored are matched to their user's current role.
  */
 export async function GET(request) {
   try {
-    // Ensure user has admin privileges to view visit logs
     requireAdmin(request);
-
     await connectToDatabase();
 
-    const { searchParams } = new URL(request.url);
-
-    // Lightweight mode: just return the timestamp of the most recently updated record
-    if (searchParams.get("check") === "latest") {
-      const latest = await PageVisit.findOne()
-        .sort({ updatedAt: -1 })
-        .select("updatedAt")
-        .lean();
-
-      return NextResponse.json({
-        success: true,
-        latestUpdatedAt: latest?.updatedAt ?? null,
-      });
-    }
-
-    // Full mode: fetch all visits sorted by lastVisitedAt (newest first)
-    const visits = await PageVisit.find()
-      .populate("userId", "username role officeName") // details from the referenced User
-      .sort({ lastVisitedAt: -1 })
-      .limit(500); // safety cap
+    const now = Date.now();
+    const pages = await PageVisit.aggregate([
+      { $lookup: { from: "users", localField: "userId", foreignField: "_id", as: "user" } },
+      { $addFields: { effectiveRole: { $ifNull: [{ $arrayElemAt: ["$user.role", 0] }, "$role"] } } },
+      { $match: { userId: { $ne: null }, effectiveRole: { $nin: UNCOUNTED_ROLES } } },
+      {
+        $group: {
+          _id: "$page",
+          lastVisitedAt: { $max: "$lastVisitedAt" },
+          totalVisits: { $sum: "$visitCount" },
+          users7d: { $sum: { $cond: [{ $gte: ["$lastVisitedAt", new Date(now - 7 * DAY_MS)] }, 1, 0] } },
+          users30d: { $sum: { $cond: [{ $gte: ["$lastVisitedAt", new Date(now - 30 * DAY_MS)] }, 1, 0] } },
+        },
+      },
+    ]);
 
     return NextResponse.json({
       success: true,
-      data: visits,
+      pages: pages.map(({ _id, ...p }) => ({ page: _id, ...p })),
     });
   } catch (error) {
-    console.error("GET /api/page-visits Error:", error);
-    
-    // Check if it's a forbidden/unauthorized error
     if (error.name === "AuthError") {
-      return NextResponse.json(
-        { success: false, error: "غير مصرح لك بالوصول (Unauthorized)" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
     if (error.name === "ForbiddenError") {
-      return NextResponse.json(
-        { success: false, error: "ليس لديك الصلاحيات الكافية (Forbidden)" },
-        { status: 403 }
-      );
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
-    
-    return NextResponse.json(
-      { success: false, error: "حدث خطأ أثناء جلب إحصائيات الصفحة" },
-      { status: 500 }
-    );
+    console.error("GET /api/page-visits Error:", error);
+    return NextResponse.json({ success: false, error: "حدث خطأ أثناء جلب الزيارات" }, { status: 500 });
   }
 }

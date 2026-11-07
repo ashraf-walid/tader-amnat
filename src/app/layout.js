@@ -3,7 +3,7 @@ import { Alexandria, Outfit } from "next/font/google";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import ClientNavWrapper from "@/components/ClientNavWrapper";
 import { Providers } from "@/components/Providers";
-// import AnalyticsTracker from "@/components/AnalyticsTracker";
+import AnalyticsTracker from "@/components/AnalyticsTracker";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -49,7 +49,7 @@ export default function RootLayout({ children }) {
       <body className="min-h-full flex flex-col">
         <Providers>
           <ServiceWorkerRegister />
-          {/* <AnalyticsTracker /> */}
+          <AnalyticsTracker />
           <ClientNavWrapper />
           {children}
         </Providers>

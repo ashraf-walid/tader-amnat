@@ -3,6 +3,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import User from "@/models/User";
 import PushSubscription from "@/models/PushSubscription";
 import cache, { CacheKeys, CacheTTL, invalidateCache } from "@/lib/cache";
+import { logActivity } from "@/lib/activityLog";
 import { requireAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -118,7 +119,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     // 🔒 تحقق من صلاحيات المدير
-    requireAdmin(request);
+    const actor = requireAdmin(request);
 
     const body = await request.json();
     const { username, password, phone, officeName, role, attempts, accountCode } = body;
@@ -184,6 +185,11 @@ export async function POST(request) {
     };
 
     console.log("✅ New user created:", newUser.username);
+
+    await logActivity(actor, "account.create", {
+      target: { kind: "user", id: userResponse.id, name: newUser.username },
+      details: { role: newUser.role, officeName: newUser.officeName },
+    });
 
     return NextResponse.json(
       {

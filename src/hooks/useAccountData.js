@@ -171,6 +171,7 @@ export function useAccountData() {
         data: preparedResults,
         dateRange: extractedDateRange,
         clearTransactions: true, // ⚠️ Flag to delete old transactions
+        source: "merge-30-06",
       };
 
       console.log("🔍 Sending merge request to API:", {
@@ -260,6 +261,7 @@ export function useAccountData() {
               data: dataToRestore,
               dateRange: restoredDateRange,
               clearTransactions: true,
+              source: "backup-restore",
             }),
           })
             .then(() => {
@@ -311,6 +313,7 @@ export function useAccountData() {
           data: preparedResults,
           dateRange: extractedDateRange,
           clearTransactions: true,
+          source: "accounting-file",
         }),
       })
         .then(() => {

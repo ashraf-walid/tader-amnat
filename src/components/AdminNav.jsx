@@ -16,7 +16,6 @@ import {
   InstallIcon,
 } from '@/components/Icons';
 import { usePWAInstall } from '@/lib/usePWAInstall';
-import { clearAnalyticsUserCache } from '@/hooks/usePageAnalytics';
 import { enableNotifications, checkSubscription, disableNotifications } from '@/lib/enableNotifications';
 import { useUser } from '@/hooks/useUser';
 import { useQueryClient } from '@tanstack/react-query';
@@ -195,8 +194,6 @@ export default function AdminNav() {
         }
       }
 
-      // Clear analytics user cache so the next visitor is tracked correctly
-      clearAnalyticsUserCache();
       localStorage.removeItem('pwa_reported');
       
       // Clear the user cache

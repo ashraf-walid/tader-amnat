@@ -4,6 +4,7 @@ import User from '@/models/User';
 import mongoose from 'mongoose';
 import { invalidateCache } from '@/lib/cache';
 import { requireAdmin } from '@/lib/auth';
+import { logActivity } from '@/lib/activityLog';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +14,7 @@ export const dynamic = 'force-dynamic';
  */
 export async function PATCH(request, { params }) {
   try {
-    requireAdmin(request);
+    const actor = requireAdmin(request);
 
     const { id } = await params;
     const body = await request.json();
@@ -36,6 +37,8 @@ export async function PATCH(request, { params }) {
 
     await connectToDatabase();
 
+    const before = await User.findById(id).select('attempts').lean();
+
     // Use findByIdAndUpdate to bypass the bcrypt pre-save hook
     const user = await User.findByIdAndUpdate(
       id,
@@ -51,6 +54,13 @@ export async function PATCH(request, { params }) {
     }
 
     console.log(`✅ User attempts updated: ${user.username} → ${attempts}`);
+
+    if (before?.attempts !== attempts) {
+      await logActivity(actor, 'account.update', {
+        target: { kind: 'user', id, name: user.username },
+        details: { changes: [{ field: 'attempts', from: before?.attempts ?? null, to: attempts }] },
+      });
+    }
 
     invalidateCache("accounts:");
     console.log("🗑️ Accounts cache invalidated");

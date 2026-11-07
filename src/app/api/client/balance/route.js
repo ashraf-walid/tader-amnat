@@ -3,6 +3,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import AccountData from "@/models/AccountData";
 import Settings from "@/models/Settings";
 import { requireAuth, AuthError } from "@/lib/auth";
+import { getBalanceHistory } from "@/lib/clientLedger";
 
 export const dynamic = "force-dynamic";
 
@@ -40,11 +41,15 @@ export async function GET(request) {
 
     // 2. البحث في مجموعة accountdatas عن الحساب الذي يطابق accountCode المستخرج من الـ Token
     // وكذلك جلب تاريخ الفترة من الإعدادات
-    const [account, dateRangeSetting] = await Promise.all([
+    const [account, dateRangeSetting, balanceHistory] = await Promise.all([
       AccountData.findOne({
         accountCode: String(decoded.accountCode),
       }).lean(),
       Settings.findOne({ key: "dateRange" }).lean(),
+      getBalanceHistory(decoded.accountCode).catch((historyError) => {
+        console.error("Failed to load balance history:", historyError);
+        return [];
+      }),
     ]);
 
     if (!account) {
@@ -68,6 +73,7 @@ export async function GET(request) {
       totals: account.totals,
       closingBalance: account.closingBalance,
       transactions: account.transactions || [],
+      balanceHistory,
     });
   } catch (error) {
     console.error("GET /api/client/balance error:", error);

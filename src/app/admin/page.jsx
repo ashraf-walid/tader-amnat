@@ -5,6 +5,7 @@ import { Icon } from "@/components/Icons";
 import { ROLES, getRoleInfo, EMPTY_FORM } from "@/lib/adminConstants";
 
 import ReportsTab from "@/components/admin/ReportsTab";
+import ActivityLogTab from "@/components/admin/ActivityLogTab";
 import { useAccountsStore } from "@/store/useAccountsStore";
 
 // ─── Input Field ────────────────────────────────────────────────────────
@@ -551,18 +552,19 @@ export default function AdminPage() {
         </div>
 
         {/* ─── Taps ─── */}
-        <div className="flex gap-2 mb-5 flex-wrap">
+        <div className="flex gap-2 mb-5 overflow-x-auto pb-1 -mx-1 px-1" role="tablist">
           {[
             { id: "accounts", icon: <Icon.Users />, label: "إدارة الحسابات" },
             { id: "reports", icon: <Icon.Chart />, label: "التقارير" },
             { id: "rate", icon: <Icon.Currency />, label: "سعر الصرف" },
             { id: "employees", icon: <Icon.Users />, label: "الموظفين" },
             ...(userRole === "owner" ? [
+              { id: "activity", icon: <Icon.Shield size={15} />, label: "سجل الأحداث" },
               { id: "data", icon: <Icon.Structure className="ml-0.5" />, label: "بيانات المشروع" },
             ] : []),
           ].map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={`px-5 py-2.5 text-[13.5px] font-semibold border-none cursor-pointer rounded-lg transition-all duration-150 inline-flex items-center gap-1.5
+            <button key={t.id} onClick={() => setTab(t.id)} role="tab" aria-selected={tab === t.id}
+              className={`shrink-0 whitespace-nowrap px-5 py-2.5 text-[13.5px] font-semibold border-none cursor-pointer rounded-lg transition-all duration-150 inline-flex items-center gap-1.5
                 ${tab === t.id ? "bg-sky-500 text-white shadow-[0_4px_12px_rgba(14,165,233,0.3)]" : "bg-white/5 text-slate-400 shadow-none"}`}>
               {t.icon} {t.label}
             </button>
@@ -838,6 +840,9 @@ export default function AdminPage() {
 
         {/* ═══ Reports Tab ═══ */}
         {tab === "reports" && <ReportsTab />}
+
+        {/* ═══ Activity Log Tab (owner only) ═══ */}
+        {tab === "activity" && userRole === "owner" && <ActivityLogTab />}
 
         {/* ═══ Project Data Tab ═══ */}
         {tab === "data" && (

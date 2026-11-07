@@ -21,6 +21,7 @@ const AccountDataSchema = new mongoose.Schema(
         type: { type: String },
         amount: Number,
         date: Date,
+        createdBy: String,
       },
     ],
   },

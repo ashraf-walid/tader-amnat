@@ -3,12 +3,13 @@ import { connectToDatabase } from "@/lib/mongodb";
 import AccountData from "@/models/AccountData";
 import { requireAdmin } from "@/lib/auth";
 import { invalidateCache } from "@/lib/cache";
+import { logActivity } from "@/lib/activityLog";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request) {
   try {
-    requireAdmin(request);
+    const actor = requireAdmin(request);
 
     const body = await request.json();
     const { targetDate } = body;
@@ -90,7 +91,14 @@ export async function POST(request) {
     }
 
     invalidateCache("data:");
-
+    await logActivity(actor, "data.deleteTransactions", {
+      details: {
+        date: targetDate,
+        transactions: totalDeletedTransactions,
+        accounts: accountsWithTransactions.length,
+        amounts: totalDeletedAmount,
+      },
+    });
     return NextResponse.json({
       success: true,
       totalDeletedTransactions,

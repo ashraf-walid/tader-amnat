@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import AccountData from "@/models/AccountData";
 import { requireAdmin } from "@/lib/auth";
+import { diffTransactions, logActivity } from "@/lib/activityLog";
 import { invalidateCache } from "@/lib/cache";
 import { calculateNetBalance, sendBalanceNotification } from "@/lib/balanceNotification";
 
@@ -13,7 +14,7 @@ export const dynamic = "force-dynamic";
  */
 export async function PATCH(request, { params }) {
   try {
-    requireAdmin(request);
+    const actor = requireAdmin(request);
 
     const { accountCode } = await params;
     const body = await request.json();
@@ -42,11 +43,16 @@ export async function PATCH(request, { params }) {
       );
     }
     const oldBal = calculateNetBalance(existingAccount);
+    const { transactions: stampedTransactions, added, removed } = diffTransactions(
+      existingAccount.transactions,
+      transactions,
+      actor.username,
+    );
 
     // Update only the transactions field for this specific account
     const updatedAccount = await AccountData.findOneAndUpdate(
       { accountCode },
-      { $set: { transactions } },
+      { $set: { transactions: stampedTransactions } },
       { returnDocument: "after" },
     );
 
@@ -69,6 +75,13 @@ export async function PATCH(request, { params }) {
     // 🔥 Invalidate cache for data pages
     invalidateCache("data:");
     console.log("🗑️ Data cache invalidated after transaction update");
+
+    if (added.length > 0 || removed.length > 0) {
+      await logActivity(actor, "balance.change", {
+        target: { kind: "client", accountCode: String(accountCode), name: existingAccount.account },
+        details: { added, removed },
+      });
+    }
 
     return NextResponse.json({
       success: true,

@@ -140,7 +140,7 @@ export default function ClientBalance() {
     );
   }
 
-  const { accountName, accountCode, dateRange, openingBalance, totals, closingBalance, transactions } = data;
+  const { accountName, accountCode, dateRange, openingBalance, totals, closingBalance, transactions, balanceHistory = [] } = data;
 
   // حساب إجمالي الإضافات والخصومات من العمليات اليدوية
   const manualAdditions = transactions
@@ -338,6 +338,8 @@ export default function ClientBalance() {
         )}
       </div>
 
+      <BalanceHistoryCard entries={balanceHistory} />
+
       <button 
           onClick={fetchBalance}
           className="flex items-center justify-center w-full gap-2 px-5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl hover:bg-slate-700 transition-all text-slate-200 font-medium shadow-sm cursor-pointer"
@@ -355,6 +357,64 @@ export default function ClientBalance() {
           ملاحظة: يتم تجديد رصيد الحساب يومياً في الساعة 15:00 عصراً
         </p>
       </div>
+    </div>
+  );
+}
+
+// Closing balances saved after each renewal from the accounts module,
+// without manual additions or deductions. Newest first.
+function BalanceHistoryCard({ entries }) {
+  return (
+    <div className="bg-slate-800 rounded-3xl shadow-sm border border-slate-700 overflow-hidden">
+      <div className="p-6 border-b border-slate-700">
+        <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          سجل الرصيد
+          {entries.length > 0 && (
+            <span className="text-xs font-normal text-slate-400 bg-slate-700 px-2 py-0.5 rounded-full">
+              {entries.length} تحديث
+            </span>
+          )}
+        </h2>
+        <p className="text-sm text-slate-400 mt-1">رصيدك في ملف الحسابات بعد كل تحديث، من غير عمليات الإضافة والخصم.</p>
+      </div>
+
+      {entries.length > 0 ? (
+        <ul className="divide-y divide-slate-700/50">
+          {entries.map((entry, idx) => {
+            const older = entries[idx + 1];
+            const change = older ? entry.balance - older.balance : null;
+            const status = entry.balance > 0 ? 'ليك' : entry.balance < 0 ? 'عليك' : 'متوازن';
+            const statusClass = entry.balance > 0 ? 'text-emerald-400' : entry.balance < 0 ? 'text-rose-400' : 'text-slate-300';
+            return (
+              <li key={`${entry.recordedAt}-${idx}`} className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-200">
+                    {format(new Date(entry.recordedAt), 'yyyy/MM/dd', { locale: ar })}
+                  </p>
+                  {entry.dateRange && <p className="text-xs text-slate-500 mt-0.5">الفترة: <span dir="ltr" className="whitespace-nowrap">{entry.dateRange}</span></p>}
+                </div>
+                <div className="sm:text-left shrink-0">
+                  <p className={`font-bold ${statusClass}`}>
+                    {fmt(Math.abs(entry.balance))} <span className="text-xs font-semibold">{status}</span>
+                  </p>
+                  {change !== null && Math.abs(change) >= 0.005 && (
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {change > 0 ? '+' : '−'}{fmt(Math.abs(change))} عن التحديث السابق
+                    </p>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <div className="p-10 flex flex-col items-center justify-center text-center space-y-3">
+          <div className="p-4 bg-slate-900/50 rounded-full text-slate-600">
+            <NavChartIcon size={36} />
+          </div>
+          <p className="text-slate-400 font-medium">سيظهر هنا رصيدك بعد كل تحديث للحسابات</p>
+        </div>
+      )}
     </div>
   );
 }

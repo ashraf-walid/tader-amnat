@@ -5,6 +5,7 @@ import bcrypt from "bcrypt";
 import mongoose from "mongoose";
 import { invalidateCache } from "@/lib/cache";
 import { requireAdmin } from "@/lib/auth";
+import { logActivity } from "@/lib/activityLog";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export const dynamic = "force-dynamic";
 export async function PUT(request, { params }) {
   try {
     // 🔒 تحقق من صلاحيات المدير
-    requireAdmin(request);
+    const actor = requireAdmin(request);
 
     const { id } = await params;
     const body = await request.json();
@@ -50,6 +51,8 @@ export async function PUT(request, { params }) {
         );
       }
     }
+
+    const before = await User.findById(id).select("-password").lean();
 
     // Build update object — only include fields that were sent
     const updateFields = {};
@@ -101,6 +104,20 @@ export async function PUT(request, { params }) {
 
     console.log("✅ User updated:", user.username);
 
+    const TRACKED_FIELDS = ["username", "phone", "officeName", "role", "attempts", "accountCode"];
+    const changes = TRACKED_FIELDS
+      .filter((field) => field in updateFields && String(before?.[field] ?? "") !== String(updateFields[field] ?? ""))
+      .map((field) => ({ field, from: before?.[field] ?? null, to: updateFields[field] ?? null }));
+    // The password itself is never logged, only that it changed
+    if (updateFields.password) changes.push({ field: "password" });
+
+    if (changes.length > 0) {
+      await logActivity(actor, "account.update", {
+        target: { kind: "user", id, name: user.username },
+        details: { changes },
+      });
+    }
+
     // 🔥 مسح الـ Cache بعد التحديث
     invalidateCache("accounts:");
     console.log("🗑️ Accounts cache invalidated after update");
@@ -136,7 +153,7 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     // 🔒 تحقق من صلاحيات المدير
-    requireAdmin(request);
+    const actor = requireAdmin(request);
 
     const { id } = await params;
 
@@ -179,6 +196,11 @@ export async function DELETE(request, { params }) {
     }
 
     console.log("✅ User deleted:", user.username);
+
+    await logActivity(actor, "account.delete", {
+      target: { kind: "user", id, name: user.username },
+      details: { role: user.role },
+    });
 
     // 🔥 مسح الـ Cache بعد الحذف
     invalidateCache("accounts:");

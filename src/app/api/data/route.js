@@ -4,6 +4,8 @@ import AccountData from "@/models/AccountData";
 import Settings from "@/models/Settings";
 import { requireAdmin, requireOwner } from "@/lib/auth";
 import { invalidateCache } from "@/lib/cache";
+import { logActivity } from "@/lib/activityLog";
+import { recordBalanceSnapshots } from "@/lib/clientLedger";
 import { calculateNetBalance, sendBalanceNotification } from "@/lib/balanceNotification";
 
 export const dynamic = "force-dynamic";
@@ -55,10 +57,11 @@ export async function GET(request) {
  */
 export async function DELETE(request) {
   try {
-    requireOwner(request);
+    const actor = requireOwner(request);
 
     await connectToDatabase();
     const deleted = await AccountData.deleteMany({});
+    await logActivity(actor, "data.clear", { details: { accounts: deleted.deletedCount } });
 
     // 🔥 Invalidate all data cache
     invalidateCache("data:");
@@ -92,7 +95,7 @@ export async function DELETE(request) {
 
 export async function POST(request) {
   try {
-    requireAdmin(request);
+    const actor = requireAdmin(request);
 
     const body = await request.json();
     await connectToDatabase();
@@ -100,6 +103,7 @@ export async function POST(request) {
     let dataToSave = [];
     let dateRange = null;
     let clearTransactions = false;
+    let source = "accounting-file";
 
     if (Array.isArray(body)) {
       dataToSave = body;
@@ -107,6 +111,7 @@ export async function POST(request) {
       dataToSave = body.data;
       dateRange = body.dateRange;
       clearTransactions = body.clearTransactions === true; // ⚠️ الحفظ هنا
+      if (typeof body.source === "string") source = body.source;
     }
 
     // 🚫 Block empty POST — use DELETE /api/data to clear all data (owner only)
@@ -176,6 +181,22 @@ export async function POST(request) {
     if (dataToSave && dataToSave.length > 0) {
       await AccountData.insertMany(dataToSave);
     }
+
+    // A restored backup holds old balances, so it is not a renewal
+    let snapshots = 0;
+    if (source !== "backup-restore") {
+      try {
+        snapshots = await recordBalanceSnapshots(dataToSave, {
+          dateRange: dateRange || "",
+          recordedBy: actor.username,
+        });
+      } catch (snapshotError) {
+        console.error("Failed to record balance snapshots:", snapshotError);
+      }
+    }
+    await logActivity(actor, "data.upload", {
+      details: { accounts: dataToSave.length, source, snapshots },
+    });
 
     // Compare new balances with old ones and send push notifications
     for (const newAcc of dataToSave) {
