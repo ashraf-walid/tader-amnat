@@ -36,7 +36,7 @@ async function sendPush(filter, message) {
  * Saves the official exchange rate, refreshes the cache and tells every
  * subscriber. Used by both the admin form and the automatic update.
  */
-export async function saveExchangeRate(value) {
+export async function saveExchangeRate(value, authorName = "النظام") {
   await connectToDatabase();
 
   const currentSetting = await Settings.findOne({ key: "exchangeRate" }).lean();
@@ -59,6 +59,25 @@ export async function saveExchangeRate(value) {
       { upsert: true },
     );
     cache.set(CacheKeys.PREVIOUS_EXCHANGE_RATE, currentRate, CacheTTL.EXCHANGE_RATE);
+
+    // Update exchangeRateHistory
+    const historyDoc = await Settings.findOne({ key: "exchangeRateHistory" }).lean();
+    let prevHistory = Array.isArray(historyDoc?.value) ? historyDoc.value : [];
+    if (prevHistory.length === 0 && currentRate > 0) {
+      prevHistory = [
+        { rate: currentRate, date: currentSetting?.updatedAt || new Date(), by: "سابق" },
+      ];
+    }
+    const newHistory = [
+      { rate: Number(value), date: new Date(), by: authorName },
+      ...prevHistory.filter((item) => Number(item.rate) !== Number(value)),
+    ].slice(0, 10);
+
+    await Settings.findOneAndUpdate(
+      { key: "exchangeRateHistory" },
+      { value: newHistory },
+      { upsert: true },
+    );
   }
 
   await sendPush({}, {

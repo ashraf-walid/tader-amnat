@@ -8,18 +8,6 @@ import { logActivity } from "@/lib/activityLog";
 
 export async function GET() {
   try {
-    // 1️⃣ Try reading from memory first
-    const cachedRate = cache.get(CacheKeys.EXCHANGE_RATE);
-    if (cachedRate !== null) {
-      console.log("✅ Exchange rate from cache:", cachedRate);
-      return NextResponse.json({
-        success: true,
-        exchangeRate: cachedRate,
-        fromCache: true,
-      });
-    }
-
-    // 2️⃣ If not found in memory, read from MongoDB
     await connectToDatabase();
     const defaultRate = 53;
 
@@ -30,18 +18,42 @@ export async function GET() {
         ? Number(rateSetting.value)
         : defaultRate;
 
-    // 3️⃣ احفظ في الذاكرة لمدة 24 ساعة
-    cache.set(CacheKeys.EXCHANGE_RATE, rateValue, CacheTTL.EXCHANGE_RATE);
-    console.log("📦 Exchange rate cached:", rateValue);
+    // Read or initialize exchangeRateHistory
+    let historyDoc = await Settings.findOne({ key: "exchangeRateHistory" }).lean();
+    let history = Array.isArray(historyDoc?.value) ? historyDoc.value : [];
 
-    return NextResponse.json(
-      {
-        success: true,
-        exchangeRate: rateValue,
-        updatedAt: rateSetting?.updatedAt || null,
-        fromCache: false,
-      },
-    );
+    if (history.length === 0 && rateSetting?.value) {
+      const prevSetting = await Settings.findOne({ key: "previousExchangeRate" }).lean();
+      history = [
+        {
+          rate: Number(rateSetting.value),
+          date: rateSetting.updatedAt || new Date(),
+          by: "الحالي",
+        },
+      ];
+      if (prevSetting?.value && Number(prevSetting.value) !== Number(rateSetting.value)) {
+        history.push({
+          rate: Number(prevSetting.value),
+          date: prevSetting.updatedAt || new Date(Date.now() - 86400000),
+          by: "سابق",
+        });
+      }
+      await Settings.findOneAndUpdate(
+        { key: "exchangeRateHistory" },
+        { value: history },
+        { upsert: true }
+      );
+    }
+
+    cache.set(CacheKeys.EXCHANGE_RATE, rateValue, CacheTTL.EXCHANGE_RATE);
+
+    return NextResponse.json({
+      success: true,
+      exchangeRate: rateValue,
+      updatedAt: rateSetting?.updatedAt || null,
+      history: history.slice(0, 3),
+      fromCache: false,
+    });
   } catch (error) {
     console.error("Failed to fetch settings:", error);
     return NextResponse.json(
@@ -68,7 +80,7 @@ export async function PUT(req) {
 
     await connectToDatabase();
     const current = await Settings.findOne({ key: "exchangeRate" }).lean();
-    const rateSetting = await saveExchangeRate(Number(exchangeRate));
+    const rateSetting = await saveExchangeRate(Number(exchangeRate), actor.username);
 
     if (Number(current?.value) !== Number(rateSetting.value)) {
       await logActivity(actor, "rate.update", {
@@ -76,10 +88,17 @@ export async function PUT(req) {
       });
     }
 
+    const historyDoc = await Settings.findOne({ key: "exchangeRateHistory" }).lean();
+    let history = Array.isArray(historyDoc?.value) ? historyDoc.value : [];
+    if (history.length === 0) {
+      history = [{ rate: rateSetting.value, date: rateSetting.updatedAt, by: actor.username }];
+    }
+
     return NextResponse.json({
       success: true,
       exchangeRate: rateSetting.value,
       updatedAt: rateSetting.updatedAt,
+      history: history.slice(0, 3),
     });
   } catch (error) {
     if (error.name === "AuthError") {

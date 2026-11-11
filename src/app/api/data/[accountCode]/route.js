@@ -77,9 +77,14 @@ export async function PATCH(request, { params }) {
     console.log("🗑️ Data cache invalidated after transaction update");
 
     if (added.length > 0 || removed.length > 0) {
+      const additions = added.filter((t) => t.type === "addition").length;
+      const deductions = added.filter((t) => t.type === "deduction").length;
       await logActivity(actor, "balance.change", {
-        target: { kind: "client", accountCode: String(accountCode), name: existingAccount.account },
-        details: { added, removed },
+        details: {
+          additions,
+          deductions,
+          removed: removed.length,
+        },
       });
     }
 

@@ -275,6 +275,7 @@ export default function AdminPage() {
   const [authLoaded, setAuthLoaded] = useState(false);
   const [rate, setRate] = useState("");
   const [rateUpdatedAt, setRateUpdatedAt] = useState(null);
+  const [rateHistory, setRateHistory] = useState([]);
   const [rateLoading, setRL] = useState(true);
   const [rateSaving, setRS] = useState(false);
   const accounts = useAccountsStore((s) => s.accounts);
@@ -330,7 +331,13 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/settings").then((r) => r.json()).then((d) => { if (d.success) { setRate(d.exchangeRate); setRateUpdatedAt(d.updatedAt || null); } })
+    fetch("/api/settings").then((r) => r.json()).then((d) => {
+      if (d.success) {
+        setRate(d.exchangeRate);
+        setRateUpdatedAt(d.updatedAt || null);
+        if (d.history) setRateHistory(d.history);
+      }
+    })
       .catch(() => {}).finally(() => setRL(false));
   }, []);
 
@@ -402,7 +409,13 @@ export default function AdminPage() {
     try {
       const res = await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ exchangeRate: Number(rate) }) });
       const d = await res.json();
-      d.success ? (notify("تم حفظ سعر الصرف بنجاح"), setRateUpdatedAt(d.updatedAt || null)) : notify(d.error || "خطأ", "error");
+      if (d.success) {
+        notify("تم حفظ سعر الصرف بنجاح");
+        setRateUpdatedAt(d.updatedAt || null);
+        if (d.history) setRateHistory(d.history);
+      } else {
+        notify(d.error || "خطأ", "error");
+      }
     } catch { notify("فشل الاتصال بالخادم", "error"); } finally { setRS(false); }
   };
 
@@ -750,6 +763,51 @@ export default function AdminPage() {
                   <p className="text-[11.5px] text-slate-500 text-center m-0">
                     آخر تعديل: {new Date(rateUpdatedAt).toLocaleDateString("ar-EG", { weekday: "long", year: "numeric", month: "2-digit", day: "2-digit" })} — {new Date(rateUpdatedAt).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}
                   </p>
+                )}
+
+                {rateHistory && rateHistory.length > 0 && (
+                  <div className="mt-1 pt-4 border-t border-white/[0.08]">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[12px] font-bold text-slate-300">سجل آخر أسعار الصرف:</span>
+                      <span className="text-[10px] text-slate-400 font-semibold bg-white/[0.04] px-2 py-0.5 rounded-full border border-white/[0.06]">
+                        آخر 3 أسعار
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      {rateHistory.slice(0, 3).map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/60 border border-white/[0.06] text-[12px] transition-colors hover:border-white/[0.12]"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full ${idx === 0 ? "bg-[#f0b429] shadow-[0_0_8px_rgba(240,180,41,0.6)]" : "bg-slate-600"}`} />
+                            <span className="font-extrabold text-[#f0b429]">
+                              {Number(item.rate).toFixed(4)}{" "}
+                              <span className="text-[10px] text-slate-400 font-normal">ج.م</span>
+                            </span>
+                            {idx === 0 && (
+                              <span className="text-[9.5px] bg-[#f0b429]/15 text-[#f0b429] border border-[#f0b429]/25 px-1.5 py-0.5 rounded font-bold">
+                                الحالي
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[11px] text-slate-500">
+                            {item.date
+                              ? new Date(item.date).toLocaleDateString("ar-EG", {
+                                  month: "short",
+                                  day: "numeric",
+                                }) +
+                                " — " +
+                                new Date(item.date).toLocaleTimeString("ar-EG", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
+                              : "—"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             )}

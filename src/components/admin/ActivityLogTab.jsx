@@ -49,12 +49,15 @@ function describe(log) {
       return `عدّل حساب ${name} — ${parts.join("، ")}`;
     }
     case "balance.change": {
-      const sum = (list, type) => (list || []).filter((t) => t.type === type).reduce((s, t) => s + t.amount, 0);
       const parts = [];
-      if (sum(d.added, "addition")) parts.push(`إضافة ${num(sum(d.added, "addition"))}`);
-      if (sum(d.added, "deduction")) parts.push(`خصم ${num(sum(d.added, "deduction"))}`);
-      if (d.removed?.length) parts.push(`حذف ${num(d.removed.length)} عملية`);
-      return `${name || "عميل"} (${log.target?.accountCode}) — ${parts.join("، ")}`;
+      const additions = d.additions ?? (d.added || []).filter((t) => t.type === "addition").length;
+      const deductions = d.deductions ?? (d.added || []).filter((t) => t.type === "deduction").length;
+      const removed = typeof d.removed === "number" ? d.removed : (d.removed || []).length;
+
+      if (additions) parts.push(`${num(additions)} إضافة`);
+      if (deductions) parts.push(`${num(deductions)} خصم`);
+      if (removed) parts.push(`${num(removed)} حذف`);
+      return `عمليات رصيد — ${parts.join(" · ") || "بدون تغيير"}`;
     }
     case "data.upload":
       return `جدّد بيانات الحسابات ${UPLOAD_SOURCES[d.source] || ""} (${num(d.accounts)} حساب)`;
@@ -83,7 +86,6 @@ function summarize(logs) {
         lastAt: log.createdAt,
         created: [],
         updated: new Set(),
-        balanceClients: new Set(),
         additions: 0,
         deductions: 0,
         other: {},
@@ -96,11 +98,10 @@ function summarize(logs) {
     if (log.action === "account.create") a.created.push(log.target?.name);
     else if (log.action === "account.update") a.updated.add(log.target?.id || log.target?.name);
     else if (log.action === "balance.change") {
-      a.balanceClients.add(log.target?.accountCode);
-      for (const t of log.details?.added || []) {
-        if (t.type === "addition") a.additions += 1;
-        else if (t.type === "deduction") a.deductions += 1;
-      }
+      const additions = log.details?.additions ?? (log.details?.added || []).filter((t) => t.type === "addition").length;
+      const deductions = log.details?.deductions ?? (log.details?.added || []).filter((t) => t.type === "deduction").length;
+      a.additions += additions;
+      a.deductions += deductions;
     } else a.other[log.action] = (a.other[log.action] || 0) + 1;
   }
   return [...byActor.values()].sort((x, y) => new Date(y.lastAt) - new Date(x.lastAt));
@@ -150,7 +151,7 @@ function ActorCard({ actor }) {
 
         <div className="grid grid-cols-3 gap-2">
           <Stat value={actor.created.length} label="حساب أضافه" accent="text-emerald-400" />
-          <Stat value={actor.balanceClients.size} label="عميل عليه عمليات رصيد" accent="text-sky-400" />
+          <Stat value={actor.additions + actor.deductions} label="عملية رصيد نفّذها" accent="text-sky-400" />
           <Stat value={actor.updated.size} label="حساب عدّله" accent="text-amber-400" />
         </div>
 
@@ -165,7 +166,7 @@ function ActorCard({ actor }) {
           </div>
         )}
 
-        {actor.balanceClients.size > 0 && (
+        {(actor.additions > 0 || actor.deductions > 0) && (
           <p className="text-[12px] text-slate-400 mt-3">
             عمليات الرصيد: <span className="text-emerald-400 font-semibold">{num(actor.additions)} إضافة</span>
             {" · "}
