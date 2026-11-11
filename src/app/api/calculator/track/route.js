@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createHash } from "crypto";
 import { connectToDatabase } from "@/lib/mongodb";
 import User from "@/models/User";
 import CalculationLog from "@/models/CalculationLog";
@@ -6,6 +7,14 @@ import { requireAuth } from "@/lib/auth";
 import { invalidateCache } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
+
+function stableSerialize(value) {
+  if (Array.isArray(value)) return `[${value.map(stableSerialize).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableSerialize(value[key])}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
 
 /**
  * POST /api/calculator/track
@@ -24,6 +33,9 @@ export async function POST(request) {
         { status: 400 },
       );
     }
+    const fingerprint = createHash("sha256")
+      .update(stableSerialize({ inputs, result }))
+      .digest("hex");
 
     await connectToDatabase();
 
@@ -38,6 +50,28 @@ export async function POST(request) {
       );
     }
 
+    await CalculationLog.init();
+    const existingInvoice = await CalculationLog.findOne({
+      userId: user._id,
+      $or: [
+        { fingerprint },
+        { fingerprint: { $exists: false }, inputs, result },
+      ],
+    }).select("_id fingerprint").lean();
+    if (existingInvoice) {
+      if (!existingInvoice.fingerprint) {
+        await CalculationLog.updateOne(
+          { _id: existingInvoice._id, fingerprint: { $exists: false } },
+          { $set: { fingerprint } },
+        );
+      }
+      return NextResponse.json({
+        success: true,
+        duplicate: true,
+        calculationsCount: user.calculationsCount || 0,
+      });
+    }
+
     // Store the calculation snapshot with the authenticated user's identity.
     await CalculationLog.create({
       userId: user._id,
@@ -46,6 +80,7 @@ export async function POST(request) {
       officeName: user.officeName || "",
       inputs,
       result,
+      fingerprint,
     });
 
     const updated = await User.findByIdAndUpdate(
@@ -59,10 +94,15 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
+      duplicate: false,
       calculationsCount: updated.calculationsCount,
     });
   } catch (error) {
     console.error("POST /api/calculator/track Error:", error);
+
+    if (error.code === 11000) {
+      return NextResponse.json({ success: true, duplicate: true });
+    }
 
     if (error.name === "AuthError") {
       return NextResponse.json(

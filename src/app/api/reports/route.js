@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(request) {
   try {
-    requireAdmin(request);
+    const actor = requireAdmin(request);
 
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type");
@@ -133,34 +133,30 @@ export async function GET(request) {
           .sort({ createdAt: -1 })
           .lean();
 
-        const detailedInvoices = invoices.map((inv) => ({
-          id: inv._id,
-          userId: inv.userId,
-          username: inv.username,
-          role: inv.role || "client",
-          officeName: inv.officeName || "",
-          createdAt: inv.createdAt,
-          inputs: inv.inputs || null,
-          result: inv.result || null,
-        }));
-
         // Group by user
         const userMap = {};
         for (const inv of invoices) {
           const key = inv.userId?.toString() || inv.username;
           if (!userMap[key]) {
             userMap[key] = {
-              userId: inv.userId,
+              userId: inv.userId ? String(inv.userId) : null,
               username: inv.username,
               role: inv.role || "client",
               officeName: inv.officeName || "",
               count: 0,
               firstInvoice: inv.createdAt,
               lastInvoice: inv.createdAt,
+              invoices: [],
             };
           }
           userMap[key].count += 1;
           userMap[key].lastInvoice = inv.createdAt;
+          userMap[key].invoices.push({
+            id: String(inv._id),
+            createdAt: inv.createdAt,
+            inputs: inv.inputs || null,
+            result: inv.result || null,
+          });
         }
 
         const users = Object.values(userMap).sort((a, b) => b.count - a.count);
@@ -170,8 +166,8 @@ export async function GET(request) {
           date: dateStr,
           totalInvoices: invoices.length,
           totalUsers: users.length,
+          canDeleteInvoices: String(actor.role).toLowerCase() === "owner",
           users,
-          invoices: detailedInvoices,
         });
       }
 

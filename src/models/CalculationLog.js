@@ -28,6 +28,10 @@ const CalculationLogSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       default: null,
     },
+    fingerprint: {
+      type: String,
+      default: undefined,
+    },
   },
   { timestamps: true },
 );
@@ -35,6 +39,10 @@ const CalculationLogSchema = new mongoose.Schema(
 // Index for fast date-based queries
 CalculationLogSchema.index({ createdAt: -1 });
 CalculationLogSchema.index({ userId: 1, createdAt: -1 });
+CalculationLogSchema.index(
+  { userId: 1, fingerprint: 1 },
+  { unique: true, partialFilterExpression: { fingerprint: { $type: "string" } } },
+);
 
 export default mongoose.models.CalculationLog ||
   mongoose.model("CalculationLog", CalculationLogSchema);
