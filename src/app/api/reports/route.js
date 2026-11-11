@@ -133,6 +133,17 @@ export async function GET(request) {
           .sort({ createdAt: -1 })
           .lean();
 
+        const detailedInvoices = invoices.map((inv) => ({
+          id: inv._id,
+          userId: inv.userId,
+          username: inv.username,
+          role: inv.role || "client",
+          officeName: inv.officeName || "",
+          createdAt: inv.createdAt,
+          inputs: inv.inputs || null,
+          result: inv.result || null,
+        }));
+
         // Group by user
         const userMap = {};
         for (const inv of invoices) {
@@ -160,6 +171,7 @@ export async function GET(request) {
           totalInvoices: invoices.length,
           totalUsers: users.length,
           users,
+          invoices: detailedInvoices,
         });
       }
 

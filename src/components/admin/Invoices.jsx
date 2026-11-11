@@ -49,6 +49,64 @@ function Section({ icon: IconComp, title, subtitle, children, action }) {
   );
 }
 
+function money(value, digits = 2) {
+  return Number(value || 0).toLocaleString("ar-EG", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
+}
+
+function InvoiceDetails({ invoice }) {
+  const { inputs, result } = invoice;
+  if (!inputs || !result) {
+    return <p className="text-xs text-slate-500 m-0">لا توجد تفاصيل محفوظة لهذه الفاتورة القديمة.</p>;
+  }
+
+  const group = (key, label) => {
+    const item = inputs.containers?.[key];
+    return item?.count > 0 ? `${label}: ${item.count} (${item.cargoType || "FULL"})` : null;
+  };
+  const groups = [group("twentyFoot", "٢٠ قدم"), group("fortyFoot", "٤٠ قدم")].filter(Boolean);
+  const breakdown = [
+    ...(result.details?.storageBreakdown || []).map((item) => ({ ...item, label: "تخزين" })),
+    ...(result.details?.cargoBreakdown || []).map((item) => ({ ...item, label: "أرضيات المشمول" })),
+    ...(result.details?.dangerYardBreakdown || []).map((item) => ({ ...item, label: "ساحة الطوارئ" })),
+  ];
+
+  return (
+    <div className="space-y-3 text-xs text-slate-300">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <span>نوع الفاتورة: {inputs.billingType === "RENEWAL" ? "تجديد" : "أولية"}</span>
+        <span>الوصول: {inputs.arrivalDate || "—"}</span>
+        <span>الصرف: {inputs.releaseDate || "—"}</span>
+        <span>المدة: {inputs.days ?? "—"} يوم</span>
+        <span>الحاويات: {groups.join("، ") || "—"}</span>
+        <span>سعر الصرف: {money(inputs.exchangeRate, 2)} ج.م/$</span>
+      </div>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 border-t border-white/10 pt-3">
+        <span>تخزين: ${money(result.usd?.storageFee)}</span>
+        <span>رسوم ثابتة: ${money(result.usd?.fixedFees)}</span>
+        <span>خدمات إضافية: ${money(result.usd?.additionalServices)}</span>
+        <span>الإجمالي بالدولار: ${money(result.usd?.subtotal)}</span>
+        <span>الضريبة: {money(result.egp?.vatAmount, 0)} ج.م</span>
+        <strong className="text-amber-400">الإجمالي النهائي: {money(result.egp?.total, 0)} ج.م</strong>
+      </div>
+      {breakdown.length > 0 && (
+        <div className="border-t border-white/10 pt-3">
+          <p className="font-semibold text-slate-200 mb-2">شرائح احتساب الرسوم</p>
+          <ul className="m-0 p-0 list-none space-y-1">
+            {breakdown.map((item, index) => (
+              <li key={`${item.label}-${index}`}>
+                {item.label}: {item.tierName}، {item.days} يوم، ${money(item.subtotal)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function InvoicesByDateSection() {
   const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [data, setData] = useState(null);
@@ -81,7 +139,7 @@ export function InvoicesByDateSection() {
     <Section
       icon={Icon.Hash}
       title="تقرير عمليات حساب الفواتير حسب التاريخ"
-      subtitle="اختر تاريخاً لعرض من استخدم الحاسبة وعدد العمليات لكل مستخدم"
+      subtitle="اختر تاريخاً لعرض العملاء وعدد عملياتهم وتفاصيل كل فاتورة"
       action={
         <input
           type="date"
@@ -182,6 +240,53 @@ export function InvoicesByDateSection() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          <div className="mt-6">
+            <h3 className="text-sm font-semibold text-slate-200 mb-3">تفاصيل الفواتير</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse rtl min-w-[720px]">
+                <thead>
+                  <tr className="bg-white/[0.03]">
+                    <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">العميل</th>
+                    <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">وقت الحساب</th>
+                    <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">نوع الفاتورة</th>
+                    <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">عدد الحاويات</th>
+                    <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">الإجمالي النهائي</th>
+                    <th className="px-4 py-3 text-right text-xs font-bold text-slate-400 border-b border-white/[0.07]">التفاصيل</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(data.invoices || []).map((invoice, idx) => {
+                    const input = invoice.inputs;
+                    const containerCount = (input?.containers?.twentyFoot?.count || 0) + (input?.containers?.fortyFoot?.count || 0);
+                    return (
+                      <tr key={invoice.id || idx} className={`border-b border-white/5 align-top ${idx % 2 ? "bg-white/[0.015]" : ""}`}>
+                        <td className="px-4 py-3 text-sm font-semibold text-slate-100">{invoice.username}</td>
+                        <td className="px-4 py-3 text-xs text-slate-400 whitespace-nowrap">
+                          {new Date(invoice.createdAt).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-slate-300">
+                          {input?.billingType ? (input.billingType === "RENEWAL" ? "تجديد" : "أولية") : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-slate-300">{input ? `${containerCount} حاوية` : "—"}</td>
+                        <td className="px-4 py-3 text-xs font-bold text-amber-400 whitespace-nowrap">
+                          {invoice.result?.egp?.total != null ? `${money(invoice.result.egp.total, 0)} ج.م` : "—"}
+                        </td>
+                        <td className="px-4 py-3 min-w-[260px]">
+                          <details className="group">
+                            <summary className="cursor-pointer text-xs font-semibold text-sky-400">عرض التفاصيل</summary>
+                            <div className="mt-3 p-3 rounded-lg bg-slate-950/70 border border-white/[0.07]">
+                              <InvoiceDetails invoice={invoice} />
+                            </div>
+                          </details>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

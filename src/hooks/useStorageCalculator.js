@@ -254,11 +254,6 @@ export function useStorageCalculator(adminExchangeRate) {
     setAttemptsLoading(false);
     */
 
-    // Track calculation count and history
-    fetch('/api/calculator/track', { method: 'POST' }).catch((err) => {
-      console.error('Failed to track calculation:', err);
-    });
-
     const maxDays = days || 0;
     if (billingType === "RENEWAL" && effectivePrevDays > maxDays) {
       setError(`الأيام المسددة سابقاً (${effectivePrevDays} يوم) لا يمكن أن تتجاوز إجمالي مدة التخزين (${maxDays} يوم).`);
@@ -464,6 +459,46 @@ export function useStorageCalculator(adminExchangeRate) {
 
       setResult(invoice);
       setIsFormDirty(false);
+
+      const invoiceInputs = {
+        arrivalDate: arrStr,
+        releaseDate: relStr,
+        billingType,
+        firstInvoiceDate: firstInvoiceDate ? format(firstInvoiceDate, 'yyyy-MM-dd') : null,
+        days: daysCalc,
+        previousDays: effectivePrevDays,
+        containers: {
+          twentyFoot: { count: twentyCount, cargoType: twentyCargoType, nonStandardType: nonStdType20 },
+          fortyFoot: { count: fortyCount, cargoType: fortyCargoType, nonStandardType: nonStdType40 },
+        },
+        exchangeRate,
+        options: {
+          isHolidayRelease,
+          hasCargoStripping,
+          hasCargoStorage,
+          cargoExitDate: cargoExitDate ? format(cargoExitDate, 'yyyy-MM-dd') : null,
+          isExternalStorage,
+          isLCLStorage,
+          hasDangerYard20,
+          hasDangerYard40,
+          services,
+          serviceQuantities,
+        },
+      };
+
+      try {
+        const trackRes = await fetch('/api/calculator/track', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ inputs: invoiceInputs, result: invoice }),
+        });
+        if (!trackRes.ok) {
+          const trackError = await trackRes.json().catch(() => ({}));
+          console.error('Failed to save invoice:', trackError.error || trackRes.statusText);
+        }
+      } catch (trackError) {
+        console.error('Failed to save invoice:', trackError);
+      }
     } catch (err) {
       setError(err.message);
     }

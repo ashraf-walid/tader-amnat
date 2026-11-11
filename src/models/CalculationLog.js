@@ -20,6 +20,14 @@ const CalculationLogSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    inputs: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+    result: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
   },
   { timestamps: true },
 );

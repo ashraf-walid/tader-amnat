@@ -15,6 +15,15 @@ export const dynamic = "force-dynamic";
 export async function POST(request) {
   try {
     const decoded = requireAuth(request);
+    const body = await request.json();
+    const { inputs, result } = body || {};
+    if (!inputs || typeof inputs !== "object" || !result || typeof result !== "object" ||
+        !Number.isFinite(Number(result?.egp?.total)) || !Number.isFinite(Number(result?.usd?.subtotal))) {
+      return NextResponse.json(
+        { success: false, error: "بيانات الفاتورة غير مكتملة" },
+        { status: 400 },
+      );
+    }
 
     await connectToDatabase();
 
@@ -29,19 +38,21 @@ export async function POST(request) {
       );
     }
 
+    // Store the calculation snapshot with the authenticated user's identity.
+    await CalculationLog.create({
+      userId: user._id,
+      username: user.username,
+      role: user.role || "client",
+      officeName: user.officeName || "",
+      inputs,
+      result,
+    });
+
     const updated = await User.findByIdAndUpdate(
       user._id,
       { $inc: { calculationsCount: 1 } },
       { returnDocument: "after", select: "username calculationsCount role officeName" },
     );
-
-    // Log this calculation for date-based reporting
-    await CalculationLog.create({
-      userId: user._id,
-      username: updated.username,
-      role: updated.role || "client",
-      officeName: updated.officeName || "",
-    });
 
     // Clear cache so admin dashboard reflects the updated calculation count
     invalidateCache("accounts:");
