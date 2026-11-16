@@ -1,5 +1,43 @@
 import ActivityLog from "@/models/ActivityLog";
 
+export async function logBalanceChange(actor, { additions = 0, deductions = 0, removed = 0 } = {}) {
+  try {
+    const actorId = actor?.userId || actor?.id || null;
+    const actorName = actor?.username || "غير معروف";
+    const actorRole = actor?.role || "";
+
+    // Start of today (UTC) for daily aggregation
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+
+    const updated = await ActivityLog.findOneAndUpdate(
+      {
+        actorName,
+        action: "balance.change",
+        createdAt: { $gte: today },
+      },
+      {
+        $setOnInsert: {
+          actorId,
+          actorName,
+          actorRole,
+          action: "balance.change",
+          createdAt: new Date(),
+        },
+        $inc: {
+          "details.additions": additions,
+          "details.deductions": deductions,
+          "details.removed": removed,
+        },
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true },
+    );
+    return updated;
+  } catch (error) {
+    console.error("Failed to write daily balance activity log:", error);
+  }
+}
+
 /**
  * Records who did a sensitive action. A failure here is logged and
  * swallowed so it never blocks the action itself.
@@ -9,6 +47,11 @@ import ActivityLog from "@/models/ActivityLog";
  */
 export async function logActivity(actor, action, { target, details } = {}) {
   try {
+    // If it's a balance change, aggregate into a single daily total per user
+    if (action === "balance.change") {
+      return await logBalanceChange(actor, details);
+    }
+
     await ActivityLog.create({
       actorId: actor?.userId || actor?.id || null,
       actorName: actor?.username || "غير معروف",

@@ -7,6 +7,7 @@ import { ROLES, getRoleInfo, EMPTY_FORM } from "@/lib/adminConstants";
 import ReportsTab from "@/components/admin/ReportsTab";
 import ActivityLogTab from "@/components/admin/ActivityLogTab";
 import NavisInvoices from "@/components/admin/NavisInvoices";
+import BackupFilesList from "@/components/admin/BackupFilesList";
 import { useAccountsStore } from "@/store/useAccountsStore";
 
 // ─── Input Field ────────────────────────────────────────────────────────
@@ -909,23 +910,27 @@ export default function AdminPage() {
 
         {/* ═══ Project Data Tab ═══ */}
         {tab === "data" && (
-          <div className="bg-slate-900 rounded-2xl border border-white/[0.08] p-5 flex flex-col gap-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-red-400/[0.12] text-red-400 flex items-center justify-center"><Icon.Trash /></div>
-              <div>
-                <h3 className="text-base font-bold m-0">إدارة البيانات</h3>
-                <p className="text-xs text-slate-400 mt-0.5">عمليات حساسة لإدارة قاعدة بيانات الحسابات.</p>
+          <div className="flex flex-col gap-5">
+            <BackupFilesList userRole={userRole} />
+
+            <div className="bg-slate-900 rounded-2xl border border-white/[0.08] p-5 flex flex-col gap-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-red-400/[0.12] text-red-400 flex items-center justify-center"><Icon.Trash /></div>
+                <div>
+                  <h3 className="text-base font-bold m-0">إدارة البيانات</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">عمليات حساسة لإدارة قاعدة بيانات الحسابات.</p>
+                </div>
               </div>
-            </div>
-            <div className="p-4 bg-red-400/5 border border-red-400/10 rounded-xl flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex-1 min-w-[200px]">
-                <p className="text-[13px] font-semibold text-red-400 mb-1">مسح كافة البيانات المالية</p>
-                <p className="text-[11px] text-slate-400 m-0">سيتم حذف جميع الحسابات والمعاملات المالية. هذا الإجراء لا يمكن التراجع عنه.</p>
+              <div className="p-4 bg-red-400/5 border border-red-400/10 rounded-xl flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex-1 min-w-[200px]">
+                  <p className="text-[13px] font-semibold text-red-400 mb-1">مسح كافة البيانات المالية</p>
+                  <p className="text-[11px] text-slate-400 m-0">سيتم حذف جميع الحسابات والمعاملات المالية. هذا الإجراء لا يمكن التراجع عنه.</p>
+                </div>
+                <Btn variant="danger" onClick={() => { setClearConfirm(""); setModal("clearData"); }} disabled={dataClearing}>
+                  {dataClearing ? <Spinner /> : <Icon.Trash />}
+                  {dataClearing ? "جاري المسح..." : "مسح كافة البيانات"}
+                </Btn>
               </div>
-              <Btn variant="danger" onClick={() => { setClearConfirm(""); setModal("clearData"); }} disabled={dataClearing}>
-                {dataClearing ? <Spinner /> : <Icon.Trash />}
-                {dataClearing ? "جاري المسح..." : "مسح كافة البيانات"}
-              </Btn>
             </div>
           </div>
         )}
