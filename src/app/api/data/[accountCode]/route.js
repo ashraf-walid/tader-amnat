@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import AccountData from "@/models/AccountData";
 import { requireAdmin } from "@/lib/auth";
-import { diffTransactions, logActivity } from "@/lib/activityLog";
+import { diffTransactions, logActivity, logBalanceChange } from "@/lib/activityLog";
 import { invalidateCache } from "@/lib/cache";
 import { calculateNetBalance, sendBalanceNotification } from "@/lib/balanceNotification";
 
@@ -79,12 +79,10 @@ export async function PATCH(request, { params }) {
     if (added.length > 0 || removed.length > 0) {
       const additions = added.filter((t) => t.type === "addition").length;
       const deductions = added.filter((t) => t.type === "deduction").length;
-      await logActivity(actor, "balance.change", {
-        details: {
-          additions,
-          deductions,
-          removed: removed.length,
-        },
+      await logBalanceChange(actor, {
+        additions,
+        deductions,
+        removed: removed.length,
       });
     }
 

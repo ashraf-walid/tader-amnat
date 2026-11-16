@@ -194,12 +194,12 @@ export default function DashboardHeader({
       </div>
 
       {(allAccounts.length > 0 || search) && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 w-full md:w-auto">
           <button
             onClick={() => fetchDataFromMongoDB()}
             disabled={loading}
             className={cn(
-              "px-3 py-2.5 sm:py-3 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border",
+              "px-3 py-2.5 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 border whitespace-nowrap",
               loading
                 ? "bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed"
                 : "bg-slate-900 text-blue-400 border-blue-900/30 hover:bg-slate-800",
@@ -215,7 +215,27 @@ export default function DashboardHeader({
 
           <label
             className={cn(
-              "px-3 py-2.5 sm:py-2 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border cursor-pointer",
+              "px-3 py-2.5 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 border cursor-pointer whitespace-nowrap",
+              loading
+                ? "bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed"
+                : "bg-slate-900 text-emerald-400 border-emerald-900/30 hover:bg-slate-800",
+            )}
+            title="دمج ملف HTML جديد مع أرصدة 30/06 (⚠️ سيتم حذف المعاملات اليدوية القديمة)"
+          >
+            <Upload size={14} />
+            دمج مع أرصدة 30/06
+            <input
+              type="file"
+              className="hidden"
+              accept=".html,.htm"
+              onChange={handleMergeWithWarning}
+              disabled={loading}
+            />
+          </label>
+
+          <label
+            className={cn(
+              "px-3 py-2.5 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 border cursor-pointer whitespace-nowrap",
               loading
                 ? "bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed"
                 : "bg-slate-900 text-amber-400 border-amber-900/30 hover:bg-slate-800",
@@ -237,7 +257,7 @@ export default function DashboardHeader({
             onClick={() => setIsDeleteDateModalOpen(true)}
             disabled={loading || clearing || isDeletingDate}
             className={cn(
-              "px-3 py-2.5 sm:py-2 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border",
+              "px-3 py-2.5 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 border whitespace-nowrap",
               loading || clearing || isDeletingDate
                 ? "bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed"
                 : "bg-slate-900 text-rose-400 border-rose-900/30 hover:bg-slate-800 hover:text-rose-300",
@@ -247,61 +267,8 @@ export default function DashboardHeader({
             <CalendarX size={14} />
             حذف معاملات تاريخ
           </button>
-
-          <button
-            onClick={handleClearDB}
-            disabled={clearing || loading}
-            className={cn(
-              "px-3 py-2.5 sm:py-2 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border",
-              clearing || loading
-                ? "bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed"
-                : "bg-slate-900 text-red-400 border-red-900/30 hover:bg-red-950/40",
-            )}
-            title="مسح جميع البيانات من قاعدة البيانات المحلية"
-          >
-            <Trash2 size={14} className={cn(clearing && "animate-pulse")} />
-            {clearing ? "جارٍ الحذف..." : "حذف البيانات المحليه"}
-          </button>
         </div>
       )}
-
-      {/* ─── saved for future use ───────────────────────────────────────────────────────────────── */}
-      {/* <label>
-        <Upload size={14} />
-        الجديد
-        <input
-          type="file"
-          className="hidden"
-          accept=".html,.htm,.json"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              convertHTML(file);
-              e.target.value = '';
-            }
-          }}
-        />
-      </label> */}
-
-      <label
-        className={cn(
-          "px-3 py-2.5 sm:py-2 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border cursor-pointer",
-          loading
-            ? "bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed"
-            : "bg-slate-900 text-emerald-400 border-emerald-900/30 hover:bg-slate-800",
-        )}
-        title="دمج ملف HTML جديد مع أرصدة 30/06 (⚠️ سيتم حذف المعاملات اليدوية القديمة)"
-      >
-        <Upload size={14} />
-        دمج مع أرصدة 30/06
-        <input
-          type="file"
-          className="hidden"
-          accept=".html,.htm"
-          onChange={handleMergeWithWarning}
-          disabled={loading}
-        />
-      </label>
       {/* ──────────────────────────────────────────────────────────────────────────── */}
 
       {/* Delete Transactions by Date Modal */}

@@ -125,28 +125,43 @@ function Stat({ value, label, accent }) {
   );
 }
 
-function ActorCard({ actor }) {
+function ActorCard({ actor, onDeleteActor, onDeleteLog, onDeleteBalance }) {
   const [open, setOpen] = useState(false);
   const [showAllNames, setShowAllNames] = useState(false);
   const names = showAllNames ? actor.created : actor.created.slice(0, NAMES_PREVIEW);
   const hiddenNames = actor.created.length - NAMES_PREVIEW;
+  const detailedLogs = actor.logs.filter((l) => l.action !== "balance.change");
 
   return (
     <div className="bg-slate-900 rounded-2xl border border-white/[0.08] overflow-hidden">
       <div className="p-4 sm:p-5">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-full bg-sky-500/15 text-sky-300 font-bold flex items-center justify-center shrink-0">
-            {actor.name?.charAt(0)?.toUpperCase()}
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-full bg-sky-500/15 text-sky-300 font-bold flex items-center justify-center shrink-0">
+              {actor.name?.charAt(0)?.toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[15px] font-bold text-slate-100 truncate">
+                {actor.name}
+                <span className="mr-2 text-[11px] font-semibold text-slate-400 bg-white/5 px-2 py-0.5 rounded-full">
+                  {ROLE_LABELS[actor.role] || actor.role}
+                </span>
+              </p>
+              <p className="text-[11.5px] text-slate-500 mt-0.5">آخر نشاط: {when(actor.lastAt)}</p>
+            </div>
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[15px] font-bold text-slate-100 truncate">
-              {actor.name}
-              <span className="mr-2 text-[11px] font-semibold text-slate-400 bg-white/5 px-2 py-0.5 rounded-full">
-                {ROLE_LABELS[actor.role] || actor.role}
-              </span>
-            </p>
-            <p className="text-[11.5px] text-slate-500 mt-0.5">آخر نشاط: {when(actor.lastAt)}</p>
-          </div>
+
+          {onDeleteActor && (
+            <button
+              type="button"
+              onClick={() => onDeleteActor(actor.name)}
+              title="حذف جميع سجلات هذا المستخدم"
+              className="p-2 rounded-lg bg-white/[0.04] text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-white/[0.08] hover:border-rose-500/30 transition-all cursor-pointer shrink-0 flex items-center gap-1 text-[11.5px]"
+            >
+              <Icon.Trash size={14} />
+              <span className="hidden sm:inline">حذف الكل</span>
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-3 gap-2">
@@ -167,11 +182,23 @@ function ActorCard({ actor }) {
         )}
 
         {(actor.additions > 0 || actor.deductions > 0) && (
-          <p className="text-[12px] text-slate-400 mt-3">
-            عمليات الرصيد: <span className="text-emerald-400 font-semibold">{num(actor.additions)} إضافة</span>
-            {" · "}
-            <span className="text-rose-400 font-semibold">{num(actor.deductions)} خصم</span>
-          </p>
+          <div className="flex items-center justify-between gap-2 mt-3 p-2 bg-white/[0.02] border border-white/[0.06] rounded-lg">
+            <p className="text-[12px] text-slate-400 m-0">
+              عمليات الرصيد: <span className="text-emerald-400 font-semibold">{num(actor.additions)} إضافة</span>
+              {" · "}
+              <span className="text-rose-400 font-semibold">{num(actor.deductions)} خصم</span>
+            </p>
+            {onDeleteBalance && (
+              <button
+                type="button"
+                onClick={() => onDeleteBalance(actor.name)}
+                title="مسح سجلات الرصيد لهذا المستخدم"
+                className="text-[11px] text-slate-500 hover:text-rose-400 bg-transparent border-none cursor-pointer px-1 py-0.5 transition-colors"
+              >
+                مسح الرصيد
+              </button>
+            )}
+          </div>
         )}
 
         {actor.created.length > 0 && (
@@ -194,24 +221,40 @@ function ActorCard({ actor }) {
         )}
       </div>
 
-      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open}
-        className="w-full flex items-center justify-between px-5 py-3 border-t border-white/[0.06] bg-white/[0.02] text-[12.5px] font-semibold text-slate-300 cursor-pointer hover:bg-white/[0.05] border-x-0 border-b-0">
-        <span>كل العمليات ({num(actor.logs.length)})</span>
-        <span className={`transition-transform ${open ? "rotate-180" : ""}`}><Icon.ChevronDown /></span>
-      </button>
+      {detailedLogs.length > 0 && (
+        <>
+          <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open}
+            className="w-full flex items-center justify-between px-5 py-3 border-t border-white/[0.06] bg-white/[0.02] text-[12.5px] font-semibold text-slate-300 cursor-pointer hover:bg-white/[0.05] border-x-0 border-b-0">
+            <span>العمليات الإدارية ({num(detailedLogs.length)})</span>
+            <span className={`transition-transform ${open ? "rotate-180" : ""}`}><Icon.ChevronDown /></span>
+          </button>
 
-      {open && (
-        <ul className="divide-y divide-white/[0.05] max-h-[420px] overflow-y-auto m-0 p-0 list-none">
-          {actor.logs.map((log) => (
-            <li key={log.id} className="px-5 py-3 flex gap-3 items-start">
-              <span className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${isRisky(log.action) ? "bg-rose-400" : "bg-sky-400"}`} />
-              <div className="min-w-0">
-                <p className="text-[13px] text-slate-200 leading-relaxed break-words">{describe(log)}</p>
-                <p className="text-[11px] text-slate-500 mt-0.5">{when(log.createdAt)}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
+          {open && (
+            <ul className="divide-y divide-white/[0.05] max-h-[420px] overflow-y-auto m-0 p-0 list-none">
+              {detailedLogs.map((log) => (
+                <li key={log.id} className="px-5 py-3 flex gap-3 items-center justify-between group">
+                  <div className="flex gap-3 items-start min-w-0">
+                    <span className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${isRisky(log.action) ? "bg-rose-400" : "bg-sky-400"}`} />
+                    <div className="min-w-0">
+                      <p className="text-[13px] text-slate-200 leading-relaxed break-words">{describe(log)}</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">{when(log.createdAt)}</p>
+                    </div>
+                  </div>
+                  {onDeleteLog && (
+                    <button
+                      type="button"
+                      onClick={() => onDeleteLog(log.id)}
+                      title="حذف هذه العملية من السجل"
+                      className="p-1.5 rounded-md text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 opacity-70 group-hover:opacity-100 transition-all cursor-pointer border-none bg-transparent shrink-0"
+                    >
+                      <Icon.Trash size={13} />
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </div>
   );
@@ -222,6 +265,72 @@ export default function ActivityLogTab() {
   const [search, setSearch] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const [state, setState] = useState({ loading: true, error: "", logs: [], truncated: false });
+
+  const deleteActorLogs = async (actorName) => {
+    if (!window.confirm(`هل أنت متأكد من حذف جميع سجلات المستخدم «${actorName}» نهائياً؟`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/activity-log?actorName=${encodeURIComponent(actorName)}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setState((prev) => ({
+          ...prev,
+          logs: prev.logs.filter((l) => l.actorName !== actorName),
+        }));
+      } else {
+        alert(data.error || "فشل حذف السجلات");
+      }
+    } catch (e) {
+      alert("خطأ أثناء الحذف");
+    }
+  };
+
+  const deleteSingleLog = async (logId) => {
+    if (!window.confirm("هل أنت متأكد من حذف هذه العملية من السجل؟")) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/activity-log?id=${encodeURIComponent(logId)}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setState((prev) => ({
+          ...prev,
+          logs: prev.logs.filter((l) => l.id !== logId),
+        }));
+      } else {
+        alert(data.error || "فشل حذف العملية");
+      }
+    } catch (e) {
+      alert("خطأ أثناء الحذف");
+    }
+  };
+
+  const deleteBalanceLogs = async (actorName) => {
+    if (!window.confirm(`هل أنت متأكد من مسح جميع عمليات الرصيد للمستخدم «${actorName}»؟`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/activity-log?actorName=${encodeURIComponent(actorName)}&action=balance.change`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setState((prev) => ({
+          ...prev,
+          logs: prev.logs.filter((l) => !(l.actorName === actorName && l.action === "balance.change")),
+        }));
+      } else {
+        alert(data.error || "فشل مسح عمليات الرصيد");
+      }
+    } catch (e) {
+      alert("خطأ أثناء الحذف");
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -302,7 +411,15 @@ export default function ActivityLogTab() {
             </p>
           )}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-            {actors.map((actor) => <ActorCard key={actor.key} actor={actor} />)}
+            {actors.map((actor) => (
+              <ActorCard
+                key={actor.key}
+                actor={actor}
+                onDeleteActor={deleteActorLogs}
+                onDeleteLog={deleteSingleLog}
+                onDeleteBalance={deleteBalanceLogs}
+              />
+            ))}
           </div>
         </>
       )}

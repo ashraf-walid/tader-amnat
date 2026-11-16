@@ -46,26 +46,13 @@ function StatusBadge({ status }) {
   );
 }
 
-function PaidBadge({ val }) {
-  const isPaid = val === "true" || val === "1" || val?.toLowerCase() === "true";
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold
-      ${isPaid
-        ? "bg-emerald-400/15 text-emerald-300 border border-emerald-400/30"
-        : "bg-slate-400/10 text-slate-400 border border-white/10"
-      }`}>
-      {isPaid ? "مدفوعة" : "غير مدفوعة"}
-    </span>
-  );
-}
-
 const PAGE_SIZE = 100;
 
 // ─── Detail Panel ──────────────────────────────────────────────────────────────
 function DetailPanel({ inv, onClose }) {
   const fields = [
-    ["رقم المسودة",         inv["Draft Nbr"]],
-    ["رقم نهائي",           inv["Final Nbr"]],
+    ["رقم الدرافت",         inv["Draft Nbr"]],
+    ["رقم الفاينال",           inv["Final Nbr"]],
     ["الحالة",              inv["Status"]],
     ["كود الدافع",          inv["Payee"]],
     ["اسم الدافع",          inv["Payee Name"]],
@@ -90,7 +77,7 @@ function DetailPanel({ inv, onClose }) {
     ["تاريخ الختم",         inv["Final_Date"]],
     ["أمر العمل",           inv["Work Order"]],
     ["رقم الأمانة",         inv["رقم الامانة"]],
-    ["المستخدم (ختم)",      inv["Final_User"]],
+    ["المراجع",            inv["Final_User"]],
     ["تاريخ السريان",       inv["Effective Date"]],
     ["تاريخ الاستحقاق",     inv["Due Date"]],
     ["ملاحظات",             inv["Notes"]],
@@ -294,15 +281,14 @@ export default function NavisInvoices() {
 
   // ─── Columns config ───────────────────────────────────────────────────────
   const TABLE_COLS = [
-    { key: "Draft Nbr",             label: "مسودة",     cls: "min-w-[80px]" },
-    { key: "Final Nbr",             label: "نهائي",     cls: "min-w-[90px]" },
+    { key: "Draft Nbr",             label: "درافت",     cls: "min-w-[80px]" },
+    { key: "Final Nbr",             label: "فاينال",     cls: "min-w-[90px]" },
     { key: "Status",                label: "الحالة",    cls: "min-w-[80px]", render: (v) => <StatusBadge status={v} /> },
     { key: "Payee Name",            label: "اسم الدافع",   cls: "min-w-[160px] max-w-[200px]" },
     { key: "Invoice Type",          label: "نوع الفاتورة", cls: "min-w-[120px] max-w-[150px]" },
     { key: "Currency",              label: "عملة",      cls: "min-w-[55px]" },
     { key: "Total Charges",         label: "إجمالي الرسوم",cls: "min-w-[110px] text-right ltr", render: fmtNum },
     { key: "Owed",                  label: "المتبقي",   cls: "min-w-[100px] text-right ltr", render: fmtNum },
-    { key: "PaidInFull",            label: "مدفوعة",    cls: "min-w-[80px]", render: (v) => <PaidBadge val={v} /> },
     { key: "Key Word 2",            label: "بوليصة",    cls: "min-w-[110px] max-w-[150px]" },
     { key: "Key Word 3",            label: "خط ملاحي",  cls: "min-w-[80px] max-w-[120px]" },
     { key: "Vessel Name",           label: "السفينة",   cls: "min-w-[120px] max-w-[160px]" },

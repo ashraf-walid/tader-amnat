@@ -121,6 +121,24 @@ export function useAccountData() {
     }
   }, []);
 
+  // ☁️ Upload raw backup file to Vercel Blob in background
+  const uploadBackupToBlob = async (file, dateRange = "", accountsCount = 0) => {
+    try {
+      const q = new URLSearchParams({
+        filename: file.name,
+        dateRange: dateRange || "",
+        accountsCount: String(accountsCount || 0),
+      });
+      await fetch(`/api/backup-files/upload?${q.toString()}`, {
+        method: "POST",
+        body: file,
+      });
+      console.log("☁️ تم حفظ نسخة أصلية من الملف على Vercel Blob بنجاح");
+    } catch (e) {
+      console.warn("⚠️ Failed to backup raw file to Vercel Blob:", e);
+    }
+  };
+
   // File processing with integration (HTML + basic balances)
   const processFileWithMerge = async (file) => {
     setLoading(true);
@@ -141,6 +159,9 @@ export function useAccountData() {
       // Merge the new file with the underlying balances
       const { data: results, dateRange: extractedDateRange, mergeInfo } =
         await mergeHTMLWithBaseBalances(file);
+
+      // ☁️ Save raw file backup to Vercel Blob (in background)
+      uploadBackupToBlob(file, extractedDateRange, results?.length || 0);
 
       // Preparing the extracted accounts
       const preparedResults = results.map((newRecord) => ({
@@ -253,6 +274,9 @@ export function useAccountData() {
           setData(dataToRestore);
           if (restoredDateRange) setDateRange(restoredDateRange);
 
+          // ☁️ Save raw file backup to Vercel Blob (in background)
+          uploadBackupToBlob(file, restoredDateRange, dataToRestore.length);
+
           // ✅ 3. Upload to MongoDB in background (no waiting)
           fetch("/api/data", {
             method: "POST",
@@ -281,6 +305,9 @@ export function useAccountData() {
       // If HTML file from accounting system
       const { data: results, dateRange: extractedDateRange } =
         await parseAccountingHTML(file);
+
+      // ☁️ Save raw file backup to Vercel Blob (in background)
+      uploadBackupToBlob(file, extractedDateRange, results?.length || 0);
 
       // Initialize extracted accounts without merging old transactions
       const preparedResults = results.map((newRecord) => ({
