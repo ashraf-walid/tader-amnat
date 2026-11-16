@@ -64,17 +64,45 @@ export async function GET(req) {
   }
 
   try {
-    const baseUrl = process.env.N4_BILLING_URL;
-    const params  = process.env.N4_BILLING_PARAMS;
-    const user    = process.env.N4_BILLING_USER;
-    const pass    = process.env.N4_BILLING_PASS;
+    const bridgeUrl = process.env.NAVIS_BRIDGE_URL;
+    let url;
+    const headers = { Accept: "text/xml, application/xml" };
 
-    if (!baseUrl || !user || !pass) {
-      return NextResponse.json({ error: "بيانات اعتماد Navis غير مهيأة في الخادم" }, { status: 500 });
+    if (bridgeUrl) {
+      const accessClientId = process.env.CF_ACCESS_CLIENT_ID;
+      const accessClientSecret = process.env.CF_ACCESS_CLIENT_SECRET;
+      const relayToken = process.env.NAVIS_RELAY_TOKEN;
+      const hasAccessClientId = Boolean(accessClientId);
+      const hasAccessClientSecret = Boolean(accessClientSecret);
+      if (!relayToken || hasAccessClientId !== hasAccessClientSecret) {
+        return NextResponse.json({ error: "رمز وسيط Navis غير مهيأ، أو إعدادات Cloudflare Access غير مكتملة" }, { status: 500 });
+      }
+
+      url = new URL(bridgeUrl);
+      if (url.protocol !== "https:") {
+        return NextResponse.json({ error: "يجب أن يكون رابط وسيط Navis آمناً (HTTPS)" }, { status: 500 });
+      }
+      if (hasAccessClientId) {
+        headers["CF-Access-Client-Id"] = accessClientId;
+        headers["CF-Access-Client-Secret"] = accessClientSecret;
+      }
+      headers.Authorization = `Bearer ${relayToken}`;
+    } else {
+      // Direct Navis access remains available for local development.
+      const baseUrl = process.env.N4_BILLING_URL;
+      const params = process.env.N4_BILLING_PARAMS || "";
+      const user = process.env.N4_BILLING_USER;
+      const pass = process.env.N4_BILLING_PASS;
+
+      if (!baseUrl || !user || !pass) {
+        return NextResponse.json({ error: "بيانات اعتماد Navis أو رابط الوسيط غير مهيأ" }, { status: 500 });
+      }
+
+      url = new URL(baseUrl);
+      const extraParams = new URLSearchParams(params.replace(/^[?&]/, ""));
+      for (const [key, value] of extraParams) url.searchParams.append(key, value);
+      headers.Authorization = `Basic ${Buffer.from(`${user}:${pass}`).toString("base64")}`;
     }
-
-    const url = `${baseUrl}?${params}`;
-    const credentials = Buffer.from(`${user}:${pass}`).toString("base64");
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 120_000);
@@ -82,12 +110,10 @@ export async function GET(req) {
     let response;
     try {
       response = await fetch(url, {
-        headers: {
-          Authorization: `Basic ${credentials}`,
-          Accept: "text/xml, application/xml",
-        },
+        headers,
         signal: controller.signal,
         cache: "no-store",
+        redirect: bridgeUrl ? "manual" : "follow",
       });
     } finally {
       clearTimeout(timeout);
@@ -119,7 +145,12 @@ export async function GET(req) {
     if (err.name === "AbortError") {
       return NextResponse.json({ error: "انتهت مهلة الاتصال بـ Navis (120 ثانية)" }, { status: 504 });
     }
-    console.error("[/api/navis] Error:", err);
-    return NextResponse.json({ error: err.message || "خطأ غير متوقع" }, { status: 500 });
+    console.error("[/api/navis] Request failed:", {
+      name: err.name,
+      code: err.cause?.code || "UNKNOWN",
+    });
+    return NextResponse.json({ error: "تعذر الاتصال بوسيط Navis. راجع سجل Vercel للتفاصيل." }, { status: 502 });
   }
 }
+
+export const maxDuration = 120;

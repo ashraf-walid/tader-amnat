@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "navis-relay": "node scripts/navis-relay.mjs",
     "delete-transactions": "node -r dotenv/config scripts/delete-transactions-by-date.js dotenv_config_path=.env.local"
   },
   "dependencies": {
