@@ -250,14 +250,15 @@ export default function AdminNav() {
         />
 
         <div className="max-w-[1200px] mx-auto px-4 h-[54px] flex items-center gap-1.5">
-          {/* ── زر الهامبرغر (جوال فقط) ── */}
+          {/* ── زر القائمة مع نص توضيحي (جوال فقط) ── */}
           <button
             onClick={() => setMobileOpen(v => !v)}
             aria-expanded={mobileOpen}
             aria-label={mobileOpen ? 'إغلاق القائمة' : 'فتح القائمة'}
-            className="flex md:hidden items-center justify-center w-9 h-9 bg-white/[0.06] border border-white/10 rounded-[9px] text-slate-400 shrink-0 transition-colors hover:bg-white/[0.12]"
+            className="flex md:hidden items-center gap-1.5 px-2.5 h-[34px] bg-blue-500/10 border border-blue-500/30 rounded-[10px] text-blue-400 shrink-0 transition-all hover:bg-blue-500/20 active:scale-95 cursor-pointer font-medium"
           >
-            {mobileOpen ? <CloseIcon size={17} /> : <MenuIcon size={17} />}
+            {mobileOpen ? <CloseIcon size={16} /> : <MenuIcon size={16} />}
+            <span className="text-[12px] font-bold">القائمة</span>
           </button>
 
           {/* ── روابط التنقل (ديسكتوب) ── */}
@@ -326,7 +327,7 @@ export default function AdminNav() {
 
               {/* سهم */}
               <ChevronDownIcon
-                size={12}
+                size={15}
                 className="shrink-0 text-slate-500 transition-transform"
                 style={{ transform: userMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
               />

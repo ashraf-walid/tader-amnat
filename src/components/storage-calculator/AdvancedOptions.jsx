@@ -87,6 +87,91 @@ export default function AdvancedOptions({
       {advOpen && (
         <div className="bg-[#111827] border border-white/[0.07] border-t-0 rounded-b-2xl p-5 mb-4 animate-[slide-in_0.2s_ease]">
 
+          {/* ── Group 3: خدمات الساحة ── */}
+          <div className="mb-4">
+            <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-[#4a5568] mb-2">
+              <span className="w-0.5 h-3.5 bg-[#f0b429] rounded-sm" />
+              خدمات الساحة
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+
+              {/* SERVICES_LIST mapping */}
+              {SERVICES_LIST.map(svc => {
+                const on = !!services[svc.id];
+                const qty = serviceQuantities[svc.id] !== undefined ? serviceQuantities[svc.id] : totalConts;
+                let rateToShow;
+                if (svc.id === 'yard') {
+                  const shiftCfg = STORAGE_CONFIG.SERVICES.SHIFTING.YARD_TO_YARD;
+                  if (totalConts > 0) {
+                    rateToShow = (
+                      (shiftCfg.rate20 * twentyCount * nsMultiplier20 + shiftCfg.rate40 * fortyCount * nsMultiplier40) / totalConts
+                    );
+                  } else {
+                    rateToShow = shiftCfg.rate40 * nsMultiplier40;
+                  }
+                  if (isHolidayRelease) rateToShow *= 1.5;
+                } else {
+                  rateToShow = svc.rate * nsMultiplier;
+                }
+                return (
+                  <div key={svc.id} className="flex gap-1.5 items-stretch">
+                    <CheckLabel checked={on} onChange={() => toggleService(svc.id)}>
+                      <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium">{svc.name}</span>
+                      <span className="text-[11px] text-slate-300 font-bold">
+                        ${rateToShow.toFixed(1)}
+                      </span>
+                    </CheckLabel>
+                    {on && (
+                      <QtyCounter storeKey={svc.id} defaultQty={totalConts} />
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* ── ساحة الطوارئ per-size ── */}
+              {showDangerYardSection && (
+                <>
+                  {canDangerYard20 && (
+                    <div className="flex gap-1.5 items-stretch">
+                      <CheckLabel
+                        checked={hasDangerYard20}
+                        onChange={() => setHasDangerYard20(!hasDangerYard20)}
+                      >
+                        <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium flex items-center justify-between">
+                          <span>ساحة الطوارئ</span>
+                          <span className="text-[10px] text-amber-400 font-bold bg-amber-400/10 px-1.5 py-0.5 rounded">٢٠ قدم</span>
+                        </span>
+                      </CheckLabel>
+                      {hasDangerYard20 && (
+                        <QtyCounter storeKey="dangeryard20" defaultQty={twentyCount} />
+                      )}
+                    </div>
+                  )}
+
+                  {canDangerYard40 && (
+                    <div className="flex gap-1.5 items-stretch">
+                      <CheckLabel
+                        checked={hasDangerYard40}
+                        onChange={() => setHasDangerYard40(!hasDangerYard40)}
+                      >
+                        <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium flex items-center justify-between">
+                          <span>ساحة الطوارئ</span>
+                          <span className="text-[10px] text-amber-400 font-bold bg-amber-400/10 px-1.5 py-0.5 rounded">٤٠ قدم</span>
+                        </span>
+                      </CheckLabel>
+                      {hasDangerYard40 && (
+                        <QtyCounter storeKey="dangeryard40" defaultQty={fortyCount} />
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* فاصل متناسق */}
+          <div className="h-px bg-white/[0.05] my-4" />
+
           {/* ── Group 1: خدمات المشمول ── */}
           <div className="mb-4">
             <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-[#4a5568] mb-2">
@@ -134,33 +219,13 @@ export default function AdvancedOptions({
           </div>
 
           {/* ── Group 2: نوع الصرف ── */}
-          <div className="h-px bg-white/[0.05] my-3" />
-          <div className="mb-4">
+          <div className="h-px bg-white/[0.05] my-4" />
+          <div>
             <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-[#4a5568] mb-2">
               <span className="w-0.5 h-3.5 bg-[#f0b429] rounded-sm" />
               نوع الصرف
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {/* صرف للتخزين الخارجي */}
-              <div className="flex gap-1.5 items-stretch">
-                <CheckLabel checked={isExternalStorage} onChange={() => setIsExternalStorage(!isExternalStorage)}>
-                  <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium">
-                    صرف للتخزين الخارجي
-                    <span className="text-[10px] block text-[#4a5568] mt-0.5">يلغي فترة السماح</span>
-                  </span>
-                </CheckLabel>
-              </div>
-
-              {/* التخزين بالمخزن المشترك LCL */}
-              <div className="flex gap-1.5 items-stretch">
-                <CheckLabel checked={isLCLStorage} onChange={() => setIsLCLStorage(!isLCLStorage)}>
-                  <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium">
-                    مخزن مشترك (LCL)
-                    <span className="text-[10px] block text-[#4a5568] mt-0.5">سماح 3 أيام + تفريغ بنصف السعر + نقل</span>
-                  </span>
-                </CheckLabel>
-              </div>
-
               {/* صرف يوم عطلة */}
               <div className="flex gap-1.5 items-stretch">
                 <CheckLabel checked={isHolidayRelease} onChange={() => setIsHolidayRelease(!isHolidayRelease)}>
@@ -173,91 +238,29 @@ export default function AdvancedOptions({
                   <QtyCounter storeKey="holiday" defaultQty={totalConts} />
                 )}
               </div>
+
+              {/* صرف للتخزين الخارجي */}
+              <div className="flex gap-1.5 items-stretch">
+                <CheckLabel checked={isExternalStorage} onChange={() => setIsExternalStorage(!isExternalStorage)}>
+                  <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium">
+                    صرف للتخزين الخارجي
+                    <span className="text-[10px] block text-[#4a5568] mt-0.5">يلغي فترة السماح</span>
+                  </span>
+                </CheckLabel>
+              </div>
+
+              {/* التخزين بالمخزن المشترك LCL */}
+              <div className="flex gap-1.5 items-stretch md:col-span-2">
+                <CheckLabel checked={isLCLStorage} onChange={() => setIsLCLStorage(!isLCLStorage)}>
+                  <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium">
+                    مخزن مشترك (LCL)
+                    <span className="text-[10px] block text-[#4a5568] mt-0.5">سماح 3 أيام + تفريغ بنصف السعر + نقل</span>
+                  </span>
+                </CheckLabel>
+              </div>
             </div>
           </div>
 
-          {/* ── Group 3: خدمات الساحة ── */}
-          <div className="h-px bg-white/[0.05] my-3" />
-          <div>
-            <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-[#4a5568] mb-2">
-              <span className="w-0.5 h-3.5 bg-[#f0b429] rounded-sm" />
-              خدمات الساحة
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-
-              {/* ── ساحة الطوارئ per-size ── */}
-              {showDangerYardSection && (
-                <>
-                  {canDangerYard20 && (
-                    <div className="flex gap-1.5 items-stretch">
-                      <CheckLabel
-                        checked={hasDangerYard20}
-                        onChange={() => setHasDangerYard20(!hasDangerYard20)}
-                      >
-                        <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium">
-                          ساحة الطوارئ
-                          <span className="text-[10px] block text-[#4a5568] mt-0.5">٢٠ قدم</span>
-                        </span>
-                      </CheckLabel>
-                      {hasDangerYard20 && (
-                        <QtyCounter storeKey="dangeryard20" defaultQty={twentyCount} />
-                      )}
-                    </div>
-                  )}
-
-                  {canDangerYard40 && (
-                    <div className="flex gap-1.5 items-stretch">
-                      <CheckLabel
-                        checked={hasDangerYard40}
-                        onChange={() => setHasDangerYard40(!hasDangerYard40)}
-                      >
-                        <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium">
-                          ساحة الطوارئ
-                          <span className="text-[10px] block text-[#4a5568] mt-0.5">٤٠ قدم</span>
-                        </span>
-                      </CheckLabel>
-                      {hasDangerYard40 && (
-                        <QtyCounter storeKey="dangeryard40" defaultQty={fortyCount} />
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* SERVICES_LIST mapping */}
-              {SERVICES_LIST.map(svc => {
-                const on = !!services[svc.id];
-                const qty = serviceQuantities[svc.id] !== undefined ? serviceQuantities[svc.id] : totalConts;
-                let rateToShow;
-                if (svc.id === 'yard') {
-                  const shiftCfg = STORAGE_CONFIG.SERVICES.SHIFTING.YARD_TO_YARD;
-                  if (totalConts > 0) {
-                    rateToShow = (
-                      (shiftCfg.rate20 * twentyCount * nsMultiplier20 + shiftCfg.rate40 * fortyCount * nsMultiplier40) / totalConts
-                    );
-                  } else {
-                    rateToShow = shiftCfg.rate40 * nsMultiplier40;
-                  }
-                  if (isHolidayRelease) rateToShow *= 1.5;
-                } else {
-                  rateToShow = svc.rate * nsMultiplier;
-                }
-                return (
-                  <div key={svc.id} className="flex gap-1.5 items-stretch">
-                    <CheckLabel checked={on} onChange={() => toggleService(svc.id)}>
-                      <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium">{svc.name}</span>
-                      <span className="text-[11px] text-[#4a5568] font-bold">
-                        ${rateToShow.toFixed(1)}
-                      </span>
-                    </CheckLabel>
-                    {on && (
-                      <QtyCounter storeKey={svc.id} defaultQty={totalConts} />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
         </div>
       )}
     </>

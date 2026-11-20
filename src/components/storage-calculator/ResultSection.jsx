@@ -18,7 +18,8 @@ export default function ResultSection({
   result,
   twentyCargoType, fortyCargoType,
   nonStdType20, nonStdType40,
-  formatNumber, resetForm, billingType
+  formatNumber, resetForm, billingType,
+  onOpenServices
 }) {
   // Build a human-readable cargo label for each size
   function buildCargoLabel(cargoType, nonStdType, sizeLabel, count) {
@@ -43,6 +44,12 @@ export default function ResultSection({
     if (labels.length > 0) return `رسوم التخزين (${labels.join(' / ')})`;
     return "رسوم التخزين";
   }
+
+  const hasAnyServices =
+    (result.usd.additionalServices > 0) ||
+    (result.usd.cargoServiceFee > 0) ||
+    (result.usd.cargoStorageFee > 0) ||
+    (result.usd.dangerYardFee > 0);
 
   return (
     <div className="mt-6 animate-[fadeup_0.35s_ease]" id="result-section">
@@ -106,16 +113,41 @@ export default function ResultSection({
           ...(result.usd.dangerYardFee > 0
             ? [["تخزين ساحة الطوارئ", `${formatNumber(result.usd.dangerYardFee)}`, false]]
             : []),
+          ...(!hasAnyServices
+            ? [["__NO_SERVICES__", "", false]]
+            : []),
           ["الإجمالي بالدولار", `${formatNumber(result.usd.subtotal)}`, true],
           ["الإجمالي بالجنيه", `${formatNumber(result.egp.subtotal, 0)} ج.م`, false],
           ["ضريبة القيمة المضافة 14%", `${formatNumber(result.egp.vatAmount, 0)} ج.م`, false],
           ["طابع الشهيد", `${result.egp.martyrStamp} ج.م`, false],
-        ].map(([label, value, isSubtotal]) => (
-          <div key={label} className={`flex justify-between items-center py-3 px-5 border-b border-white/[0.07] text-sm last:border-b-0 ${isSubtotal ? 'bg-[#1a2035]' : ''}`}>
-            <span className="text-[#8892a4]">{label}</span>
-            <span className={`font-bold ${isSubtotal ? 'text-[#f0b429]' : 'text-[#f0f2f8]'}`}>{value}</span>
-          </div>
-        ))}
+        ].map(([label, value, isSubtotal]) => {
+          if (label === "__NO_SERVICES__") {
+            return (
+              <div key="no-services" className="flex justify-between items-center py-2.5 px-5 border-b border-white/[0.07] bg-amber-500/5 text-xs">
+                <span className="text-slate-400 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400/70 shrink-0" />
+                  <span>الخدمات:</span>
+                  <span className="text-slate-400 font-medium"> تأكد أن كشف الحركة لا يحتوى على اي خدمه اضافيه</span>
+                </span>
+                {onOpenServices && (
+                  <button
+                    type="button"
+                    onClick={onOpenServices}
+                    className="text-amber-400 hover:text-amber-300 font-semibold transition-colors cursor-pointer flex items-center gap-1 hover:underline"
+                  >
+                    <span>+ إضافة</span>
+                  </button>
+                )}
+              </div>
+            );
+          }
+          return (
+            <div key={label} className={`flex justify-between items-center py-3 px-5 border-b border-white/[0.07] text-sm last:border-b-0 ${isSubtotal ? 'bg-[#1a2035]' : ''}`}>
+              <span className="text-[#8892a4]">{label}</span>
+              <span className={`font-bold ${isSubtotal ? 'text-[#f0b429]' : 'text-[#f0f2f8]'}`}>{value}</span>
+            </div>
+          );
+        })}
 
         <div className="flex justify-between items-center py-5 px-5 bg-linear-to-l from-[rgba(240,180,41,0.15)] to-[rgba(240,180,41,0.05)] border-t border-[rgba(240,180,41,0.3)]">
           <span className="text-[15px] font-bold text-[#f0b429]">الإجمالي النهائي</span>

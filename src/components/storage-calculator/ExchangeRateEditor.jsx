@@ -68,7 +68,7 @@ export default function ExchangeRateEditor({
             className="flex items-center gap-1.5 text-xs text-[#8892a4] bg-[#1a2035] border border-white/[0.12] rounded-lg px-3 py-1.5 cursor-pointer transition-all hover:text-[#f0b429] hover:border-[rgba(240,180,41,0.3)] whitespace-nowrap"
             onClick={() => setIsEditingRate(true)}>
             <EditIcon />
-            تعديل السعر
+             عدل السعر
           </button>
         </div>
       ) : (

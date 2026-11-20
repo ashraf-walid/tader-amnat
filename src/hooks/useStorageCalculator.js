@@ -30,7 +30,7 @@ export function useStorageCalculator(adminExchangeRate) {
   const [relDate, setRelDate] = useState(new Date());
   const [billingType, setBillingTypeState] = useState("INITIAL");
   const [firstInvoiceDate, setFirstInvoiceDateState] = useState(null);
-  const [twentyCount, setTwentyCount] = useState(1);
+  const [twentyCount, setTwentyCount] = useState(0);
   const [fortyCount, setFortyCount] = useState(0);
 
   // ── Per-size cargo type ──
@@ -189,7 +189,7 @@ export function useStorageCalculator(adminExchangeRate) {
     setArrDate(null);
     setRelDate(new Date());
     setFirstInvoiceDateState(null);
-    setTwentyCount(1);
+    setTwentyCount(0);
     setFortyCount(0);
     setTwentyCargoType("FULL");
     setFortyCargoType("FULL");

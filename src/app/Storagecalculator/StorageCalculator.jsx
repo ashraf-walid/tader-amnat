@@ -91,6 +91,16 @@ export default function StorageCalculator({ adminExchangeRate, previousExchangeR
     }
   }, [result]);
 
+  const handleOpenServices = () => {
+    setAdvOpen(true);
+    setTimeout(() => {
+      const el = document.getElementById('advanced-options-section');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 50);
+  };
+
 
 
   return (
@@ -134,7 +144,7 @@ export default function StorageCalculator({ adminExchangeRate, previousExchangeR
                 href="/Storagecalculator/rates"
                 className="flex items-center gap-1.5 bg-blue-500/10 text-blue-400 text-xs font-bold px-3.5 py-2 rounded-xl border border-blue-500/20 transition-all hover:bg-blue-500/15 no-underline">
                 <InfoIcon />
-                التعريفات
+                التعريفة
               </Link>
             </div>
 
@@ -179,8 +189,8 @@ export default function StorageCalculator({ adminExchangeRate, previousExchangeR
                 أعداد الحاويات في البوليصة
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                <ContainerCountInput label="٢٠ قدم (Twenty-foot)" count={twentyCount} setCount={setTwentyCount} />
-                <ContainerCountInput label="٤٠ قدم (Forty-foot)" count={fortyCount} setCount={setFortyCount} />
+                <ContainerCountInput label="٢٠ قدم" count={twentyCount} setCount={setTwentyCount} />
+                <ContainerCountInput label="٤٠ قدم" count={fortyCount} setCount={setFortyCount} />
               </div>
             </div>
 
@@ -198,43 +208,45 @@ export default function StorageCalculator({ adminExchangeRate, previousExchangeR
               setNonStdType40={setNonStdType40}
             />
 
-            <AdvancedOptions
-              advOpen={advOpen}
-              setAdvOpen={setAdvOpen}
-              hasAdvanced={hasAdvanced}
-              twentyCargoType={twentyCargoType}
-              fortyCargoType={fortyCargoType}
-              nonStdType20={nonStdType20}
-              setNonStdType20={setNonStdType20}
-              nonStdType40={nonStdType40}
-              setNonStdType40={setNonStdType40}
-              hasDangerYard20={hasDangerYard20}
-              setHasDangerYard20={setHasDangerYard20}
-              hasDangerYard40={hasDangerYard40}
-              setHasDangerYard40={setHasDangerYard40}
-              hasCargoStripping={hasCargoStripping}
-              setHasCargoStripping={setHasCargoStripping}
-              hasCargoStorage={hasCargoStorage}
-              setHasCargoStorage={setHasCargoStorage}
-              cargoExitDate={cargoExitDate}
-              setCargoExitDate={setCargoExitDate}
-              arrDate={arrDate}
-              relDate={relDate}
-              isExternalStorage={isExternalStorage}
-              setIsExternalStorage={setIsExternalStorage}
-              isLCLStorage={isLCLStorage}
-              setIsLCLStorage={setIsLCLStorage}
-              isHolidayRelease={isHolidayRelease}
-              setIsHolidayRelease={setIsHolidayRelease}
-              services={services}
-              toggleService={toggleService}
-              serviceQuantities={serviceQuantities}
-              setServiceQuantities={setServiceQuantities}
-              twentyCount={twentyCount}
-              fortyCount={fortyCount}
-              nsMultiplier20={nsMultiplier20}
-              nsMultiplier40={nsMultiplier40}
-            />
+            <div id="advanced-options-section">
+              <AdvancedOptions
+                advOpen={advOpen}
+                setAdvOpen={setAdvOpen}
+                hasAdvanced={hasAdvanced}
+                twentyCargoType={twentyCargoType}
+                fortyCargoType={fortyCargoType}
+                nonStdType20={nonStdType20}
+                setNonStdType20={setNonStdType20}
+                nonStdType40={nonStdType40}
+                setNonStdType40={setNonStdType40}
+                hasDangerYard20={hasDangerYard20}
+                setHasDangerYard20={setHasDangerYard20}
+                hasDangerYard40={hasDangerYard40}
+                setHasDangerYard40={setHasDangerYard40}
+                hasCargoStripping={hasCargoStripping}
+                setHasCargoStripping={setHasCargoStripping}
+                hasCargoStorage={hasCargoStorage}
+                setHasCargoStorage={setHasCargoStorage}
+                cargoExitDate={cargoExitDate}
+                setCargoExitDate={setCargoExitDate}
+                arrDate={arrDate}
+                relDate={relDate}
+                isExternalStorage={isExternalStorage}
+                setIsExternalStorage={setIsExternalStorage}
+                isLCLStorage={isLCLStorage}
+                setIsLCLStorage={setIsLCLStorage}
+                isHolidayRelease={isHolidayRelease}
+                setIsHolidayRelease={setIsHolidayRelease}
+                services={services}
+                toggleService={toggleService}
+                serviceQuantities={serviceQuantities}
+                setServiceQuantities={setServiceQuantities}
+                twentyCount={twentyCount}
+                fortyCount={fortyCount}
+                nsMultiplier20={nsMultiplier20}
+                nsMultiplier40={nsMultiplier40}
+              />
+            </div>
 
             <CalculateButton
               calculate={calculate}
@@ -261,6 +273,7 @@ export default function StorageCalculator({ adminExchangeRate, previousExchangeR
                   formatNumber={formatNumber}
                   resetForm={resetForm}
                   billingType={billingType}
+                  onOpenServices={handleOpenServices}
                 />
               </div>
             )}
