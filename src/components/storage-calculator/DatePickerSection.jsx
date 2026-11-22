@@ -34,15 +34,15 @@ export default function DatePickerSection({
         />
       </div>
       {days && (
-        <div className="inline-flex items-center gap-2 bg-[rgba(240,180,41,0.12)] border border-[rgba(240,180,41,0.25)] text-[#f0b429] rounded-full text-[13px] font-bold px-3.5 py-1.5 mt-3.5">
-          <ClockIcon />
+        <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-[rgba(240,180,41,0.12)] border border-[rgba(240,180,41,0.25)] text-[#f0b429] rounded-full text-[11px] sm:text-[13px] font-bold px-2.5 sm:px-3.5 py-1 sm:py-1.5 mt-3.5 whitespace-nowrap">
+          <ClockIcon className="shrink-0" />
           <span className="flex items-center">
             إجمالي المدة:
-            <strong className="text-[17px] font-extrabold font-mono mx-1.5 text-white bg-[rgba(240,180,41,0.25)] px-2 py-0.5 rounded-md leading-none">
+            <strong className="text-[14px] sm:text-[17px] font-extrabold font-mono mx-1 sm:mx-1.5 text-white bg-[rgba(240,180,41,0.25)] px-1.5 sm:px-2 py-0.5 rounded-md leading-none">
               {days}
             </strong>
             يوم
-            <span className="text-[11px] font-normal opacity-80 mr-1.5">
+            <span className="text-[9px] sm:text-[11px] font-normal opacity-80 mr-1 sm:mr-1.5">
               (شاملة فترة السماح)
             </span>
           </span>
