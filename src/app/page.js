@@ -41,6 +41,8 @@ export default function AccountsDashboard() {
     setIsEnglishKeyboard,
     isTransactionsOnlyActive,
     setIsTransactionsOnlyActive,
+    isNegativeOnlyActive,
+    setIsNegativeOnlyActive,
     searchInputRef,
   } = useSearch(allAccounts, setData);
 
@@ -92,7 +94,8 @@ export default function AccountsDashboard() {
         {loading &&
           allAccounts.length === 0 &&
           !search &&
-          !isTransactionsOnlyActive ? (
+          !isTransactionsOnlyActive &&
+          !isNegativeOnlyActive ? (
           <div className="flex flex-col items-center justify-center h-75 md:h-100 mx-4 md:mx-0">
             <div className="w-12 h-12 rounded-full border-4 border-blue-900/40 border-t-blue-600 animate-spin mb-4" />
             <p className="text-sm font-medium text-slate-500">
@@ -102,7 +105,8 @@ export default function AccountsDashboard() {
         ) : allAccounts.length === 0 &&
           !search &&
           !loading &&
-          !isTransactionsOnlyActive ? (
+          !isTransactionsOnlyActive &&
+          !isNegativeOnlyActive ? (
           /* Empty State - File Upload Zone */
           <FileUploadZone
             isDragging={isDragging}
@@ -124,6 +128,8 @@ export default function AccountsDashboard() {
                 setIsEnglishKeyboard={setIsEnglishKeyboard}
                 isTransactionsOnlyActive={isTransactionsOnlyActive}
                 setIsTransactionsOnlyActive={setIsTransactionsOnlyActive}
+                isNegativeOnlyActive={isNegativeOnlyActive}
+                setIsNegativeOnlyActive={setIsNegativeOnlyActive}
                 filteredData={filteredData}
               />
 

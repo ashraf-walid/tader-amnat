@@ -12,7 +12,7 @@ export default function BillingTypeSelector({
   prevDays
 }) {
   return (
-    <div className="bg-[#111827] border border-white/[0.12] rounded-[20px] p-6 mb-4">
+    <div className="bg-[#111827] border border-white/[0.12] rounded-[20px] px-6 pb-1 pt-4 mb-4">
       {/* Release type */}
       <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-[#4a5568] mb-2">
         <span className="w-0.5 h-3.5 bg-[#f0b429] rounded-sm" />

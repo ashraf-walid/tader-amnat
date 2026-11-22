@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Search, X, History } from "lucide-react";
+import { Search, X, History, TrendingDown } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -16,6 +16,8 @@ export default function SearchBar({
   isEnglishKeyboard,
   isTransactionsOnlyActive,
   setIsTransactionsOnlyActive,
+  isNegativeOnlyActive,
+  setIsNegativeOnlyActive,
   filteredData,
 }) {
   return (
@@ -35,7 +37,7 @@ export default function SearchBar({
               setIsTransactionsOnlyActive(!isTransactionsOnlyActive)
             }
             className={cn(
-              "flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold transition-all",
+              "flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold transition-all cursor-pointer",
               isTransactionsOnlyActive
                 ? "bg-orange-600 text-white shadow-lg shadow-orange-500/30"
                 : "bg-slate-800 text-slate-500 hover:bg-slate-700",
@@ -43,6 +45,20 @@ export default function SearchBar({
           >
             <History size={12} />
             المعاملات
+          </button>
+          <button
+            onClick={() =>
+              setIsNegativeOnlyActive(!isNegativeOnlyActive)
+            }
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold transition-all cursor-pointer",
+              isNegativeOnlyActive
+                ? "bg-red-600 text-white shadow-lg shadow-red-500/30"
+                : "bg-slate-800 text-slate-500 hover:bg-slate-700 hover:text-slate-300",
+            )}
+          >
+            <TrendingDown size={12} />
+            الحسابات الكاشفة
           </button>
         </div>
       </div>

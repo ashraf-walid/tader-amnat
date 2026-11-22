@@ -8,9 +8,11 @@ export const useSearchStore = create(
     (set) => ({
       search: "",
       isTransactionsOnlyActive: false,
+      isNegativeOnlyActive: false,
 
       setSearch: (search) => set({ search }),
       setIsTransactionsOnlyActive: (isTransactionsOnlyActive) => set({ isTransactionsOnlyActive }),
+      setIsNegativeOnlyActive: (isNegativeOnlyActive) => set({ isNegativeOnlyActive }),
     }),
     {
       name: "search-storage",

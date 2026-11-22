@@ -17,6 +17,8 @@ export function useSearch(allAccounts, setData) {
     setSearch,
     isTransactionsOnlyActive,
     setIsTransactionsOnlyActive,
+    isNegativeOnlyActive,
+    setIsNegativeOnlyActive,
   } = useSearchStore();
   const searchInputRef = useRef(null);
   const [isEnglishKeyboard, setIsEnglishKeyboard] = useState(false);
@@ -77,11 +79,34 @@ export function useSearch(allAccounts, setData) {
         );
       }
 
+      // Apply negative balance only filter (< 0)
+      if (isNegativeOnlyActive) {
+        results = results.filter((acc) => {
+          const baseBalance =
+            (acc.closingBalance?.debit || 0) -
+            (acc.closingBalance?.credit || 0);
+          const historyAddition = (acc.transactions || [])
+            .filter((t) => t.type === "addition")
+            .reduce((sum, t) => sum + (t.amount || 0), 0);
+          const historyDeduction = (acc.transactions || [])
+            .filter((t) => t.type === "deduction")
+            .reduce((sum, t) => sum + (t.amount || 0), 0);
+          const netBalance = baseBalance + historyAddition - historyDeduction;
+          return netBalance < 0;
+        });
+      }
+
       setData(results);
     };
 
     performLocalSearch();
-  }, [queryVariants, isTransactionsOnlyActive, allAccounts, setData]);
+  }, [
+    queryVariants,
+    isTransactionsOnlyActive,
+    isNegativeOnlyActive,
+    allAccounts,
+    setData,
+  ]);
 
   // Focus on search input on mount
   useEffect(() => {
@@ -100,6 +125,8 @@ export function useSearch(allAccounts, setData) {
     setIsEnglishKeyboard,
     isTransactionsOnlyActive,
     setIsTransactionsOnlyActive,
+    isNegativeOnlyActive,
+    setIsNegativeOnlyActive,
     searchInputRef,
     clearSearch,
   };

@@ -50,13 +50,13 @@ export const STORAGE_CONFIG = {
         CURRENCY: 'USD',
         TIERS: [
           {
-            name: 'Tier 1',
+            name: 'الشريحة 1',
             minDay: 6,
             maxDay: 20,
             rate: 8
           },
           {
-            name: 'Tier 2',
+            name: 'الشريحة 2',
             minDay: 21,
             maxDay: Infinity,
             rate: 12
@@ -112,13 +112,13 @@ export const STORAGE_CONFIG = {
         CURRENCY: 'USD',
         TIERS: [
           {
-            name: 'Tier 1',
+            name: 'الشريحة 1',
             minDay: 6,
             maxDay: 20,
             rate: 14 
           },
           {
-            name: 'Tier 2',
+            name: 'الشريحة 2',
             minDay: 21,
             maxDay: Infinity,
             rate: 21 

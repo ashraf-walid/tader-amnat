@@ -69,18 +69,28 @@ export async function PUT(req) {
     const actor = requireAdmin(req);
 
     const body = await req.json();
-    const { exchangeRate } = body;
+    let { exchangeRate } = body;
 
-    if (!exchangeRate || isNaN(exchangeRate)) {
+    if (typeof exchangeRate === "string") {
+      exchangeRate = exchangeRate
+        .replace(/[\u200B-\u200D\uFEFF\u00A0\u200E\u200F]/g, "")
+        .replace(/\s+/g, "")
+        .replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d))
+        .replace(/,/g, ".");
+    }
+
+    const numRate = Number(exchangeRate);
+
+    if (!exchangeRate || isNaN(numRate) || numRate <= 0) {
       return NextResponse.json(
-        { success: false, error: "Invalid exchange rate" },
+        { success: false, error: "سعر الصرف غير صالح" },
         { status: 400 },
       );
     }
 
     await connectToDatabase();
     const current = await Settings.findOne({ key: "exchangeRate" }).lean();
-    const rateSetting = await saveExchangeRate(Number(exchangeRate), actor.username);
+    const rateSetting = await saveExchangeRate(numRate, actor.username);
 
     if (Number(current?.value) !== Number(rateSetting.value)) {
       await logActivity(actor, "rate.update", {

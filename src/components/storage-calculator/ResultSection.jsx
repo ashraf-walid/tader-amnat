@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { SummaryIcon } from '@/components/Icons';
 
 const CARGO_LABELS = {
@@ -13,6 +14,105 @@ const NON_STD_LABELS = {
   OOG: "سعر مضاعف ×٢",
   LASHING: "سعر مضاعف ×٤",
 };
+
+function CollapsibleBreakdown({ title, items, formatNumber }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  if (!items || items.length === 0) return null;
+
+  return (
+    <div className="border-t border-white/[0.07] bg-[#0b1120]">
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="w-full flex items-center justify-between py-3 px-5 cursor-pointer hover:bg-white/[0.02] transition-colors select-none text-right"
+      >
+        <div className="flex items-center gap-2 text-[10px] font-extrabold text-[#8892a4] tracking-wider uppercase">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#f0b429]" />
+          <span>{title}</span>
+          <span className="text-[10px] text-slate-500 font-normal">
+            ({items.length} {items.length === 1 ? "شريحة" : "شرائح"})
+          </span>
+        </div>
+        <span
+          className={`text-sm text-[#8892a4] transition-transform duration-300 ${
+            isOpen ? "rotate-180 text-[#f0b429]" : ""
+          }`}
+        >
+          ⌄
+        </span>
+      </button>
+
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          isOpen
+            ? "max-h-[800px] opacity-100 px-5 pb-4 pt-1"
+            : "max-h-0 opacity-0 px-5 py-0 pointer-events-none"
+        }`}
+      >
+        <div className="space-y-2">
+          {items.map((item, i) => {
+            const isGrace =
+              item.subtotal === 0 ||
+              item.rate === 0 ||
+              item.tierName?.includes("سماح");
+
+            return (
+              <div
+                key={i}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-white/[0.08] transition-colors"
+              >
+                {/* اسم الشريحة والشارة */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold text-[#f0f2f8]">
+                    {item.tierName}
+                  </span>
+                  {isGrace && (
+                    <span className="text-[7px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      بدون رسوم تخزين
+                    </span>
+                  )}
+                </div>
+
+                {/* تفاصيل الأيام والمبلغ */}
+                <div className="flex items-center justify-between sm:justify-end gap-3 text-[11px]">
+                  {/* شارة الأيام المنظمة */}
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/40 border border-white/[0.05] text-[#8892a4]">
+                    <span>
+                      من اليوم <strong className="text-white font-mono">{item.fromDay}</strong> إلى <strong className="text-white font-mono">{item.toDay}</strong>
+                    </span>
+                    <span className="text-white/20">•</span>
+                    <span className="text-[#f0b429] font-bold font-mono">
+                      {item.days} {item.days === 1 ? "يوم" : item.days === 2 ? "يومان" : "أيام"}
+                    </span>
+                  </div>
+
+                  {/* الحسبة والمبلغ */}
+                  <div className="min-w-[75px] text-left">
+                    {isGrace ? (
+                      <span className="font-mono font-bold text-emerald-400 text-[11px]">$0.00</span>
+                    ) : (
+                      <div className="flex items-baseline justify-end gap-1.5 font-mono">
+                        {item.rate > 0 && (
+                          <span className="text-[10px] text-[#4a5568]">
+                            ({item.days}×${formatNumber(item.rate)})
+                          </span>
+                        )}
+                        <span className="font-bold text-[#f0b429] text-[11px]">
+                          ${formatNumber(item.subtotal)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function ResultSection({
   result,
@@ -154,41 +254,21 @@ export default function ResultSection({
           <span className="text-[28px] font-extrabold text-[#f0b429] tracking-tight">{formatNumber(result.egp.total, 0)} ج.م</span>
         </div>
 
-        {result.details.storageBreakdown.length > 0 && (
-          <div className="py-3.5 px-5 bg-[#0b1120] border-t border-white/[0.07]">
-            <div className="text-[10px] font-bold text-[#4a5568] tracking-widest uppercase mb-2">تفصيل شرائح التخزين</div>
-            {result.details.storageBreakdown.map((item, i) => (
-              <div key={i} className="flex justify-between text-xs text-[#4a5568] py-1 border-b border-dashed border-white/[0.07] last:border-b-0">
-                <span>{item.tierName} — {item.days} يوم (من {item.fromDay} إلى {item.toDay})</span>
-                <span className="text-[#8892a4] font-bold">${formatNumber(item.subtotal)}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {result.details.cargoBreakdown?.length > 0 && (
-          <div className="py-3.5 px-5 bg-[#0b1120] border-t border-white/[0.07]">
-            <div className="text-[10px] font-bold text-[#4a5568] tracking-widest uppercase mb-2">تفصيل شرائح أرضيات المشمول</div>
-            {result.details.cargoBreakdown.map((item, i) => (
-              <div key={i} className="flex justify-between text-xs text-[#4a5568] py-1 border-b border-dashed border-white/[0.07] last:border-b-0">
-                <span>{item.tierName} — {item.days} يوم (من {item.fromDay} إلى {item.toDay})</span>
-                <span className="text-[#8892a4] font-bold">${formatNumber(item.subtotal)}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {result.details.dangerYardBreakdown?.length > 0 && (
-          <div className="py-3.5 px-5 bg-[#0b1120] border-t border-white/[0.07]">
-            <div className="text-[10px] font-bold text-[#4a5568] tracking-widest uppercase mb-2">تفصيل شرائح ساحة الطوارئ</div>
-            {result.details.dangerYardBreakdown.map((item, i) => (
-              <div key={i} className="flex justify-between text-xs text-[#4a5568] py-1 border-b border-dashed border-white/[0.07] last:border-b-0">
-                <span>{item.tierName} — {item.days} يوم (من {item.fromDay} إلى {item.toDay})</span>
-                <span className="text-[#8892a4] font-bold">${formatNumber(item.subtotal)}</span>
-              </div>
-            ))}
-          </div>
-        )}
+        <CollapsibleBreakdown
+          title="تفصيل شرائح التخزين"
+          items={result.details.storageBreakdown}
+          formatNumber={formatNumber}
+        />
+        <CollapsibleBreakdown
+          title="تفصيل شرائح أرضيات المشمول"
+          items={result.details.cargoBreakdown}
+          formatNumber={formatNumber}
+        />
+        <CollapsibleBreakdown
+          title="تفصيل شرائح ساحة الطوارئ"
+          items={result.details.dangerYardBreakdown}
+          formatNumber={formatNumber}
+        />
       </div>
 
       <button

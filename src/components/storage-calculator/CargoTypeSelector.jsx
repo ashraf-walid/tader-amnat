@@ -104,49 +104,51 @@ export default function CargoTypeSelector({
   return (
     <div className="bg-gradient-to-b from-[#111827] to-[#0d1424] border border-white/[0.08] shadow-[0_8px_30px_rgb(0,0,0,0.4)] rounded-[24px] p-6 mb-5 transition-all duration-300 hover:border-white/[0.12]">
 
-      {/* ── Header ── */}
-      <div className="flex items-center gap-2.5 text-[11px] font-extrabold tracking-widest uppercase text-[#4a5568] mb-5">
-        <span className="w-1 h-4 bg-gradient-to-b from-[#f0b429] to-[#d69b1e] rounded-full shadow-[0_0_8px_rgba(240,180,41,0.5)]" />
-        نوع البضاعة
+      {/* ── Header & Container Size Row ── */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div className="flex items-center gap-2.5 text-[11px] font-extrabold tracking-widest uppercase text-[#4a5568]">
+          <span className="w-1 h-4 bg-gradient-to-b from-[#f0b429] to-[#d69b1e] rounded-full shadow-[0_0_8px_rgba(240,180,41,0.5)]" />
+          نوع البضاعة
+        </div>
+
+        {/* ── Tab bar (only when both sizes active) ── */}
+        {bothActive && (
+          <div className="flex bg-black/40 rounded-xl p-1 border border-white/[0.04] w-full sm:w-auto">
+            {/* 20ft tab */}
+            <button
+              onClick={() => setActiveTab('20')}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2 rounded-lg text-[13px] font-bold transition-all duration-300 ease-out cursor-pointer ${
+                currentTab === '20'
+                  ? 'bg-[#f0b429] text-[#020617] shadow-md scale-100'
+                  : 'text-[#8892a4] hover:text-white hover:bg-white/5 opacity-80 hover:opacity-100'
+              }`}
+            >
+              <span>٢٠ قدم</span>
+              {currentTab !== '20' && <TypeBadge value={twentyCargoType} nonStdType={nonStdType20} />}
+            </button>
+
+            {/* 40ft tab */}
+            <button
+              onClick={() => setActiveTab('40')}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2 rounded-lg text-[13px] font-bold transition-all duration-300 ease-out cursor-pointer ${
+                currentTab === '40'
+                  ? 'bg-[#f0b429] text-[#020617] shadow-md scale-100'
+                  : 'text-[#8892a4] hover:text-white hover:bg-white/5 opacity-80 hover:opacity-100'
+              }`}
+            >
+              <span>٤٠ قدم</span>
+              {currentTab !== '40' && <TypeBadge value={fortyCargoType} nonStdType={nonStdType40} />}
+            </button>
+          </div>
+        )}
+
+        {/* ── Single-size label ── */}
+        {!bothActive && (
+          <div className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.05] text-[#8892a4] text-[12px] font-bold shadow-sm">
+            {hasTwenty ? '٢٠ قدم' : '٤٠ قدم'}
+          </div>
+        )}
       </div>
-
-      {/* ── Tab bar (only when both sizes active) ── */}
-      {bothActive && (
-        <div className="flex mb-6 bg-black/40 rounded-xl p-1.5 w-full sm:w-max border border-white/[0.04]">
-          {/* 20ft tab */}
-          <button
-            onClick={() => setActiveTab('20')}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 sm:px-6 py-2.5 rounded-lg text-[13px] font-bold transition-all duration-300 ease-out ${
-              currentTab === '20'
-                ? 'bg-[#f0b429] text-[#020617] shadow-md scale-100'
-                : 'text-[#8892a4] hover:text-white hover:bg-white/5 opacity-80 hover:opacity-100'
-            }`}
-          >
-            <span>٢٠ قدم</span>
-            {currentTab !== '20' && <TypeBadge value={twentyCargoType} nonStdType={nonStdType20} />}
-          </button>
-
-          {/* 40ft tab */}
-          <button
-            onClick={() => setActiveTab('40')}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 sm:px-6 py-2.5 rounded-lg text-[13px] font-bold transition-all duration-300 ease-out ${
-              currentTab === '40'
-                ? 'bg-[#f0b429] text-[#020617] shadow-md scale-100'
-                : 'text-[#8892a4] hover:text-white hover:bg-white/5 opacity-80 hover:opacity-100'
-            }`}
-          >
-            <span>٤٠ قدم</span>
-            {currentTab !== '40' && <TypeBadge value={fortyCargoType} nonStdType={nonStdType40} />}
-          </button>
-        </div>
-      )}
-
-      {/* ── Single-size label ── */}
-      {!bothActive && (
-        <div className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-white/[0.03] border border-white/[0.05] text-[#8892a4] text-[13px] font-bold mb-5 shadow-sm">
-          {hasTwenty ? '٢٠ قدم' : '٤٠ قدم'}
-        </div>
-      )}
 
       {/* ── Cargo type buttons ── */}
       <CargoButtons

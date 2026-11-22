@@ -70,22 +70,62 @@ export default function AdvancedOptions({
     );
   }
 
+  const smoothScrollBy = (distance, duration = 650) => {
+    const start = window.scrollY;
+    const startTime = performance.now();
+
+    const easeInOutCubic = (t) =>
+      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+    const step = (currentTime) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = easeInOutCubic(progress);
+
+      window.scrollTo(0, start + distance * ease);
+
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      }
+    };
+
+    requestAnimationFrame(step);
+  };
+
+  const handleToggle = () => {
+    setAdvOpen((prev) => {
+      const willOpen = !prev;
+      if (willOpen) {
+        requestAnimationFrame(() => {
+          smoothScrollBy(200, 650);
+        });
+      }
+      return willOpen;
+    });
+  };
+
   return (
     <>
       <button
         className={`flex items-center justify-between w-full bg-[#111827] border border-white/[0.07] rounded-2xl px-[18px] py-3.5 cursor-pointer text-sm font-semibold text-[#8892a4] transition-all mb-0 hover:border-white/[0.12] hover:text-[#f0f2f8] ${advOpen ? 'rounded-b-none border-b-transparent text-[#f0f2f8]' : ''
           }`}
-        onClick={() => setAdvOpen(o => !o)}>
+        onClick={handleToggle}>
         <span className="flex items-center gap-2">
           <OptionsIcon />
           خدمات اضافية
           {hasAdvanced && <span className="w-[7px] h-[7px] rounded-full bg-[#f0b429] inline-block mr-0.5" />}
         </span>
-        <span className={`text-lg transition-transform ${advOpen ? 'rotate-180' : ''}`}>⌄</span>
+        <span className={`text-lg transition-transform duration-500 ${advOpen ? 'rotate-180' : ''}`}>⌄</span>
       </button>
 
-      {advOpen && (
-        <div className="bg-[#111827] border border-white/[0.07] border-t-0 rounded-b-2xl p-5 mb-4 animate-[slide-in_0.2s_ease]">
+      <div
+        className={`overflow-hidden transition-all duration-700 ease-in-out ${
+          advOpen
+            ? 'max-h-[1600px] opacity-100 mb-4'
+            : 'max-h-0 opacity-0 mb-0 pointer-events-none'
+        }`}
+      >
+        <div className="bg-[#111827] border border-white/[0.07] border-t-0 rounded-b-2xl p-5">
 
           {/* ── Group 3: خدمات الساحة ── */}
           <div className="mb-4">
@@ -262,7 +302,7 @@ export default function AdvancedOptions({
           </div>
 
         </div>
-      )}
+      </div>
     </>
   );
 }

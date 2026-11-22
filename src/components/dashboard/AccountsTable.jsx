@@ -58,7 +58,9 @@ export default function AccountsTable({
         </thead>
         <tbody className="divide-y divide-slate-800">
           {filteredData.map((item, idx) => {
-            const pending = pendingChanges[item.accountCode] || {};
+            const accountKey =
+              item.accountCode || item._id || item.account || idx;
+            const pending = pendingChanges[accountKey] || {};
             const historyAddition = (item.transactions || [])
               .filter((t) => t.type === "addition")
               .reduce((sum, t) => sum + t.amount, 0);
@@ -86,7 +88,7 @@ export default function AccountsTable({
 
             return (
               <tr
-                key={idx}
+                key={accountKey}
                 className={cn(
                   "hover:bg-slate-800/30 border-r-4 transition-all",
                   hasChanges
@@ -192,7 +194,7 @@ export default function AccountsTable({
                     value={pending.manualAddition || ""}
                     onChange={(e) =>
                       updateManualValue(
-                        item.accountCode,
+                        accountKey,
                         "manualAddition",
                         e.target.value,
                       )
@@ -207,7 +209,7 @@ export default function AccountsTable({
                     value={pending.manualDeduction || ""}
                     onChange={(e) =>
                       updateManualValue(
-                        item.accountCode,
+                        accountKey,
                         "manualDeduction",
                         e.target.value,
                       )
@@ -218,7 +220,7 @@ export default function AccountsTable({
                 <td className="w-28 text-center">
                   {hasChanges && (
                     <button
-                      onClick={() => commitChanges(item.accountCode)}
+                      onClick={() => commitChanges(accountKey)}
                       className="px-2 py-1 bg-green-600 text-white rounded-lg shadow-sm flex items-center gap-1 mx-auto text-xs"
                     >
                       <Check size={12} /> حفظ

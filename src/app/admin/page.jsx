@@ -406,10 +406,32 @@ export default function AdminPage() {
     })();
   }, []);
 
+  const cleanRateInput = (raw) => {
+    if (!raw) return "";
+    let val = String(raw)
+      .replace(/[\u200B-\u200D\uFEFF\u00A0\u200E\u200F]/g, "") // إزالة الرموز الخفية ورموز اتجاه النص
+      .replace(/\s+/g, "") // إزالة جميع أنواع المسافات
+      .replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d)) // تحويل الأرقام العربية
+      .replace(/,/g, ".") // تحويل الفاصلة إلى نقطة
+      .replace(/[^0-9.]/g, ""); // حذف أي أحرف أو رموز أخرى
+    const parts = val.split(".");
+    if (parts.length > 2) {
+      val = parts[0] + "." + parts.slice(1).join("");
+    }
+    return val;
+  };
+
   const saveRate = async () => {
+    const cleaned = cleanRateInput(rate);
+    const num = parseFloat(cleaned);
+    if (!cleaned || isNaN(num) || num <= 0) {
+      notify("يرجى إدخال سعر صرف صحيح", "error");
+      return;
+    }
+    setRate(cleaned);
     setRS(true);
     try {
-      const res = await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ exchangeRate: Number(rate) }) });
+      const res = await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ exchangeRate: num }) });
       const d = await res.json();
       if (d.success) {
         notify("تم حفظ سعر الصرف بنجاح");
@@ -753,8 +775,19 @@ export default function AdminPage() {
               <div className="flex flex-col gap-[18px]">
                 <Field label="سعر الصرف الحالي  (ج.م / دولار)" icon={Icon.Currency}>
                   <div className="relative">
-                    <input type="number" step="0.0001" min="0.1" value={rate} onChange={(e) => setRate(e.target.value)}
-                      className="admin-input-gold w-full bg-slate-950 border-[1.5px] border-white/[0.12] rounded-[10px] text-[#f0b429] text-[22px] font-extrabold tracking-wide rtl outline-none py-3.5 px-4 pl-[52px] box-border" />
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={rate}
+                      onChange={(e) => setRate(cleanRateInput(e.target.value))}
+                      onPaste={(e) => {
+                        e.preventDefault();
+                        const text = e.clipboardData.getData("text") || "";
+                        setRate(cleanRateInput(text));
+                      }}
+                      placeholder="0.0000"
+                      className="admin-input-gold w-full bg-slate-950 border-[1.5px] border-white/[0.12] rounded-[10px] text-[#f0b429] text-[22px] font-extrabold tracking-wide rtl outline-none py-3.5 px-4 pl-[52px] box-border"
+                    />
                     <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[12.5px] text-slate-400 font-semibold pointer-events-none">ج.م / $</span>
                   </div>
                 </Field>

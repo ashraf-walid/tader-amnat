@@ -423,15 +423,19 @@ export function useAccountData() {
     }
   };
 
+  // Helper to get consistent account identifier
+  const getAccountKey = (item) =>
+    item?.accountCode || item?._id || item?.account;
+
   // Commit transaction changes
   const commitTransactionChanges = async (
-    accountCode,
+    accountIdentifier,
     transactions,
     pendingChanges,
   ) => {
     // Find the account to update
     const accountToUpdate = data.find(
-      (item) => item.accountCode === accountCode,
+      (item) => getAccountKey(item) === accountIdentifier,
     );
     if (!accountToUpdate) return;
 
@@ -453,42 +457,57 @@ export function useAccountData() {
     }
 
     // ✅ 1. Save to IndexedDB first (immediate)
-    await updateTransactions(accountCode, newTransactions);
+    await updateTransactions(
+      accountToUpdate.accountCode,
+      newTransactions,
+      accountToUpdate.account,
+    );
 
     // ✅ 2. Update UI immediately
     setAllAccounts((prevAll) =>
       prevAll.map((item) =>
-        item.accountCode === accountCode
+        getAccountKey(item) === accountIdentifier
           ? { ...item, transactions: newTransactions }
           : item,
       ),
     );
     setData((prevData) =>
       prevData.map((item) =>
-        item.accountCode === accountCode
+        getAccountKey(item) === accountIdentifier
           ? { ...item, transactions: newTransactions }
           : item,
       ),
     );
 
-    // ✅ 3. Sync with MongoDB in background (no waiting)
-    fetch(`/api/data/${accountCode}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ transactions: newTransactions }),
-    })
-      .then(async (response) => {
-        const result = await response.json();
-        if (result.success) {
-          console.log(`✅ تمت مزامنة الحساب ${accountCode} مع MongoDB بنجاح`);
-          await setLastSyncTimestamp(Date.now());
-        } else {
-          console.error(`⚠️ فشلت مزامنة الحساب ${accountCode}:`, result.error);
-        }
+    // ✅ 3. Sync with MongoDB in background (only if accountCode exists)
+    if (accountToUpdate.accountCode) {
+      fetch(`/api/data/${accountToUpdate.accountCode}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transactions: newTransactions }),
       })
-      .catch((err) => {
-        console.error("⚠️ MongoDB sync failed:", err);
-      });
+        .then(async (response) => {
+          const result = await response.json();
+          if (result.success) {
+            console.log(
+              `✅ تمت مزامنة الحساب ${accountToUpdate.accountCode} مع MongoDB بنجاح`,
+            );
+            await setLastSyncTimestamp(Date.now());
+          } else {
+            console.error(
+              `⚠️ فشلت مزامنة الحساب ${accountToUpdate.accountCode}:`,
+              result.error,
+            );
+          }
+        })
+        .catch((err) => {
+          console.error("⚠️ MongoDB sync failed:", err);
+        });
+    } else {
+      console.warn(
+        `⚠️ تم حفظ التعديلات محلياً فقط لعدم توفر كود العميل للحساب: ${accountToUpdate.account}`,
+      );
+    }
   };
 
   // Initialize data

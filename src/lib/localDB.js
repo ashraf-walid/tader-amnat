@@ -237,15 +237,23 @@ export async function updateAccount(accountCode, updatedData) {
  * إضافة أو تحديث المعاملات لحساب معين
  * @param {string} accountCode - كود الحساب
  * @param {Array} transactions - مصفوفة المعاملات الجديدة
+ * @param {string} [accountName] - اسم الحساب كخيار بديل في حال عدم توفر الكود
  * @returns {Promise<boolean>}
  */
-export async function updateTransactions(accountCode, transactions) {
+export async function updateTransactions(accountCode, transactions, accountName) {
   try {
-    await db.accounts.update(accountCode, { transactions });
-    console.log(`✅ تم تحديث معاملات الحساب ${accountCode}`);
-    return true;
+    if (accountCode) {
+      await db.accounts.update(accountCode, { transactions });
+      console.log(`✅ تم تحديث معاملات الحساب ${accountCode}`);
+      return true;
+    } else if (accountName) {
+      await db.accounts.where('account').equals(accountName).modify({ transactions });
+      console.log(`✅ تم تحديث معاملات الحساب محلياً بالاسم: ${accountName}`);
+      return true;
+    }
+    return false;
   } catch (error) {
-    console.error(`Error updating transactions for ${accountCode}:`, error);
+    console.error(`Error updating transactions for ${accountCode || accountName}:`, error);
     return false;
   }
 }
