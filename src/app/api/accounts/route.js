@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import User from "@/models/User";
 import PushSubscription from "@/models/PushSubscription";
+import CalculationLog from "@/models/CalculationLog";
+import PageVisit from "@/models/PageVisit";
 import cache, { CacheKeys, CacheTTL, invalidateCache } from "@/lib/cache";
 import { logActivity } from "@/lib/activityLog";
 import { requireAdmin } from "@/lib/auth";
@@ -17,9 +19,11 @@ export async function GET(request) {
     // 🔒 تحقق من صلاحيات المدير
     const decoded = requireAdmin(request);
     const isOwner = decoded.role === "owner";
+    const { searchParams } = new URL(request.url);
+    const forceFresh = searchParams.has("t");
 
-    // 1️⃣ محاولة القراءة من الذاكرة
-    const cachedAccounts = cache.get(CacheKeys.ALL_ACCOUNTS);
+    // 1️⃣ محاولة القراءة من الذاكرة (إلا إذا تم طلب تحديث فوري)
+    const cachedAccounts = forceFresh ? null : cache.get(CacheKeys.ALL_ACCOUNTS);
     if (cachedAccounts !== null) {
       const visible = isOwner ? cachedAccounts : cachedAccounts.filter(a => a.role !== "owner");
       console.log("✅ Accounts from cache:", visible.length);
@@ -65,12 +69,41 @@ export async function GET(request) {
       hasNotifications: false,
     }));
 
-    // 3️⃣ احسب حالة الإشعارات لكل حساب
+    // 3️⃣ احسب حالة الإشعارات وتاريخ آخر فاتورة وزيارات كشف الرصيد لكل حساب
     const userIds = users.map(u => u._id);
-    const subs = await PushSubscription.find({ userId: { $in: userIds } }).select('userId');
+    const [subs, lastCalculations, balanceVisits] = await Promise.all([
+      PushSubscription.find({ userId: { $in: userIds } }).select('userId').lean(),
+      CalculationLog.aggregate([
+        { $match: { userId: { $in: userIds } } },
+        { $group: { _id: "$userId", lastCalculation: { $max: "$createdAt" } } },
+      ]),
+      PageVisit.find({
+        userId: { $in: userIds },
+        page: "/client/balance",
+      }).select("userId lastVisitedAt visitCount").lean(),
+    ]);
+
     const subSet = new Set(subs.map(s => s.userId.toString()));
+    const calcDateMap = new Map(lastCalculations.map(c => [c._id.toString(), c.lastCalculation]));
+    const balanceVisitMap = new Map(
+      balanceVisits.map(v => [
+        v.userId.toString(),
+        { lastVisitedAt: v.lastVisitedAt, visitCount: v.visitCount || 0 },
+      ])
+    );
+
     accounts.forEach(acc => {
       acc.hasNotifications = subSet.has(acc.id);
+      acc.lastCalculation = calcDateMap.get(acc.id) || null;
+      // لا يُحسب كشف الرصيد إلا للعملاء المربوطين بكود فعلي
+      if (acc.accountCode) {
+        const bVisit = balanceVisitMap.get(acc.id);
+        acc.lastBalanceView = bVisit?.lastVisitedAt || null;
+        acc.balanceViewsCount = bVisit?.visitCount || 0;
+      } else {
+        acc.lastBalanceView = null;
+        acc.balanceViewsCount = 0;
+      }
     });
 
     // 3️⃣ احفظ في الذاكرة لمدة 5 دقائق

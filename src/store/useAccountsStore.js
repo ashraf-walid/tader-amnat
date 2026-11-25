@@ -13,12 +13,15 @@ export const useAccountsStore = create(
       /**
        * جلب الحسابات من الخادم — يُظهر البيانات المخزّنة فوراً ويُحدّثها في الخلفية.
        */
-      loadAccounts: async () => {
+      loadAccounts: async (forceRefresh = false) => {
         const { accounts } = get();
         // Don't show loading indicator if there is cached data (silent background update)
-        if (accounts.length === 0) set({ accLoading: true });
+        if (accounts.length === 0 || forceRefresh) set({ accLoading: true });
         try {
-          const res = await fetch("/api/accounts");
+          const url = forceRefresh ? `/api/accounts?t=${Date.now()}` : "/api/accounts";
+          const res = await fetch(url, {
+            cache: forceRefresh ? "no-store" : "default",
+          });
           const d = await res.json();
           if (d.success) set({ accounts: d.accounts, lastFetched: Date.now() });
         } catch {

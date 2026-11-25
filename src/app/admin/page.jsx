@@ -46,9 +46,9 @@ const BTN_BASE = "font-semibold text-white border-none rounded-[7px] inline-flex
 const VARIANTS = {
   primary: "bg-sky-500 shadow-[0_4px_12px_rgba(14,165,233,0.3)] hover:bg-sky-600 active:scale-[0.97]",
   success: "bg-emerald-600 shadow-[0_4px_12px_rgba(5,150,105,0.3)] hover:bg-emerald-700 active:scale-[0.97]",
-  danger:  "bg-red-600 shadow-[0_4px_12px_rgba(220,38,38,0.3)] hover:bg-red-700 active:scale-[0.97]",
-  ghost:   "bg-white/[0.06] shadow-none hover:bg-white/[0.12] active:scale-[0.97]",
-  gold:    "bg-amber-600 shadow-[0_4px_12px_rgba(217,119,6,0.3)] hover:bg-amber-700 active:scale-[0.97]",
+  danger: "bg-red-600 shadow-[0_4px_12px_rgba(220,38,38,0.3)] hover:bg-red-700 active:scale-[0.97]",
+  ghost: "bg-white/[0.06] shadow-none hover:bg-white/[0.12] active:scale-[0.97]",
+  gold: "bg-amber-600 shadow-[0_4px_12px_rgba(217,119,6,0.3)] hover:bg-amber-700 active:scale-[0.97]",
 };
 const SIZES = { xs: "px-2 py-1 text-xs", sm: "px-3 py-1.5 text-xs", md: "px-[18px] py-2.5 text-sm" };
 
@@ -152,6 +152,9 @@ function AccountDetails({ account }) {
         {/* <DetailRow label="المحاولات">{account.attempts ?? "غير محددة"}</DetailRow> */}
         <DetailRow label="حالة الحساب">{account.isActive === false ? "غير مفعل" : "مفعل"}</DetailRow>
         <DetailRow label="آخر دخول">{formatDateTime(account.lastLogin)}</DetailRow>
+        <DetailRow label="آخر فاتورة">{formatDateTime(account.lastCalculation)}</DetailRow>
+        <DetailRow label="آخر كشف حساب">{formatDateTime(account.lastBalanceView)}</DetailRow>
+        <DetailRow label="عدد فتح كشف الحساب">{account.balanceViewsCount ? `${account.balanceViewsCount} مرة` : "لم يفتح بعد"}</DetailRow>
         <DetailRow label="تاريخ الإنشاء">{formatDateTime(account.createdAt)}</DetailRow>
         <DetailRow label="آخر تحديث">{formatDateTime(account.updatedAt)}</DetailRow>
         {/* <DetailRow label="معرف الحساب">{account.id || "—"}</DetailRow> */}
@@ -290,6 +293,19 @@ export default function AdminPage() {
   const [toast, setToast] = useState({ text: "", type: "" });
   const [newAttempts, setNewAttempts] = useState("");
   const [dataClearing, setDataClearing] = useState(false);
+  const [ledgerClearing, setLedgerClearing] = useState(false);
+  const [ledgerClientCode, setLedgerClientCode] = useState("");
+  const [ledgerClearConfirm, setLedgerClearConfirm] = useState("");
+  const [ledgerAccountName, setLedgerAccountName] = useState(null); // null=لم يُبحث, ""=غير موجود, "..."=اسم الحساب
+  const [ledgerNameLoading, setLedgerNameLoading] = useState(false);
+  const [statsClearing, setStatsClearing] = useState(false);
+  const [statsTargetClient, setStatsTargetClient] = useState("");
+  const [statsSearchUser, setStatsSearchUser] = useState("");
+  const [statsTargetType, setStatsTargetType] = useState("calculationsCount"); // "calculationsCount" | "lastCalculation" | "lastBalanceView"
+  const [statsClearAllModal, setStatsClearAllModal] = useState(null); // null or targetType
+  const [statsClearAllConfirm, setStatsClearAllConfirm] = useState("");
+  const [dataSubTab, setDataSubTab] = useState("backups"); // "backups" | "stats" | "danger"
+  const [statsMode, setStatsMode] = useState("single"); // "single" | "bulk"
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("client");
   const [pwaFilter, setPwaFilter] = useState("all");
@@ -316,12 +332,13 @@ export default function AdminPage() {
 
   const COLUMNS = [
     { key: "index", label: "م", sortable: false },
-    { key: "username", label: "اسم المستخدم", sortable: true },
+    { key: "username", label: "الاسم", sortable: true },
+    { key: "accountCode", label: "الكود", sortable: true },
     { key: "role", label: "الدور", sortable: true },
-    { key: "pwaStatus", label: "مثبت", sortable: false },
-    { key: "notificationsStatus", label: "الإشعارات", sortable: false },
-    { key: "calculationsCount", label: "عمليات الحساب", sortable: true },
-    { key: "lastLogin", label: "آخر دخول", sortable: true },
+    { key: "appStatus", label: "مثبت/ الإشعارات", sortable: false },
+    { key: "calculationsCount", label: "الحساب", sortable: true },
+    { key: "lastCalculation", label: "آخر فاتورة", sortable: true },
+    { key: "lastBalanceView", label: "صفحة الحساب", sortable: true },
     { key: "actions", label: "الإجراءات", sortable: false },
   ];
 
@@ -340,17 +357,17 @@ export default function AdminPage() {
         if (d.history) setRateHistory(d.history);
       }
     })
-      .catch(() => {}).finally(() => setRL(false));
+      .catch(() => { }).finally(() => setRL(false));
   }, []);
 
   // ─── Fetch Accounts Data ──────────────────────────────────────────────────
-  useEffect(() => { if (accounts.length === 0) fetchAccounts(); }, []); 
+  useEffect(() => { if (accounts.length === 0) fetchAccounts(); }, []);
 
   // ─── Employee CRUD ─────────────────────────────────────────────────────────
   const loadEmployees = () => {
     setEmpLoading(true);
     fetch("/api/employees").then(r => r.json()).then(d => { if (d.success) setEmpList(d.employees); })
-      .catch(() => {}).finally(() => setEmpLoading(false));
+      .catch(() => { }).finally(() => setEmpLoading(false));
   };
 
   const addEmployee = async () => {
@@ -498,14 +515,108 @@ export default function AdminPage() {
     } catch { notify("فشل الاتصال بالخادم", "error"); } finally { setDataClearing(false); }
   };
 
+  const deleteClientLedger = async () => {
+    const code = ledgerClientCode.trim();
+    if (!code) return notify("يرجى إدخال كود العميل", "error");
+    setLedgerClearing(true);
+    try {
+      const res = await fetch(`/api/data/ledger?accountCode=${encodeURIComponent(code)}`, { method: "DELETE" });
+      const d = await res.json();
+      if (d.success) {
+        notify(d.message || `تم حذف سجل العميل ${code}`);
+        setLedgerClientCode("");
+      } else {
+        notify(d.error || "خطأ أثناء حذف السجل", "error");
+      }
+    } catch {
+      notify("فشل الاتصال بالخادم", "error");
+    } finally {
+      setLedgerClearing(false);
+    }
+  };
+
+  const clearAllLedger = async () => {
+    setLedgerClearing(true);
+    try {
+      const res = await fetch("/api/data/ledger", { method: "DELETE" });
+      const d = await res.json();
+      if (d.success) {
+        notify(d.message || "تم مسح حركة الرصيد التاريخية لجميع العملاء");
+        setModal(null);
+        setLedgerClearConfirm("");
+      } else {
+        notify(d.error || "خطأ أثناء مسح السجلات", "error");
+      }
+    } catch {
+      notify("فشل الاتصال بالخادم", "error");
+    } finally {
+      setLedgerClearing(false);
+    }
+  };
+
+  const deleteStatsForClient = async (target, userId) => {
+    if (!target || !userId) return;
+    setStatsClearing(true);
+    try {
+      const res = await fetch(`/api/accounts/stats?target=${encodeURIComponent(target)}&userId=${encodeURIComponent(userId)}`, { method: "DELETE" });
+      const d = await res.json();
+      if (d.success) {
+        notify(d.message || "تم حذف البيانات بنجاح");
+        fetchAccounts(true);
+      } else {
+        notify(d.error || "خطأ أثناء الحذف", "error");
+      }
+    } catch {
+      notify("فشل الاتصال بالخادم", "error");
+    } finally {
+      setStatsClearing(false);
+    }
+  };
+
+  const clearAllStats = async (target) => {
+    if (!target) return;
+    setStatsClearing(true);
+    try {
+      const res = await fetch(`/api/accounts/stats?target=${encodeURIComponent(target)}`, { method: "DELETE" });
+      const d = await res.json();
+      if (d.success) {
+        notify(d.message || "تم مسح البيانات لجميع العملاء بنجاح");
+        setStatsClearAllModal(null);
+        setStatsClearAllConfirm("");
+        fetchAccounts(true);
+      } else {
+        notify(d.error || "خطأ أثناء مسح البيانات", "error");
+      }
+    } catch {
+      notify("فشل الاتصال بالخادم", "error");
+    } finally {
+      setStatsClearing(false);
+    }
+  };
+
+  // ─── Ledger account name lookup (debounced) ─────────────────────────────────
+  useEffect(() => {
+    const code = ledgerClientCode.trim();
+    const timer = setTimeout(() => {
+      if (!code) { setLedgerAccountName(null); setLedgerNameLoading(false); return; }
+      setLedgerNameLoading(true);
+      fetch(`/api/data/${encodeURIComponent(code)}`)
+        .then((r) => r.json())
+        .then((d) => setLedgerAccountName(d.success ? d.accountName : ""))
+        .catch(() => setLedgerAccountName(""))
+        .finally(() => setLedgerNameLoading(false));
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [ledgerClientCode]);
+
   const filtered = accounts.filter((a) => {
     if (userRole !== "owner" && a.role === "owner") return false;
     const matchRole = roleFilter === "all" || a.role === roleFilter;
-    const matchPwa = pwaFilter === "all" || 
-      (pwaFilter === "installed" && a.isPwaInstalled) || 
+    const matchPwa = pwaFilter === "all" ||
+      (pwaFilter === "installed" && a.isPwaInstalled) ||
       (pwaFilter === "not-installed" && !a.isPwaInstalled);
-    const matchNotifications = notificationsFilter === "all" || 
-      (notificationsFilter === "enabled" && a.hasNotifications) || 
+    const matchNotifications = notificationsFilter === "all" ||
+      (notificationsFilter === "enabled" && a.hasNotifications) ||
       (notificationsFilter === "disabled" && !a.hasNotifications);
     const q = search.toLowerCase();
     const matchSearch = !q || a.username.toLowerCase().includes(q) || (a.phone || "").includes(q) || (a.officeName || "").toLowerCase().includes(q) || (a.accountCode && a.accountCode.toString().includes(q));
@@ -514,8 +625,11 @@ export default function AdminPage() {
     let va, vb;
     switch (sortBy) {
       case "username": va = a.username || ""; vb = b.username || ""; break;
+      case "accountCode": va = Number(a.accountCode) || 0; vb = Number(b.accountCode) || 0; break;
       case "role": va = a.role || ""; vb = b.role || ""; break;
       case "calculationsCount": va = a.calculationsCount || 0; vb = b.calculationsCount || 0; break;
+      case "lastCalculation": va = a.lastCalculation ? new Date(a.lastCalculation).getTime() : 0; vb = b.lastCalculation ? new Date(b.lastCalculation).getTime() : 0; break;
+      case "lastBalanceView": va = a.lastBalanceView ? new Date(a.lastBalanceView).getTime() : 0; vb = b.lastBalanceView ? new Date(b.lastBalanceView).getTime() : 0; break;
       case "lastLogin": va = a.lastLogin ? new Date(a.lastLogin).getTime() : 0; vb = b.lastLogin ? new Date(b.lastLogin).getTime() : 0; break;
       default: return 0;
     }
@@ -596,9 +710,9 @@ export default function AdminPage() {
             { id: "rate", icon: <Icon.Currency />, label: "سعر الصرف" },
             { id: "employees", icon: <Icon.Users />, label: "الموظفين" },
             ...(userRole === "owner" ? [
-              { id: "navis",    icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>, label: "فواتير Navis" },
+              { id: "navis", icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>, label: "فواتير Navis" },
               { id: "activity", icon: <Icon.Shield size={15} />, label: "سجل الأحداث" },
-              { id: "data",     icon: <Icon.Structure className="ml-0.5" />, label: "بيانات المشروع" },
+              { id: "data", icon: <Icon.Structure className="ml-0.5" />, label: "بيانات المشروع" },
             ] : []),
           ].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)} role="tab" aria-selected={tab === t.id}
@@ -683,28 +797,34 @@ export default function AdminPage() {
                             {acc.username}
                           </button>
                         </td>
-                        <td className="px-4 py-3.5"><RoleBadge role={acc.role} /></td>
                         <td className="px-4 py-3.5">
-                          <div className="flex justify-center">
+                          {acc.accountCode ? (
+                            <span className="font-mono text-xs font-bold text-sky-400 bg-sky-950/40 border border-sky-800/40 px-2 py-0.5 rounded">
+                              {acc.accountCode}
+                            </span>
+                          ) : (
+                            <span className="text-slate-600 text-xs font-mono">--</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3.5"><RoleBadge role={acc.role} /></td>
+                        <td className="px-3 py-3.5">
+                          <div className="flex items-center justify-center gap-2">
                             {acc.isPwaInstalled ? (
-                              <span className="text-green-500 text-lg" title="مثبت على الجهاز (PWA)">
+                              <span className="text-green-500 text-base leading-none" title="مثبت على الجهاز (PWA)">
                                 📱
                               </span>
                             ) : (
-                              <span className="text-red-400 text-lg" title="لم يتم التثبيت بعد">
+                              <span className="text-slate-600 text-xs font-mono" title="لم يتم التثبيت بعد">
                                 --
                               </span>
                             )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3.5">
-                          <div className="flex justify-center">
+                            <span className="text-white/10 select-none">|</span>
                             {acc.hasNotifications ? (
-                              <span className="text-blue-400 text-lg" title="مفعل الإشعارات">
+                              <span className="text-blue-400 text-base leading-none" title="مفعل الإشعارات">
                                 🔔
                               </span>
                             ) : (
-                              <span className="text-slate-500 text-lg" title="غير مفعل الإشعارات">
+                              <span className="text-slate-600 text-base leading-none" title="غير مفعل الإشعارات">
                                 🔕
                               </span>
                             )}
@@ -712,19 +832,27 @@ export default function AdminPage() {
                         </td>
                         <td className="px-4 py-3.5">
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full text-[11.5px] font-bold text-[#f0b429] bg-[#f0b429]/10 border border-[#f0b429]/25 whitespace-nowrap">
-                            {acc.calculationsCount || 0} عملية
+                            {acc.calculationsCount || 0}
                           </span>
                         </td>
                         <td className="px-4 py-3.5">
-                          {acc.lastLogin ? (
-                            <span className="text-[12px] text-slate-400 whitespace-nowrap">
-                              {new Date(acc.lastLogin).toLocaleDateString("ar-EG", { year: "numeric", month: "short", day: "numeric" })}
-                              <span className="text-slate-500 mr-1">
-                                {new Date(acc.lastLogin).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}
-                              </span>
+                          {acc.lastCalculation ? (
+                            <span className="text-[12px] text-slate-300 whitespace-nowrap">
+                              {new Date(acc.lastCalculation).toLocaleDateString("ar-EG-u-nu-latn", { day: "numeric", month: "long" })}
                             </span>
                           ) : (
-                            <span className="text-[11.5px] text-slate-500">لم يدخل بعد</span>
+                            <span className="text-[11.5px] text-slate-500 font-mono">--</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3.5">
+                          {acc.lastBalanceView ? (
+                            <span className="text-[12px] text-slate-300 whitespace-nowrap" title={formatDateTime(acc.lastBalanceView)}>
+                              {new Date(acc.lastBalanceView).toLocaleDateString("ar-EG-u-nu-latn", { day: "numeric", month: "long" })}
+                            </span>
+                          ) : !acc.accountCode ? (
+                            <span className="text-[11px] text-slate-500 font-mono tracking-wider" title="العميل غير مربوط بكود">no code</span>
+                          ) : (
+                            <span className="text-[11.5px] text-slate-500 font-mono">--</span>
                           )}
                         </td>
                         <td className="px-4 py-3.5">
@@ -830,14 +958,14 @@ export default function AdminPage() {
                           <span className="text-[11px] text-slate-500">
                             {item.date
                               ? new Date(item.date).toLocaleDateString("ar-EG", {
-                                  month: "short",
-                                  day: "numeric",
-                                }) +
-                                " — " +
-                                new Date(item.date).toLocaleTimeString("ar-EG", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })
+                                month: "short",
+                                day: "numeric",
+                              }) +
+                              " — " +
+                              new Date(item.date).toLocaleTimeString("ar-EG", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })
                               : "—"}
                           </span>
                         </div>
@@ -944,27 +1072,325 @@ export default function AdminPage() {
         {/* ═══ Project Data Tab ═══ */}
         {tab === "data" && (
           <div className="flex flex-col gap-5">
-            <BackupFilesList userRole={userRole} />
+            {/* ── شريط التنقل الفرعي لبيانات المشروع ── */}
+            <div className="flex items-center gap-2 p-1.5 bg-slate-900 border border-white/[0.08] rounded-xl overflow-x-auto">
+              <button
+                onClick={() => setDataSubTab("backups")}
+                className={`flex-1 shrink-0 px-4 py-2 text-xs font-semibold rounded-lg transition-all border-none cursor-pointer flex items-center justify-center gap-2 ${
+                  dataSubTab === "backups"
+                    ? "bg-sky-500 text-white shadow-[0_2px_8px_rgba(14,165,233,0.3)]"
+                    : "bg-transparent text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                }`}
+              >
+                <span>📂</span>
+                <span>ملفات النسخ الاحتياطي</span>
+              </button>
 
-            <div className="bg-slate-900 rounded-2xl border border-white/[0.08] p-5 flex flex-col gap-4">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-red-400/[0.12] text-red-400 flex items-center justify-center"><Icon.Trash /></div>
-                <div>
-                  <h3 className="text-base font-bold m-0">إدارة البيانات</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">عمليات حساسة لإدارة قاعدة بيانات الحسابات.</p>
-                </div>
-              </div>
-              <div className="p-4 bg-red-400/5 border border-red-400/10 rounded-xl flex items-center justify-between gap-4 flex-wrap">
-                <div className="flex-1 min-w-[200px]">
-                  <p className="text-[13px] font-semibold text-red-400 mb-1">مسح كافة البيانات المالية</p>
-                  <p className="text-[11px] text-slate-400 m-0">سيتم حذف جميع الحسابات والمعاملات المالية. هذا الإجراء لا يمكن التراجع عنه.</p>
-                </div>
-                <Btn variant="danger" onClick={() => { setClearConfirm(""); setModal("clearData"); }} disabled={dataClearing}>
-                  {dataClearing ? <Spinner /> : <Icon.Trash />}
-                  {dataClearing ? "جاري المسح..." : "مسح كافة البيانات"}
-                </Btn>
-              </div>
+              <button
+                onClick={() => setDataSubTab("stats")}
+                className={`flex-1 shrink-0 px-4 py-2 text-xs font-semibold rounded-lg transition-all border-none cursor-pointer flex items-center justify-center gap-2 ${
+                  dataSubTab === "stats"
+                    ? "bg-sky-500 text-white shadow-[0_2px_8px_rgba(14,165,233,0.3)]"
+                    : "bg-transparent text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                }`}
+              >
+                <span>📊</span>
+                <span>سجلات النشاط والأرصدة</span>
+              </button>
+
+              <button
+                onClick={() => setDataSubTab("danger")}
+                className={`flex-1 shrink-0 px-4 py-2 text-xs font-semibold rounded-lg transition-all border-none cursor-pointer flex items-center justify-center gap-2 ${
+                  dataSubTab === "danger"
+                    ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                    : "bg-transparent text-slate-400 hover:text-red-300 hover:bg-red-500/10"
+                }`}
+              >
+                <span>⚠️</span>
+                <span>العمليات الحساسة</span>
+              </button>
             </div>
+
+            {/* 1️⃣ القسم الأول: ملفات النسخ الاحتياطي */}
+            {dataSubTab === "backups" && (
+              <BackupFilesList userRole={userRole} />
+            )}
+
+            {/* 2️⃣ القسم الثاني: سجلات النشاط والأرصدة التاريخية */}
+            {dataSubTab === "stats" && (
+              <div className="flex flex-col gap-5">
+                {/* ═══ حذف بيانات نشاط العملاء ═══ */}
+                <div className="bg-slate-900 rounded-2xl border border-white/[0.08] p-5 flex flex-col gap-4">
+                  <div className="flex items-center justify-between gap-4 flex-wrap pb-3 border-b border-white/5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-sky-400/[0.12] text-sky-400 flex items-center justify-center">
+                        <Icon.Chart />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold m-0">بيانات نشاط الحسابات</h3>
+                        <p className="text-xs text-slate-400 mt-0.5">حذف وتصفير (عدد العمليات، آخر فاتورة، فتح كشف الحساب).</p>
+                      </div>
+                    </div>
+
+                    {/* تبديل الوضع: حساب محدد أو الجميع */}
+                    <div className="flex items-center p-1 bg-slate-950 border border-white/10 rounded-lg">
+                      <button
+                        onClick={() => setStatsMode("single")}
+                        className={`px-3 py-1 text-xs rounded-md font-medium border-none cursor-pointer transition-all ${
+                          statsMode === "single" ? "bg-sky-500 text-white" : "bg-transparent text-slate-400 hover:text-slate-200"
+                        }`}
+                      >
+                        حساب محدد
+                      </button>
+                      <button
+                        onClick={() => setStatsMode("bulk")}
+                        className={`px-3 py-1 text-xs rounded-md font-medium border-none cursor-pointer transition-all ${
+                          statsMode === "bulk" ? "bg-red-500 text-white" : "bg-transparent text-slate-400 hover:text-slate-200"
+                        }`}
+                      >
+                        كافة الحسابات
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* وضع حساب محدد */}
+                  {statsMode === "single" && (() => {
+                    const targetObj = accounts.find((a) => a.id === statsTargetClient);
+                    const q = statsSearchUser.trim().toLowerCase();
+                    const filteredUsers = accounts.filter((a) => {
+                      if (!q) return true;
+                      return (
+                        a.username.toLowerCase().includes(q) ||
+                        (a.accountCode && String(a.accountCode).includes(q)) ||
+                        (a.officeName && a.officeName.toLowerCase().includes(q)) ||
+                        (a.role && a.role.toLowerCase().includes(q))
+                      );
+                    });
+
+                    const getRoleBadgeText = (role) => {
+                      switch (role) {
+                        case "owner": return "مالك";
+                        case "admin": return "مدير";
+                        case "employee": return "موظف";
+                        case "client": return "عميل";
+                        default: return role;
+                      }
+                    };
+
+                    return (
+                      <div className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl flex flex-col gap-3">
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                          {/* حقل البحث لتصفية القائمة */}
+                          <div className="relative min-w-[160px]">
+                            <input
+                              type="text"
+                              value={statsSearchUser}
+                              onChange={(e) => setStatsSearchUser(e.target.value)}
+                              placeholder="بحث بالاسم أو الكود..."
+                              className="w-full bg-slate-950 border border-white/10 rounded-lg text-slate-100 text-xs py-2 pr-7 pl-2.5 outline-none focus:border-sky-400/50"
+                            />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-500">🔍</span>
+                          </div>
+
+                          {/* قائمة اختيار المستخدم من جميع الفئات */}
+                          <select
+                            value={statsTargetClient}
+                            onChange={(e) => setStatsTargetClient(e.target.value)}
+                            className="bg-slate-950 border border-white/10 rounded-lg text-slate-100 text-xs py-2 px-3 outline-none focus:border-sky-400/50 min-w-[220px] max-w-[320px]"
+                          >
+                            <option value="">-- اختر الحساب ({filteredUsers.length}) --</option>
+                            {filteredUsers.map((u) => (
+                              <option key={u.id} value={u.id}>
+                                [{getRoleBadgeText(u.role)}] {u.username} {u.accountCode ? `(كود: ${u.accountCode})` : ""} {u.officeName ? `[${u.officeName}]` : ""}
+                              </option>
+                            ))}
+                          </select>
+
+                          {/* نوع البيان */}
+                          <select
+                            value={statsTargetType}
+                            onChange={(e) => setStatsTargetType(e.target.value)}
+                            className="bg-slate-950 border border-white/10 rounded-lg text-slate-100 text-xs py-2 px-3 outline-none focus:border-sky-400/50"
+                          >
+                            <option value="calculationsCount">عدد الحساب (تصفير العداد)</option>
+                            <option value="lastCalculation">تاريخ آخر فاتورة (مسح السجلات)</option>
+                            <option value="lastBalanceView">تاريخ فتح صفحة الحساب (مسح الزيارة)</option>
+                          </select>
+
+                          <Btn
+                            variant="gold"
+                            size="sm"
+                            onClick={() => deleteStatsForClient(statsTargetType, statsTargetClient)}
+                            disabled={statsClearing || !statsTargetClient}
+                          >
+                            {statsClearing ? <Spinner size={14} /> : <Icon.Trash size={14} />}
+                            حذف {targetObj ? `لحساب «${targetObj.username}»` : ""}
+                          </Btn>
+                        </div>
+
+                        {targetObj && (
+                          <div className="flex items-center gap-2 text-xs text-slate-400 bg-white/[0.015] px-3 py-1.5 rounded-lg border border-white/5 w-fit">
+                            <span>الحساب المحدد: <strong className="text-slate-200">{targetObj.username}</strong></span>
+                            <span className="text-white/10">|</span>
+                            <span>الفئة: <strong className="text-sky-400">{getRoleBadgeText(targetObj.role)}</strong></span>
+                            {targetObj.accountCode && (
+                              <>
+                                <span className="text-white/10">|</span>
+                                <span>كود: <strong className="text-amber-400">{targetObj.accountCode}</strong></span>
+                              </>
+                            )}
+                            {targetObj.officeName && (
+                              <>
+                                <span className="text-white/10">|</span>
+                                <span>مكتب: <strong className="text-slate-300">{targetObj.officeName}</strong></span>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* وضع الحذف الجماعي */}
+                  {statsMode === "bulk" && (
+                    <div className="p-4 bg-red-400/5 border border-red-400/10 rounded-xl flex flex-col gap-3">
+                      <div>
+                        <p className="text-[13px] font-semibold text-red-400 mb-1">مسح بيانات لكافة الحسابات في النظام</p>
+                        <p className="text-[11px] text-slate-400 m-0">اختر نوع البيان المطلوب مسحه أو تصفيره دفعة واحدة لجميع المستخدمين.</p>
+                      </div>
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        <Btn
+                          variant="danger"
+                          size="sm"
+                          onClick={() => { setStatsClearAllModal("calculationsCount"); setStatsClearAllConfirm(""); }}
+                          disabled={statsClearing}
+                        >
+                          <Icon.Trash size={14} />
+                          تصفير عدد الحساب للجميع
+                        </Btn>
+
+                        <Btn
+                          variant="danger"
+                          size="sm"
+                          onClick={() => { setStatsClearAllModal("lastCalculation"); setStatsClearAllConfirm(""); }}
+                          disabled={statsClearing}
+                        >
+                          <Icon.Trash size={14} />
+                          مسح تاريخ آخر فاتورة للجميع
+                        </Btn>
+
+                        <Btn
+                          variant="danger"
+                          size="sm"
+                          onClick={() => { setStatsClearAllModal("lastBalanceView"); setStatsClearAllConfirm(""); }}
+                          disabled={statsClearing}
+                        >
+                          <Icon.Trash size={14} />
+                          مسح تاريخ فتح صفحة الحساب للجميع
+                        </Btn>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* ═══ حركة الرصيد التاريخية ═══ */}
+                <div className="bg-slate-900 rounded-2xl border border-white/[0.08] p-5 flex flex-col gap-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-amber-400/[0.12] text-amber-400 flex items-center justify-center">
+                      <Icon.Structure />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold m-0">حركة الرصيد التاريخية</h3>
+                      <p className="text-xs text-slate-400 mt-0.5">حذف لقطات الرصيد التاريخية المسجلة عند تجديد أو رفع الملفات (ClientLedgerEntry).</p>
+                    </div>
+                  </div>
+
+                  {/* حذف لعميل محدد */}
+                  {(() => {
+                    const hasCode = !!ledgerClientCode.trim();
+                    const accountFound = !!(ledgerAccountName && ledgerAccountName.length > 0);
+                    return (
+                      <div className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl flex flex-col gap-3">
+                        <div>
+                          <p className="text-[13px] font-semibold text-slate-200 mb-1">حذف سجل حساب محدد</p>
+                          <p className="text-[11px] text-slate-400 m-0">أدخل كود الحساب لحذف كافة لقطات الرصيد التاريخية الخاصة به فقط.</p>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <input
+                            type="text"
+                            value={ledgerClientCode}
+                            onChange={(e) => { setLedgerClientCode(e.target.value); setLedgerAccountName(null); }}
+                            placeholder="كود الحساب (مثال: 101)"
+                            className={`w-44 bg-slate-950 rounded-lg text-slate-100 text-xs py-2 px-3 outline-none border transition-colors ${
+                              hasCode && ledgerAccountName === ""
+                                ? "border-red-500/50 focus:border-red-400"
+                                : accountFound
+                                ? "border-emerald-500/40 focus:border-emerald-400"
+                                : "border-white/10 focus:border-amber-400/50"
+                            }`}
+                          />
+                          {hasCode && ledgerNameLoading && (
+                            <span className="text-slate-400 text-xs flex items-center gap-1.5"><Spinner size={12} /> جاري البحث...</span>
+                          )}
+                          {hasCode && !ledgerNameLoading && accountFound && (
+                            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-500/10 border border-emerald-500/25 rounded-lg">
+                              <span className="text-xs">🏢</span>
+                              <span className="text-emerald-300 text-xs font-semibold">{ledgerAccountName}</span>
+                            </div>
+                          )}
+                          {hasCode && !ledgerNameLoading && ledgerAccountName === "" && (
+                            <span className="text-[11.5px] text-red-400 flex items-center gap-1">⚠️ لا يوجد حساب بهذا الكود</span>
+                          )}
+                        </div>
+                        <div className="flex justify-end">
+                          <Btn variant="gold" size="sm" onClick={deleteClientLedger} disabled={ledgerClearing || !accountFound || ledgerNameLoading}>
+                            {ledgerClearing ? <Spinner size={14} /> : <Icon.Trash size={14} />}
+                            حذف سجل {accountFound ? `«${ledgerAccountName}»` : "الحساب"}
+                          </Btn>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* حذف لكافة العملاء */}
+                  <div className="p-4 bg-red-400/5 border border-red-400/10 rounded-xl flex items-center justify-between gap-4 flex-wrap">
+                    <div className="flex-1 min-w-[200px]">
+                      <p className="text-[13px] font-semibold text-red-400 mb-1">مسح سجل كافة العملاء دفعة واحدة</p>
+                      <p className="text-[11px] text-slate-400 m-0">سيتم مسح سجلات حركة الرصيد التاريخية لجميع العملاء نهائياً.</p>
+                    </div>
+                    <Btn variant="danger" size="sm" onClick={() => { setLedgerClearConfirm(""); setModal("clearLedger"); }} disabled={ledgerClearing}>
+                      {ledgerClearing ? <Spinner size={14} /> : <Icon.Trash size={14} />}
+                      مسح سجل كافة العملاء
+                    </Btn>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 3️⃣ القسم الثالث: العمليات الحساسة (Danger Zone) */}
+            {dataSubTab === "danger" && (
+              <div className="bg-slate-900 rounded-2xl border border-red-500/20 p-5 flex flex-col gap-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-red-400/[0.12] text-red-400 flex items-center justify-center">
+                    <Icon.Trash />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-red-400 m-0">منطقة العمليات الحساسة</h3>
+                    <p className="text-xs text-slate-400 mt-0.5">عمليات لا رجعة فيها لإدارة ومسح قاعدة البيانات المالية.</p>
+                  </div>
+                </div>
+                <div className="p-4 bg-red-400/5 border border-red-400/15 rounded-xl flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex-1 min-w-[200px]">
+                    <p className="text-[13px] font-semibold text-red-400 mb-1">مسح كافة البيانات المالية</p>
+                    <p className="text-[11px] text-slate-400 m-0">سيتم حذف جميع الحسابات والمعاملات المالية نهائياً من قاعدة البيانات.</p>
+                  </div>
+                  <Btn variant="danger" onClick={() => { setClearConfirm(""); setModal("clearData"); }} disabled={dataClearing}>
+                    {dataClearing ? <Spinner /> : <Icon.Trash />}
+                    {dataClearing ? "جاري المسح..." : "مسح كافة البيانات"}
+                  </Btn>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -1021,6 +1447,90 @@ export default function AdminPage() {
             <Btn variant="danger" disabled={clearConfirm !== "مسح البيانات" || dataClearing} onClick={clearFinancialData}>
               {dataClearing ? <Spinner /> : <Icon.Trash />}
               {dataClearing ? "جاري المسح..." : "تأكيد المسح"}
+            </Btn>
+          </div>
+        </div>
+      </Modal>
+      <Modal open={modal === "clearLedger"} onClose={() => setModal(null)} title="تأكيد مسح حركة الرصيد التاريخية">
+        <div>
+          <div className="bg-red-400/[0.08] border border-red-400/20 rounded-[10px] px-4 py-3.5 mb-[18px]">
+            <p className="m-0 text-sm text-red-400 leading-relaxed">
+              ⚠️ تحذير: سيتم <strong className="text-slate-100">مسح حركة الرصيد التاريخية لجميع العملاء</strong> نهائياً.<br />
+              <span className="text-[12.5px] text-slate-400">هذا الإجراء لا يمكن التراجع عنه. لن تتأثر الأرصدة الحالية، بل التاريخية فقط.</span>
+            </p>
+          </div>
+          <p className="text-[13px] text-slate-400 mb-2.5">
+            اكتب <strong className="text-red-400">مسح السجل التاريخي</strong> للتأكيد:
+          </p>
+          <input
+            type="text"
+            value={ledgerClearConfirm}
+            onChange={(e) => setLedgerClearConfirm(e.target.value)}
+            placeholder="مسح السجل التاريخي"
+            className="admin-input-danger w-full bg-slate-950 border-[1.5px] border-red-400/30 rounded-lg text-slate-100 text-sm rtl outline-none py-2.5 px-3 mb-[18px] box-border"
+          />
+          <div className="flex gap-2.5 justify-end">
+            <Btn variant="ghost" onClick={() => setModal(null)}>إلغاء</Btn>
+            <Btn
+              variant="danger"
+              disabled={ledgerClearConfirm !== "مسح السجل التاريخي" || ledgerClearing}
+              onClick={clearAllLedger}
+            >
+              {ledgerClearing ? <Spinner /> : <Icon.Trash />}
+              {ledgerClearing ? "جاري المسح..." : "تأكيد المسح"}
+            </Btn>
+          </div>
+        </div>
+      </Modal>
+
+      {/* مودال تأكيد مسح بيانات النشاط لكافة العملاء */}
+      <Modal
+        open={!!statsClearAllModal}
+        onClose={() => setStatsClearAllModal(null)}
+        title={
+          statsClearAllModal === "calculationsCount"
+            ? "تأكيد تصفير عدد الحساب للجميع"
+            : statsClearAllModal === "lastCalculation"
+            ? "تأكيد مسح تاريخ آخر فاتورة للجميع"
+            : "تأكيد مسح تاريخ فتح صفحة الحساب للجميع"
+        }
+      >
+        <div>
+          <div className="bg-red-400/[0.08] border border-red-400/20 rounded-[10px] px-4 py-3.5 mb-[18px]">
+            <p className="m-0 text-sm text-red-400 leading-relaxed">
+              ⚠️ تحذير: سيتم{" "}
+              <strong className="text-slate-100">
+                {statsClearAllModal === "calculationsCount"
+                  ? "تصفير عداد عمليات الحساب لجميع الحسابات"
+                  : statsClearAllModal === "lastCalculation"
+                  ? "مسح سجلات فواتير جميع المستخدمين"
+                  : "مسح سجلات فتح كشف الرصيد لجميع المستخدمين"}
+              </strong>
+              .<br />
+              <span className="text-[12.5px] text-slate-400">هذا الإجراء لا يمكن التراجع عنه.</span>
+            </p>
+          </div>
+          <p className="text-[13px] text-slate-400 mb-2.5">
+            اكتب <strong className="text-red-400">تأكيد المسح</strong> للتأكيد:
+          </p>
+          <input
+            type="text"
+            value={statsClearAllConfirm}
+            onChange={(e) => setStatsClearAllConfirm(e.target.value)}
+            placeholder="تأكيد المسح"
+            className="admin-input-danger w-full bg-slate-950 border-[1.5px] border-red-400/30 rounded-lg text-slate-100 text-sm rtl outline-none py-2.5 px-3 mb-[18px] box-border"
+          />
+          <div className="flex gap-2.5 justify-end">
+            <Btn variant="ghost" onClick={() => setStatsClearAllModal(null)}>
+              إلغاء
+            </Btn>
+            <Btn
+              variant="danger"
+              disabled={statsClearAllConfirm !== "تأكيد المسح" || statsClearing}
+              onClick={() => clearAllStats(statsClearAllModal)}
+            >
+              {statsClearing ? <Spinner /> : <Icon.Trash />}
+              {statsClearing ? "جاري المسح..." : "تأكيد المسح"}
             </Btn>
           </div>
         </div>

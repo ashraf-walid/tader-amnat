@@ -26,6 +26,11 @@ export async function POST(request) {
       return NextResponse.json({ success: true, counted: false });
     }
 
+    // لا يتم احتساب زيارات صفحة كشف الرصيد لمن ليس لديهم كود عميل
+    if (page === "/client/balance" && !user.accountCode) {
+      return NextResponse.json({ success: true, counted: false });
+    }
+
     await connectToDatabase();
     await PageVisit.findOneAndUpdate(
       { userId: user.userId || user.id, page },

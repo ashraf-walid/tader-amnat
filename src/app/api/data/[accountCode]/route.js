@@ -9,6 +9,28 @@ import { calculateNetBalance, sendBalanceNotification } from "@/lib/balanceNotif
 export const dynamic = "force-dynamic";
 
 /**
+ * GET /api/data/[accountCode]
+ * Returns just the account name for the given code — admin only.
+ */
+export async function GET(request, { params }) {
+  try {
+    requireAdmin(request);
+    const { accountCode } = await params;
+    await connectToDatabase();
+    const account = await AccountData.findOne({ accountCode }).select("account accountCode").lean();
+    if (!account) {
+      return NextResponse.json({ success: false, error: "Account not found" }, { status: 404 });
+    }
+    return NextResponse.json({ success: true, accountName: account.account, accountCode: account.accountCode });
+  } catch (error) {
+    if (error.name === "AuthError" || error.name === "ForbiddenError") {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
+/**
  * PATCH /api/data/[accountCode]
  * Update a single account's transactions
  */

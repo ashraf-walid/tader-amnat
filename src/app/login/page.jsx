@@ -68,7 +68,12 @@ export default function LoginPage() {
       } else if (role === "employee") {
         router.push("/");
       } else if (role === "client") {
-        router.push("/client/balance");
+        // إذا كان العميل مربوطاً بكود يذهب لكشف حسابه، وإلا يذهب لحاسبة الأرضيات
+        if (data.user?.accountCode) {
+          router.push("/client/balance");
+        } else {
+          router.push("/Storagecalculator");
+        }
       } else {
         router.push("/Storagecalculator");
       }
