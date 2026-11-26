@@ -64,6 +64,7 @@ const CARGO_LABELS = {
   FULL: "عادية",
   REEFER: "ثلاجة",
   DANGEROUS: "خطرة",
+  REEFER_DANGEROUS: "ثلاجة + خطرة",
   NON_STANDARD: "غير منتظمة",
 };
 const NON_STANDARD_LABELS = { OOG: "سعر مضاعف ×٢", LASHING: "سعر مضاعف ×٤" };
@@ -111,8 +112,7 @@ function InvoiceDetails({ invoice }) {
       <section>
         <h4 className="mb-2 mt-0 text-[11px] font-bold text-slate-400">بيانات الحساب</h4>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <span>نوع الفاتورة: {inputs.billingType === "RENEWAL" ? "تجديد" : "أولية"}</span>
-          <span>مدة التخزين: {inputs.days ?? "—"} يوم</span>
+          <span>اجمالى مدة التخزين: {inputs.days ?? "—"} يوم</span>
           <span>تاريخ الوصول: {inputs.arrivalDate || "—"}</span>
           <span>تاريخ الصرف: {inputs.releaseDate || "—"}</span>
           {inputs.firstInvoiceDate && <span>تاريخ الفاتورة الأولى: {inputs.firstInvoiceDate}</span>}
@@ -176,7 +176,7 @@ function InvoiceCard({ invoice, selected, onSelect, canSelect }) {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="m-0 text-sm font-bold text-slate-100">
-                {input?.billingType === "RENEWAL" ? "فاتورة تجديد" : "فاتورة أولية"}
+                {input?.billingType === "RENEWAL" ? "تجديد" : "صرف اول مرة"}
               </p>
               <p className="mb-0 mt-1 text-[11px] text-slate-500">{dateTime(invoice.createdAt)}</p>
             </div>
@@ -201,11 +201,10 @@ function InvoiceCard({ invoice, selected, onSelect, canSelect }) {
               </span>
             </button>
             <div
-              className={`grid transition-all duration-300 ease-in-out ${
-                isOpen
-                  ? "grid-rows-[1fr] opacity-100 mt-3"
-                  : "grid-rows-[0fr] opacity-0 mt-0 pointer-events-none"
-              }`}
+              className={`grid transition-all duration-300 ease-in-out ${isOpen
+                ? "grid-rows-[1fr] opacity-100 mt-3"
+                : "grid-rows-[0fr] opacity-0 mt-0 pointer-events-none"
+                }`}
             >
               <div className="overflow-hidden">
                 <div className="rounded-lg bg-slate-900/80 p-3 sm:p-4">
@@ -356,7 +355,7 @@ function ClientInvoicesDialog({ client, canDelete, onClose, onInvoicesChanged })
 }
 
 export function InvoicesByDateSection() {
-  const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(() => new Date().toLocaleDateString("en-CA"));
   const [data, setData] = useState(null);
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -366,7 +365,8 @@ export function InvoicesByDateSection() {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(`/api/reports?type=invoices-by-date&date=${targetDate}`);
+      const tzOffset = new Date().getTimezoneOffset();
+      const response = await fetch(`/api/reports?type=invoices-by-date&date=${targetDate}&tzOffset=${tzOffset}`);
       const payload = await response.json();
       if (cancelled()) return;
       if (payload.success) setData(payload);

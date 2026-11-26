@@ -24,6 +24,42 @@ function calculateNsMultiplier(cargoType, nonStdType, sizeCfg) {
   return 1;
 }
 
+// Save invoice in the background without blocking the UI
+async function trackInvoiceInBackground(payload, retries = 2) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const trackRes = await fetch('/api/calculator/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        keepalive: true,
+        body: JSON.stringify(payload),
+      });
+
+      if (trackRes.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
+
+      if (trackRes.ok) {
+        return;
+      }
+
+      if (trackRes.status < 500 || attempt === retries) {
+        const trackError = await trackRes.json().catch(() => ({}));
+        console.error('Failed to save invoice:', trackError.error || trackRes.statusText);
+        return;
+      }
+    } catch (trackError) {
+      if (attempt === retries) {
+        console.error('Failed to save invoice:', trackError);
+        return;
+      }
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1)));
+  }
+}
+
 export function useStorageCalculator(adminExchangeRate) {
   // ── Primary state ──
   const [arrDate, setArrDate] = useState(null);
@@ -297,8 +333,10 @@ export function useStorageCalculator(adminExchangeRate) {
         const baseConfig = STORAGE_CONFIG.IMPORT.TWENTY_FT;
         let surchargeConfig = null;
         let rateMultiplier = 1;
+        const isReefer20 = twentyCargoType === "REEFER" || twentyCargoType === "REEFER_DANGEROUS";
+        const isDangerous20 = twentyCargoType === "DANGEROUS" || twentyCargoType === "REEFER_DANGEROUS";
 
-        if (twentyCargoType === "REEFER") {
+        if (isReefer20) {
           surchargeConfig = baseConfig.REEFER;
         } else if (twentyCargoType === "NON_STANDARD") {
           rateMultiplier = baseConfig.NON_STANDARD[nonStdType20]?.RATE_MULTIPLIER || 1;
@@ -310,8 +348,9 @@ export function useStorageCalculator(adminExchangeRate) {
           config: { ...baseConfig.FULL, CARGO_SERVICE_FEE: baseConfig.CARGO_SERVICE_FEE * nsMultiplier20 },
           dangerousConfig: { ...baseConfig.DANGEROUS, CARGO_SERVICE_FEE: baseConfig.CARGO_SERVICE_FEE * nsMultiplier20 },
           surchargeConfig,
+          surchargeMultiplier: isReefer20 && isDangerous20 ? 1.5 : 1,
           rateMultiplier,
-          isDangerous: twentyCargoType === "DANGEROUS",
+          isDangerous: isDangerous20,
           hasCargoService: hasCargoStripping && stripping20 > 0,
           cargoServiceCount: stripping20,
           hasCargoStorage: hasCargoStorage && cargoStorage20 > 0,
@@ -324,8 +363,10 @@ export function useStorageCalculator(adminExchangeRate) {
         const baseConfig = STORAGE_CONFIG.IMPORT.FORTY_FT;
         let surchargeConfig = null;
         let rateMultiplier = 1;
+        const isReefer40 = fortyCargoType === "REEFER" || fortyCargoType === "REEFER_DANGEROUS";
+        const isDangerous40 = fortyCargoType === "DANGEROUS" || fortyCargoType === "REEFER_DANGEROUS";
 
-        if (fortyCargoType === "REEFER") {
+        if (isReefer40) {
           surchargeConfig = baseConfig.REEFER;
         } else if (fortyCargoType === "NON_STANDARD") {
           rateMultiplier = baseConfig.NON_STANDARD[nonStdType40]?.RATE_MULTIPLIER || 1;
@@ -337,8 +378,9 @@ export function useStorageCalculator(adminExchangeRate) {
           config: { ...baseConfig.FULL, CARGO_SERVICE_FEE: baseConfig.CARGO_SERVICE_FEE * nsMultiplier40 },
           dangerousConfig: { ...baseConfig.DANGEROUS, CARGO_SERVICE_FEE: baseConfig.CARGO_SERVICE_FEE * nsMultiplier40 },
           surchargeConfig,
+          surchargeMultiplier: isReefer40 && isDangerous40 ? 1.5 : 1,
           rateMultiplier,
-          isDangerous: fortyCargoType === "DANGEROUS",
+          isDangerous: isDangerous40,
           hasCargoService: hasCargoStripping && stripping40 > 0,
           cargoServiceCount: stripping40,
           hasCargoStorage: hasCargoStorage && cargoStorage40 > 0,
@@ -414,7 +456,11 @@ export function useStorageCalculator(adminExchangeRate) {
           isExternalStorage,
           isLCLStorage,
           additionalServices: selectedServices,
-          isDangerous: twentyCargoType === "DANGEROUS" || fortyCargoType === "DANGEROUS",
+          isDangerous:
+            twentyCargoType === "DANGEROUS" ||
+            twentyCargoType === "REEFER_DANGEROUS" ||
+            fortyCargoType === "DANGEROUS" ||
+            fortyCargoType === "REEFER_DANGEROUS",
           isHolidayRelease,
           cargoStorageDays: cargoDays
         }
@@ -486,19 +532,7 @@ export function useStorageCalculator(adminExchangeRate) {
         },
       };
 
-      try {
-        const trackRes = await fetch('/api/calculator/track', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ inputs: invoiceInputs, result: invoice }),
-        });
-        if (!trackRes.ok) {
-          const trackError = await trackRes.json().catch(() => ({}));
-          console.error('Failed to save invoice:', trackError.error || trackRes.statusText);
-        }
-      } catch (trackError) {
-        console.error('Failed to save invoice:', trackError);
-      }
+      void trackInvoiceInBackground({ inputs: invoiceInputs, result: invoice });
     } catch (err) {
       setError(err.message);
     }

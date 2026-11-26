@@ -7,6 +7,7 @@ const CARGO_LABELS = {
   FULL: "عادية",
   REEFER: "ثلاجة ❄️",
   DANGEROUS: "خطرة ⚠️",
+  REEFER_DANGEROUS: "ثلاجة + خطرة ❄️⚠️",
   NON_STANDARD: "غير منتظمة",
 };
 
@@ -95,7 +96,7 @@ function CollapsibleBreakdown({ title, items, formatNumber }) {
                       <div className="flex items-baseline justify-end gap-1.5 font-mono">
                         {item.rate > 0 && (
                           <span className="text-[10px] text-[#4a5568]">
-                            ({item.days}×${formatNumber(item.rate)})
+                            ({item.days}×${formatNumber(item.rate)}{item.containerCount > 1 ? `×${item.containerCount}` : ''})
                           </span>
                         )}
                         <span className="font-bold text-[#f0b429] text-[11px]">

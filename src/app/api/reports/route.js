@@ -74,8 +74,13 @@ export async function GET(request) {
           );
         }
 
-        const dayStart = new Date(dateStr + "T00:00:00.000Z");
-        const dayEnd = new Date(dateStr + "T23:59:59.999Z");
+        const rawOffset = Number(searchParams.get("tzOffset"));
+        const tzOffsetMs =
+          Number.isFinite(rawOffset) && rawOffset >= -840 && rawOffset <= 840
+            ? rawOffset * 60_000
+            : 0;
+        const dayStart = new Date(new Date(dateStr + "T00:00:00.000Z").getTime() + tzOffsetMs);
+        const dayEnd = new Date(new Date(dateStr + "T23:59:59.999Z").getTime() + tzOffsetMs);
 
         if (isNaN(dayStart.getTime())) {
           return NextResponse.json(
@@ -116,8 +121,13 @@ export async function GET(request) {
           );
         }
 
-        const dayStart = new Date(dateStr + "T00:00:00.000Z");
-        const dayEnd = new Date(dateStr + "T23:59:59.999Z");
+        const rawOffset = Number(searchParams.get("tzOffset"));
+        const tzOffsetMs =
+          Number.isFinite(rawOffset) && rawOffset >= -840 && rawOffset <= 840
+            ? rawOffset * 60_000
+            : 0;
+        const dayStart = new Date(new Date(dateStr + "T00:00:00.000Z").getTime() + tzOffsetMs);
+        const dayEnd = new Date(new Date(dateStr + "T23:59:59.999Z").getTime() + tzOffsetMs);
 
         if (isNaN(dayStart.getTime())) {
           return NextResponse.json(

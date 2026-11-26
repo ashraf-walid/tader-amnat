@@ -261,9 +261,10 @@ export function calculateMultiContainerInvoice(arrivalDate, releaseDate, contain
     const {
       config,
       surchargeConfig,
+      surchargeMultiplier = 1,
       count,
       sizeLabel,
-      isDangerous = false,
+      isDangerous,
       hasCargoService = false,
       hasCargoStorage = false,
       rateMultiplier = 1
@@ -287,7 +288,7 @@ export function calculateMultiContainerInvoice(arrivalDate, releaseDate, contain
     }
 
     // A. Main Storage
-    const isActuallyDangerous = isDangerous || options.isDangerous;
+    const isActuallyDangerous = isDangerous !== undefined ? Boolean(isDangerous) : Boolean(options.isDangerous);
     const baseStorageConfig = isActuallyDangerous ? group.dangerousConfig : adjustedConfig;
 
     const storageRes = calculateStorageFee(days, baseStorageConfig, {
@@ -297,10 +298,10 @@ export function calculateMultiContainerInvoice(arrivalDate, releaseDate, contain
     });
     const groupStorageUSD = storageRes.storageFeeUSD * count;
     totalStorageUSD += groupStorageUSD;
-    allDetails.storageBreakdown.push(...storageRes.breakdown.map(b => ({ ...b, tierName: `${sizeLabel} - ${b.tierName}` })));
+    allDetails.storageBreakdown.push(...storageRes.breakdown.map(b => ({ ...b, tierName: `${sizeLabel} - ${b.tierName}`, containerCount: count, subtotal: b.subtotal * count })));
 
     // B. Surcharge
-    if (surchargeConfig && !isActuallyDangerous) {
+    if (surchargeConfig) {
       const surchargeGrace = isExternalStorage ? 0 : (isLCLStorage ? 3 : (surchargeConfig.GRACE_PERIOD_DAYS || 0));
       const adjustedSurchargeConfig = {
         ...surchargeConfig,
@@ -313,10 +314,10 @@ export function calculateMultiContainerInvoice(arrivalDate, releaseDate, contain
           return tier;
         })
       };
-      const surRes = calculateStorageFee(days, adjustedSurchargeConfig, { rateMultiplier });
+      const surRes = calculateStorageFee(days, adjustedSurchargeConfig, { rateMultiplier: rateMultiplier * surchargeMultiplier });
       const groupSurchargeUSD = surRes.storageFeeUSD * count;
       totalSurchargeUSD += groupSurchargeUSD;
-      allDetails.surchargeBreakdown.push(...surRes.breakdown.map(b => ({ ...b, tierName: `${sizeLabel} - إضافي ${b.tierName}` })));
+      allDetails.surchargeBreakdown.push(...surRes.breakdown.map(b => ({ ...b, tierName: `${sizeLabel} - إضافي ${b.tierName}`, containerCount: count, subtotal: b.subtotal * count })));
     }
 
     // C. Cargo Storage
@@ -331,7 +332,7 @@ export function calculateMultiContainerInvoice(arrivalDate, releaseDate, contain
       const activeCargoCount = group.cargoStorageCount;
       const groupCargoStorageUSD = cargoRes.storageFeeUSD * activeCargoCount;
       totalCargoStorageUSD += groupCargoStorageUSD;
-      allDetails.cargoBreakdown.push(...cargoRes.breakdown.map(b => ({ ...b, tierName: `${sizeLabel} - مشمول ${b.tierName}` })));
+      allDetails.cargoBreakdown.push(...cargoRes.breakdown.map(b => ({ ...b, tierName: `${sizeLabel} - مشمول ${b.tierName}`, containerCount: activeCargoCount, subtotal: b.subtotal * activeCargoCount })));
     }
 
     // D. Fixed Services

@@ -33,8 +33,11 @@ export async function POST(request) {
         { status: 400 },
       );
     }
+    const cairoDate = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Africa/Cairo",
+    }).format(new Date());
     const fingerprint = createHash("sha256")
-      .update(stableSerialize({ inputs, result }))
+      .update(stableSerialize({ inputs, result, date: cairoDate }))
       .digest("hex");
 
     await connectToDatabase();
@@ -50,7 +53,6 @@ export async function POST(request) {
       );
     }
 
-    await CalculationLog.init();
     const existingInvoice = await CalculationLog.findOne({
       userId: user._id,
       $or: [
