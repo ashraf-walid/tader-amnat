@@ -14,6 +14,7 @@ import {
 } from "@/lib/localDB";
 import { parseAccountingHTML } from "@/lib/parser";
 import { mergeHTMLWithBaseBalances, checkBaseBalancesExists } from "@/lib/mergeBalances";
+import { partitionAccounts } from "@/lib/excludedAccounts";
 
 export function useAccountData() {
   const [allAccounts, setAllAccounts] = useState([]);
@@ -23,6 +24,75 @@ export function useAccountData() {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [errorStatus, setErrorStatus] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  // Owner-managed list of accounts excluded from database upload
+  const [excludedAccounts, setExcludedAccounts] = useState([]);
+
+  // Fetch the exclusion list (fresh copy; used before every upload)
+  const fetchExcludedAccounts = useCallback(async () => {
+    try {
+      const res = await fetch("/api/settings/excluded-accounts", {
+        cache: "no-store",
+      });
+      if (!res.ok) return [];
+      const result = await res.json();
+      const list = Array.isArray(result.excludedAccounts)
+        ? result.excludedAccounts
+        : [];
+      setExcludedAccounts(list);
+      return list;
+    } catch (error) {
+      console.warn("Failed to fetch excluded accounts:", error);
+      return [];
+    }
+  }, []);
+
+  // Split accounts into an upload payload that never contains excluded ones.
+  // Excluded accounts stay visible locally (IndexedDB/UI); only the
+  // MongoDB upload is filtered. The server filters again as a safety net.
+  const buildUploadData = useCallback(
+    async (accounts) => {
+      const freshList = await fetchExcludedAccounts();
+      return partitionAccounts(accounts, freshList);
+    },
+    [fetchExcludedAccounts]
+  );
+
+  // Owner only (enforced by the API): exclude an account from DB upload
+  const excludeAccount = useCallback(async (account, { deleteExisting = false } = {}) => {
+    const res = await fetch("/api/settings/excluded-accounts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        code: account?.accountCode || "",
+        name: account?.account || account?.name || "",
+        deleteExisting,
+      }),
+    });
+    const result = await res.json().catch(() => ({}));
+    if (!res.ok || !result.success) {
+      throw new Error(result.error || "فشل في استثناء الحساب");
+    }
+    setExcludedAccounts(result.excludedAccounts || []);
+    return result;
+  }, []);
+
+  // Owner only (enforced by the API): re-include a previously excluded account
+  const includeAccount = useCallback(async (entry) => {
+    const res = await fetch("/api/settings/excluded-accounts", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        code: entry?.code || entry?.accountCode || "",
+        name: entry?.name || entry?.account || "",
+      }),
+    });
+    const result = await res.json().catch(() => ({}));
+    if (!res.ok || !result.success) {
+      throw new Error(result.error || "فشل في إدراج الحساب");
+    }
+    setExcludedAccounts(result.excludedAccounts || []);
+    return result;
+  }, []);
 
   // Check if dateRange in MongoDB matches local IndexedDB
   const checkDateRangeSync = useCallback(async () => {
@@ -187,9 +257,18 @@ export function useAccountData() {
       if (extractedDateRange) setDateRange(extractedDateRange);
 
       // ✅ 3. Upload to MongoDB in background (no waiting)
+      // Excluded accounts are filtered out of the upload payload only;
+      // they remain saved locally and visible in the UI.
+      const { included: mergeUploadData, excluded: mergeSkipped } =
+        await buildUploadData(preparedResults);
+      if (mergeSkipped.length > 0) {
+        console.log(
+          `🚫 تم تخطي ${mergeSkipped.length} حساب مستثنى من الرفع إلى قاعدة البيانات`
+        );
+      }
       // Use merge path to delete old transactions
       const payload = {
-        data: preparedResults,
+        data: mergeUploadData,
         dateRange: extractedDateRange,
         clearTransactions: true, // ⚠️ Flag to delete old transactions
         source: "merge-30-06",
@@ -201,17 +280,19 @@ export function useAccountData() {
         firstAccountHasTransactions: preparedResults[0]?.transactions?.length || 0
       });
 
-      fetch("/api/data", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      })
-        .then(async (response) => {
-          const result = await response.json();
-          console.log("✅ تمت المزامنة مع MongoDB بنجاح:", result);
-          await setLastSyncTimestamp(Date.now());
+      if (mergeUploadData.length > 0) {
+        fetch("/api/data", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
         })
-        .catch((err) => console.error("⚠️ MongoDB sync failed:", err));
+          .then(async (response) => {
+            const result = await response.json();
+            console.log("✅ تمت المزامنة مع MongoDB بنجاح:", result);
+            await setLastSyncTimestamp(Date.now());
+          })
+          .catch((err) => console.error("⚠️ MongoDB sync failed:", err));
+      }
 
       // Display merge information
       alert(
@@ -278,21 +359,26 @@ export function useAccountData() {
           uploadBackupToBlob(file, restoredDateRange, dataToRestore.length);
 
           // ✅ 3. Upload to MongoDB in background (no waiting)
-          fetch("/api/data", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              data: dataToRestore,
-              dateRange: restoredDateRange,
-              clearTransactions: true,
-              source: "backup-restore",
-            }),
-          })
+          // Excluded accounts are filtered out of the upload payload only
+          const { included: restoreUploadData } =
+            await buildUploadData(dataToRestore);
+          if (restoreUploadData.length > 0) {
+            fetch("/api/data", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                data: restoreUploadData,
+                dateRange: restoredDateRange,
+                clearTransactions: true,
+                source: "backup-restore",
+              }),
+            })
             .then(() => {
               console.log("✅ تمت المزامنة مع MongoDB بنجاح");
               setLastSyncTimestamp(Date.now());
             })
             .catch((err) => console.error("⚠️ MongoDB sync failed:", err));
+          }
 
           return { success: true };
         } else {
@@ -333,21 +419,32 @@ export function useAccountData() {
       if (extractedDateRange) setDateRange(extractedDateRange);
 
       // ✅ 3. Upload to MongoDB in background (no waiting)
-      fetch("/api/data", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          data: preparedResults,
-          dateRange: extractedDateRange,
-          clearTransactions: true,
-          source: "accounting-file",
-        }),
-      })
-        .then(() => {
-          console.log("✅ تمت المزامنة مع MongoDB بنجاح");
-          setLastSyncTimestamp(Date.now());
+      // Excluded accounts are filtered out of the upload payload only;
+      // they remain saved locally and visible in the UI.
+      const { included: uploadData, excluded: skippedExcluded } =
+        await buildUploadData(preparedResults);
+      if (skippedExcluded.length > 0) {
+        console.log(
+          `🚫 تم تخطي ${skippedExcluded.length} حساب مستثنى من الرفع إلى قاعدة البيانات`
+        );
+      }
+      if (uploadData.length > 0) {
+        fetch("/api/data", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            data: uploadData,
+            dateRange: extractedDateRange,
+            clearTransactions: true,
+            source: "accounting-file",
+          }),
         })
-        .catch((err) => console.error("⚠️ MongoDB sync failed:", err));
+          .then(() => {
+            console.log("✅ تمت المزامنة مع MongoDB بنجاح");
+            setLastSyncTimestamp(Date.now());
+          })
+          .catch((err) => console.error("⚠️ MongoDB sync failed:", err));
+      }
 
       return { success: true };
     } catch (err) {
@@ -513,7 +610,8 @@ export function useAccountData() {
   // Initialize data
   useEffect(() => {
     loadDataSmart();
-  }, [loadDataSmart]);
+    fetchExcludedAccounts();
+  }, [loadDataSmart, fetchExcludedAccounts]);
 
   return {
     allAccounts,
@@ -534,5 +632,9 @@ export function useAccountData() {
     onDrop,
     downloadData,
     commitTransactionChanges,
+    excludedAccounts,
+    fetchExcludedAccounts,
+    excludeAccount,
+    includeAccount,
   };
 }

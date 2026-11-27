@@ -7,6 +7,11 @@ import { invalidateCache } from "@/lib/cache";
 import { logActivity } from "@/lib/activityLog";
 import { recordBalanceSnapshots } from "@/lib/clientLedger";
 import { calculateNetBalance, sendBalanceNotification } from "@/lib/balanceNotification";
+import {
+  EXCLUDED_ACCOUNTS_KEY,
+  partitionAccounts,
+  sanitizeExcludedList,
+} from "@/lib/excludedAccounts";
 
 export const dynamic = "force-dynamic";
 
@@ -114,6 +119,37 @@ export async function POST(request) {
       if (typeof body.source === "string") source = body.source;
     }
 
+    // 🚫 Owner exclusion list: excluded accounts never reach MongoDB.
+    // Runs before everything else (snapshots, notifications, replace-all),
+    // so an excluded account produces no ledger entries and no notifications.
+    const excludedDoc = await Settings.findOne({ key: EXCLUDED_ACCOUNTS_KEY }).lean();
+    const excludedList = sanitizeExcludedList(excludedDoc?.value);
+    let skippedExcluded = [];
+    if (excludedList.length > 0 && dataToSave.length > 0) {
+      const partitioned = partitionAccounts(dataToSave, excludedList);
+      dataToSave = partitioned.included;
+      skippedExcluded = partitioned.excluded.map(
+        (acc) => acc.accountCode || acc.account || ""
+      );
+      if (skippedExcluded.length > 0) {
+        console.log(
+          `🚫 Skipped ${skippedExcluded.length} excluded account(s): ${skippedExcluded.join(", ")}`
+        );
+      }
+    }
+
+    // All uploaded accounts were excluded — succeed without touching stored data
+    // (important: the replace-all below would otherwise wipe the database).
+    if (skippedExcluded.length > 0 && dataToSave.length === 0) {
+      return NextResponse.json({
+        success: true,
+        savedCount: 0,
+        skippedExcluded,
+        message: "All uploaded accounts are excluded by the owner",
+        timestamp: Date.now(),
+      });
+    }
+
     // 🚫 Block empty POST — use DELETE /api/data to clear all data (owner only)
     if (dataToSave.length === 0) {
       return NextResponse.json(
@@ -195,7 +231,12 @@ export async function POST(request) {
       }
     }
     await logActivity(actor, "data.upload", {
-      details: { accounts: dataToSave.length, source, snapshots },
+      details: {
+        accounts: dataToSave.length,
+        source,
+        snapshots,
+        skippedExcluded: skippedExcluded.length,
+      },
     });
 
     // Compare new balances with old ones and send push notifications
@@ -223,7 +264,12 @@ export async function POST(request) {
     console.log("🗑️ Data cache invalidated after bulk upload");
 
     console.log("POST /api/data: Saved", dataToSave.length, "items to MongoDB");
-    return NextResponse.json({ success: true, timestamp: Date.now() });
+    return NextResponse.json({
+      success: true,
+      savedCount: dataToSave.length,
+      skippedExcluded,
+      timestamp: Date.now(),
+    });
   } catch (error) {
     console.error("POST /api/data Error:", error);
     if (error.name === "AuthError") {

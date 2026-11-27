@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { Check, History, Copy } from "lucide-react";
+import { Check, History, Copy, Ban, Undo2 } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { formatLargeNumber, getFullNumberTooltip } from "@/lib/formatUtils";
+import { isAccountExcluded } from "@/lib/excludedAccounts";
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -17,6 +18,9 @@ export default function AccountCard({
   commitChanges,
   setSelectedAccount,
   setIsHistoryOpen,
+  isOwner = false,
+  excludedAccounts = [],
+  onToggleExclude,
 }) {
   const [copiedCode, setCopiedCode] = useState(null);
 
@@ -55,6 +59,7 @@ export default function AccountCard({
           (historyDeduction + deduction);
         const hasChanges = addition > 0 || deduction > 0;
         const transactionCount = (item.transactions || []).length;
+        const excluded = isAccountExcluded(item, excludedAccounts);
 
         return (
           <div
@@ -118,6 +123,34 @@ export default function AccountCard({
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {excluded && (
+                  <span className="bg-amber-900/30 text-amber-400 text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
+                    <Ban size={10} />
+                    مستثنى من الرفع
+                  </span>
+                )}
+                {isOwner && onToggleExclude && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleExclude(item);
+                    }}
+                    className={cn(
+                      "px-2 py-0.5 text-[10px] font-bold rounded cursor-pointer transition-all flex items-center gap-1",
+                      excluded
+                        ? "bg-emerald-900/30 text-emerald-400"
+                        : "bg-slate-800 text-slate-400 hover:bg-amber-900/30 hover:text-amber-400"
+                    )}
+                    title={
+                      excluded
+                        ? "إدراج الحساب مرة أخرى في الرفع إلى قاعدة البيانات"
+                        : "استثناء الحساب من الرفع إلى قاعدة البيانات"
+                    }
+                  >
+                    {excluded ? <Undo2 size={9} /> : <Ban size={9} />}
+                    <span>{excluded ? "إدراج" : "استثناء"}</span>
+                  </button>
+                )}
                 {transactionCount > 0 && (
                   <span className="bg-blue-900/30 text-blue-400 text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
                     <History size={10} />

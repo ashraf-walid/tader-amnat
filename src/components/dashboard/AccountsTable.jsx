@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { Check, History, Copy } from "lucide-react";
+import { Check, History, Copy, Ban, Undo2 } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { formatLargeNumber, getFullNumberTooltip } from "@/lib/formatUtils";
+import { isAccountExcluded } from "@/lib/excludedAccounts";
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -17,6 +18,9 @@ export default function AccountsTable({
   commitChanges,
   setSelectedAccount,
   setIsHistoryOpen,
+  isOwner = false,
+  excludedAccounts = [],
+  onToggleExclude,
 }) {
   const [copiedCode, setCopiedCode] = useState(null);
 
@@ -85,6 +89,7 @@ export default function AccountsTable({
               (historyDeduction + deduction);
             const hasChanges = addition > 0 || deduction > 0;
             const transactionCount = (item.transactions || []).length;
+            const excluded = isAccountExcluded(item, excludedAccounts);
 
             return (
               <tr
@@ -117,6 +122,12 @@ export default function AccountsTable({
                           {transactionCount}
                         </span>
                       )}
+                      {excluded && (
+                        <span className="shrink-0 text-[10px] px-1.5 py-0.5 bg-amber-900/30 rounded text-amber-400 flex items-center gap-1">
+                          <Ban size={10} />
+                          مستثنى من الرفع
+                        </span>
+                      )}
                     </div>
                     <button
                       onClick={(e) => handleCopyCode(e, item.accountCode)}
@@ -140,6 +151,28 @@ export default function AccountsTable({
                         </>
                       )}
                     </button>
+                    {isOwner && onToggleExclude && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleExclude(item);
+                        }}
+                        className={cn(
+                          "px-2 py-0.5 w-fit text-[10px] font-bold rounded cursor-pointer transition-all flex items-center gap-1",
+                          excluded
+                            ? "bg-emerald-900/30 text-emerald-400 hover:bg-emerald-900/50"
+                            : "bg-slate-800 text-slate-500 hover:bg-amber-900/30 hover:text-amber-400"
+                        )}
+                        title={
+                          excluded
+                            ? "إدراج الحساب مرة أخرى في الرفع إلى قاعدة البيانات"
+                            : "استثناء الحساب من الرفع إلى قاعدة البيانات"
+                        }
+                      >
+                        {excluded ? <Undo2 size={9} /> : <Ban size={9} />}
+                        <span>{excluded ? "إدراج" : "استثناء"}</span>
+                      </button>
+                    )}
                   </div>
                 </td>
 

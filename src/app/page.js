@@ -11,6 +11,9 @@ import FileUploadZone from "@/components/dashboard/FileUploadZone";
 import { useAccountData } from "@/hooks/useAccountData";
 import { useSearch } from "@/hooks/useSearch";
 import { usePendingChanges } from "@/hooks/usePendingChanges";
+import { useUser } from "@/hooks/useUser";
+import { isAccountExcluded } from "@/lib/excludedAccounts";
+import ExcludedAccountsPanel from "@/components/dashboard/ExcludedAccountsPanel";
 
 export default function AccountsDashboard() {
   // Account data hook
@@ -31,7 +34,49 @@ export default function AccountsDashboard() {
     onDrop,
     downloadData,
     commitTransactionChanges,
+    excludedAccounts,
+    excludeAccount,
+    includeAccount,
   } = useAccountData();
+
+  // Owner-only exclusion controls (the API enforces this too)
+  const { data: currentUser } = useUser();
+  const isOwner = currentUser?.role === "owner";
+
+  const handleToggleExclude = async (account) => {
+    try {
+      if (isAccountExcluded(account, excludedAccounts)) {
+        if (
+          !window.confirm(
+            `إدراج حساب "${account.account}" مرة أخرى؟\nسيتم رفعه إلى قاعدة البيانات من الرفعة القادمة.`
+          )
+        )
+          return;
+        await includeAccount(account);
+      } else {
+        if (
+          !window.confirm(
+            `استثناء حساب "${account.account}" من الرفع إلى قاعدة البيانات؟\nسيظل ظاهرًا في التحليل المحلي، لكنه لن يُرفع.`
+          )
+        )
+          return;
+        const deleteExisting = window.confirm(
+          "هل تريد أيضًا حذف نسخته الحالية من قاعدة البيانات الآن؟\nموافق = حذف فوري — إلغاء = يبقى حتى الرفعة القادمة ثم يُحذف تلقائيًا لأن الرفع يستبدل كل البيانات."
+        );
+        await excludeAccount(account, { deleteExisting });
+      }
+    } catch (err) {
+      alert(err.message || "حدث خطأ أثناء تحديث قائمة الاستثناء");
+    }
+  };
+
+  const handleIncludeEntry = async (entry) => {
+    try {
+      await includeAccount(entry);
+    } catch (err) {
+      alert(err.message || "حدث خطأ أثناء إدراج الحساب");
+    }
+  };
 
   // Search hook
   const {
@@ -89,6 +134,16 @@ export default function AccountsDashboard() {
           search={search}
         />
 
+        {/* Owner-only: accounts excluded from database upload */}
+        {isOwner && (
+          <ExcludedAccountsPanel
+            excludedAccounts={excludedAccounts}
+            allAccounts={allAccounts}
+            onExclude={excludeAccount}
+            onInclude={handleIncludeEntry}
+          />
+        )}
+
         {/* Loading or Upload or Analysis */}
         {loading &&
           allAccounts.length === 0 &&
@@ -139,6 +194,9 @@ export default function AccountsDashboard() {
                 commitChanges={commitChanges}
                 setSelectedAccount={setSelectedAccount}
                 setIsHistoryOpen={setIsHistoryOpen}
+                isOwner={isOwner}
+                excludedAccounts={excludedAccounts}
+                onToggleExclude={handleToggleExclude}
               />
 
               {/* Mobile Card View */}
@@ -149,6 +207,9 @@ export default function AccountsDashboard() {
                 commitChanges={commitChanges}
                 setSelectedAccount={setSelectedAccount}
                 setIsHistoryOpen={setIsHistoryOpen}
+                isOwner={isOwner}
+                excludedAccounts={excludedAccounts}
+                onToggleExclude={handleToggleExclude}
               />
 
               {/* No Search Results */}
