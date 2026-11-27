@@ -134,16 +134,6 @@ export default function AccountsDashboard() {
           search={search}
         />
 
-        {/* Owner-only: accounts excluded from database upload */}
-        {isOwner && (
-          <ExcludedAccountsPanel
-            excludedAccounts={excludedAccounts}
-            allAccounts={allAccounts}
-            onExclude={excludeAccount}
-            onInclude={handleIncludeEntry}
-          />
-        )}
-
         {/* Loading or Upload or Analysis */}
         {loading &&
           allAccounts.length === 0 &&
@@ -243,6 +233,16 @@ export default function AccountsDashboard() {
         selectedAccount={selectedAccount}
         onClose={() => setIsHistoryOpen(false)}
       />
+
+      {/* Owner-only: accounts excluded from database upload */}
+      {isOwner && (
+        <ExcludedAccountsPanel
+          excludedAccounts={excludedAccounts}
+          allAccounts={allAccounts}
+          onExclude={excludeAccount}
+          onInclude={handleIncludeEntry}
+        />
+      )}
 
       <footer className="mt-12 text-center text-slate-400 text-sm">
         نظام أمانات لعرض حسابات العملاء &copy; 2026

@@ -51,7 +51,7 @@ export default function ExcludedAccountsPanel({
   };
 
   return (
-    <div className="bg-slate-900 rounded-3xl shadow-sm border border-amber-900/40 overflow-hidden">
+    <div className="max-w-7xl mx-auto p-4 md:p-8 bg-slate-900 rounded-3xl shadow-sm border border-amber-900/40 overflow-hidden">
       <div className="px-4 md:px-6 py-4 border-b border-slate-800 flex items-center gap-2">
         <ShieldOff size={18} className="text-amber-400" />
         <h3 className="font-bold text-slate-100">
