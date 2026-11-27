@@ -1,6 +1,6 @@
 import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
+import { requireOwnerOrAdmin } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import FileBackup from "@/models/FileBackup";
 
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request) {
   try {
-    const actor = requireAdmin(request);
+    const actor = requireOwnerOrAdmin(request);
     const { searchParams } = new URL(request.url);
     const rawFilename = searchParams.get("filename") || "accounting-backup.html";
     const dateRange = searchParams.get("dateRange") || "";

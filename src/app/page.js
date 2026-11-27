@@ -38,7 +38,6 @@ export default function AccountsDashboard() {
     search,
     setSearch,
     isEnglishKeyboard,
-    setIsEnglishKeyboard,
     isTransactionsOnlyActive,
     setIsTransactionsOnlyActive,
     isNegativeOnlyActive,
@@ -125,7 +124,6 @@ export default function AccountsDashboard() {
                 setSearch={setSearch}
                 searchInputRef={searchInputRef}
                 isEnglishKeyboard={isEnglishKeyboard}
-                setIsEnglishKeyboard={setIsEnglishKeyboard}
                 isTransactionsOnlyActive={isTransactionsOnlyActive}
                 setIsTransactionsOnlyActive={setIsTransactionsOnlyActive}
                 isNegativeOnlyActive={isNegativeOnlyActive}

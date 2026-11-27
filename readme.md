@@ -8,6 +8,13 @@ Built on a modern stack using **Next.js**, **React 19**, **Mongoose (MongoDB)**,
 
 ## 🔑 Recruiter Demo Access
 
+<!-- SECURITY NOTE — DEFERRED — Planned for remediation in early 2027:
+     The credentials below are for recruiter/demo use only.
+     These credentials must NOT exist in the production database unchanged.
+     Keeping a known public account with a weak password in production
+     is a security vulnerability and should be rotated or removed before
+     the system is fully public-facing. -->
+
 To test or inspect the administration controls, client lists, analytics dashboards, and calculators:
 * **Username:** `admin`
 * **Password:** `123`

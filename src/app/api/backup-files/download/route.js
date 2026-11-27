@@ -1,12 +1,12 @@
 import { get } from "@vercel/blob";
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
+import { requireOwnerOrAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request) {
   try {
-    requireAdmin(request);
+    requireOwnerOrAdmin(request);
 
     const { searchParams } = new URL(request.url);
     const pathname = searchParams.get("pathname");

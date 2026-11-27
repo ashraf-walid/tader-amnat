@@ -4,6 +4,42 @@ import { OptionsIcon, CheckIcon } from '@/components/Icons';
 import ArabicDatePicker from '@/components/ArabicDatePicker';
 import { STORAGE_CONFIG, SERVICES_LIST } from '@/lib/storageConstants';
 
+// Helper: qty counter widget (Defined outside to preserve component identity across renders)
+function QtyCounter({ storeKey, defaultQty, serviceQuantities, setServiceQuantities }) {
+  const qty = serviceQuantities[storeKey] !== undefined ? serviceQuantities[storeKey] : defaultQty;
+  return (
+    <div className="flex items-center gap-0 w-[90px] rounded-xl border-[1.5px] border-[#f0b429] overflow-hidden">
+      <button
+        type="button"
+        className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
+        onClick={() => setServiceQuantities(p => ({ ...p, [storeKey]: Math.max(1, Number(qty) - 1) }))}
+      >−</button>
+      <div className="flex-1 text-center text-sm font-extrabold text-[#f0f2f8] select-none">{qty}</div>
+      <button
+        type="button"
+        className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
+        onClick={() => setServiceQuantities(p => ({ ...p, [storeKey]: Number(qty) + 1 }))}
+      >+</button>
+    </div>
+  );
+}
+
+// Helper: checkbox toggle label (Defined outside to preserve component identity across renders)
+function CheckLabel({ checked, onChange, disabled, children }) {
+  return (
+    <label
+      className={`flex items-center gap-2.5 py-3 px-3 rounded-xl border-[1.5px] cursor-pointer select-none transition-all flex-1 ${checked ? 'border-[#f0b429] bg-[rgba(240,180,41,0.12)]' : 'border-white/[0.07] bg-[#1a2035] hover:border-white/[0.12]'}`}
+      style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
+    >
+      <input type="checkbox" checked={checked} onChange={onChange} disabled={disabled} className="hidden" />
+      <span className={`w-[19px] h-[19px] shrink-0 rounded-md border-[1.5px] flex items-center justify-center transition-all ${checked ? 'bg-[#f0b429] border-[#f0b429]' : 'bg-[#0b1120] border-white/[0.12]'}`}>
+        {checked && <CheckIcon />}
+      </span>
+      {children}
+    </label>
+  );
+}
+
 export default function AdvancedOptions({
   advOpen, setAdvOpen,
   hasAdvanced,
@@ -35,40 +71,6 @@ export default function AdvancedOptions({
   const canDangerYard20 = twentyCount > 0 && twentyCargoType !== "NON_STANDARD";
   const canDangerYard40 = fortyCount > 0 && fortyCargoType !== "NON_STANDARD";
   const showDangerYardSection = canDangerYard20 || canDangerYard40;
-
-  // Helper: qty counter widget
-  function QtyCounter({ storeKey, defaultQty }) {
-    const qty = serviceQuantities[storeKey] !== undefined ? serviceQuantities[storeKey] : defaultQty;
-    return (
-      <div className="flex items-center gap-0 w-[90px] rounded-xl border-[1.5px] border-[#f0b429] overflow-hidden">
-        <button
-          className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
-          onClick={() => setServiceQuantities(p => ({ ...p, [storeKey]: Math.max(1, Number(qty) - 1) }))}
-        >−</button>
-        <div className="flex-1 text-center text-sm font-extrabold text-[#f0f2f8] select-none">{qty}</div>
-        <button
-          className="w-[30px] h-full border-none bg-transparent text-[#8892a4] text-lg cursor-pointer flex items-center justify-center transition-all hover:bg-[#1f2847] hover:text-[#f0b429]"
-          onClick={() => setServiceQuantities(p => ({ ...p, [storeKey]: Number(qty) + 1 }))}
-        >+</button>
-      </div>
-    );
-  }
-
-  // Helper: checkbox toggle label
-  function CheckLabel({ checked, onChange, disabled, children }) {
-    return (
-      <label
-        className={`flex items-center gap-2.5 py-3 px-3 rounded-xl border-[1.5px] cursor-pointer select-none transition-all flex-1 ${checked ? 'border-[#f0b429] bg-[rgba(240,180,41,0.12)]' : 'border-white/[0.07] bg-[#1a2035] hover:border-white/[0.12]'}`}
-        style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
-      >
-        <input type="checkbox" checked={checked} onChange={onChange} disabled={disabled} className="hidden" />
-        <span className={`w-[19px] h-[19px] shrink-0 rounded-md border-[1.5px] flex items-center justify-center transition-all ${checked ? 'bg-[#f0b429] border-[#f0b429]' : 'bg-[#0b1120] border-white/[0.12]'}`}>
-          {checked && <CheckIcon />}
-        </span>
-        {children}
-      </label>
-    );
-  }
 
   const smoothScrollBy = (distance, duration = 650) => {
     const start = window.scrollY;
@@ -162,7 +164,7 @@ export default function AdvancedOptions({
                       </span>
                     </CheckLabel>
                     {on && (
-                      <QtyCounter storeKey={svc.id} defaultQty={totalConts} />
+                      <QtyCounter storeKey={svc.id} defaultQty={totalConts} serviceQuantities={serviceQuantities} setServiceQuantities={setServiceQuantities} />
                     )}
                   </div>
                 );
@@ -183,7 +185,7 @@ export default function AdvancedOptions({
                         </span>
                       </CheckLabel>
                       {hasDangerYard20 && (
-                        <QtyCounter storeKey="dangeryard20" defaultQty={twentyCount} />
+                        <QtyCounter storeKey="dangeryard20" defaultQty={twentyCount} serviceQuantities={serviceQuantities} setServiceQuantities={setServiceQuantities} />
                       )}
                     </div>
                   )}
@@ -200,7 +202,7 @@ export default function AdvancedOptions({
                         </span>
                       </CheckLabel>
                       {hasDangerYard40 && (
-                        <QtyCounter storeKey="dangeryard40" defaultQty={fortyCount} />
+                        <QtyCounter storeKey="dangeryard40" defaultQty={fortyCount} serviceQuantities={serviceQuantities} setServiceQuantities={setServiceQuantities} />
                       )}
                     </div>
                   )}
@@ -225,7 +227,7 @@ export default function AdvancedOptions({
                   <span className="text-[13px] text-[#f0f2f8] flex-1 font-medium">تفريغ مشمول</span>
                 </CheckLabel>
                 {hasCargoStripping && (
-                  <QtyCounter storeKey="stripping" defaultQty={totalConts} />
+                  <QtyCounter storeKey="stripping" defaultQty={totalConts} serviceQuantities={serviceQuantities} setServiceQuantities={setServiceQuantities} />
                 )}
               </div>
 
@@ -235,7 +237,7 @@ export default function AdvancedOptions({
                   <span className="text-[12px] text-[#f0f2f8] flex-1 font-medium truncate">أرضيات المشمول (تفريغ بالساحة)</span>
                 </CheckLabel>
                 {hasCargoStorage && (
-                  <QtyCounter storeKey="cargostorage" defaultQty={totalConts} />
+                  <QtyCounter storeKey="cargostorage" defaultQty={totalConts} serviceQuantities={serviceQuantities} setServiceQuantities={setServiceQuantities} />
                 )}
               </div>
 
@@ -275,7 +277,7 @@ export default function AdvancedOptions({
                   </span>
                 </CheckLabel>
                 {isHolidayRelease && (
-                  <QtyCounter storeKey="holiday" defaultQty={totalConts} />
+                  <QtyCounter storeKey="holiday" defaultQty={totalConts} serviceQuantities={serviceQuantities} setServiceQuantities={setServiceQuantities} />
                 )}
               </div>
 

@@ -1,5 +1,7 @@
 // src/lib/auth.js
 import jwt from "jsonwebtoken";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 class AuthError extends Error {
   constructor(message = "Authentication error") {
@@ -22,7 +24,7 @@ export function getTokenFromReq(req) {
   try {
     const token = req?.cookies?.get?.("auth-token")?.value ?? null;
     if (token) return token;
-  } catch (e) {}
+  } catch (e) { }
   // Fallback: Read from cookie header (rare in App Router but useful for tests)
   const cookieHeader = req?.headers?.get?.("cookie") || req?.headers?.cookie;
   if (!cookieHeader) return null;
@@ -30,8 +32,9 @@ export function getTokenFromReq(req) {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
+// NOTE: Deferred refactor — moving this check into a lazy getter (e.g., getJwtSecret())
+// to avoid a module-level throw if JWT_SECRET is missing was intentionally skipped as not urgently needed.
 // 🔒 JWT Secret - Must be set in environment variables only
-// في بيئة الإنتاج، لا تتركه بدون قيمة!
 const JWT_SECRET = process.env.JWT_SECRET;
 
 if (!JWT_SECRET) {
@@ -62,12 +65,26 @@ export function requireAuth(req) {
 
 /**
  * Ensures that the user admin then returns the decoded payload.
+ * Allowed roles: admin, owner, employee.
  */
 export function requireAdmin(req) {
   const decoded = requireAuth(req);
   const ADMIN_ROLES = ["admin", "owner", "employee"];
   if (!decoded || !ADMIN_ROLES.includes(String(decoded.role).toLowerCase())) {
     throw new ForbiddenError("Admin only");
+  }
+  return decoded;
+}
+
+/**
+ * Ensures that the user is owner or admin (NOT employee) then returns the decoded payload.
+ * Use this for sensitive operations: backup, delete, employee management, settings.
+ */
+export function requireOwnerOrAdmin(req) {
+  const decoded = requireAuth(req);
+  const PRIVILEGED_ROLES = ["admin", "owner"];
+  if (!decoded || !PRIVILEGED_ROLES.includes(String(decoded.role).toLowerCase())) {
+    throw new ForbiddenError("Admin or Owner only");
   }
   return decoded;
 }
@@ -81,6 +98,23 @@ export function requireOwner(req) {
     throw new ForbiddenError("Owner only");
   }
   return decoded;
+}
+
+/**
+ * Server Component Guard: verifies auth-token cookie and redirects to /login on failure.
+ * Returns the decoded payload if valid.
+ */
+export async function requireAuthPage() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth-token")?.value;
+  if (!token) {
+    redirect("/login");
+  }
+  try {
+    return verifyToken(token);
+  } catch {
+    redirect("/login");
+  }
 }
 
 export { AuthError, ForbiddenError, JWT_SECRET };

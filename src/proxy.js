@@ -23,6 +23,8 @@ function matchesPath(pathname, paths) {
 export async function proxy(req) {
   const { pathname } = req.nextUrl;
 
+  // NOTE: Deferred refactor — moving this check after static/public path bypasses and returning
+  // a structured 500 response instead of throwing was intentionally skipped as not urgently needed.
   // 🔒 Ensure JWT_SECRET is set
   if (!process.env.JWT_SECRET) {
     console.error("❌ JWT_SECRET must be set in environment variables!");

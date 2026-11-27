@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import Settings from "@/models/Settings";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin, requireOwnerOrAdmin } from "@/lib/auth";
 import cache, { CacheKeys, CacheTTL } from "@/lib/cache";
 import { saveExchangeRate } from "@/lib/exchangeRate";
 import { logActivity } from "@/lib/activityLog";
@@ -66,7 +66,7 @@ export async function GET() {
 export async function PUT(req) {
   try {
     // Only admin/owner can change settings
-    const actor = requireAdmin(req);
+    const actor = requireOwnerOrAdmin(req);
 
     const body = await req.json();
     let { exchangeRate } = body;

@@ -1,15 +1,9 @@
 import "./globals.css";
-import { Alexandria, Outfit } from "next/font/google";
+import { Alexandria } from "next/font/google";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import ClientNavWrapper from "@/components/ClientNavWrapper";
 import { Providers } from "@/components/Providers";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
-
-const outfit = Outfit({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-sans",
-});
 
 const alexandria = Alexandria({
   subsets: ["arabic", "latin"],
@@ -36,15 +30,9 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="ar"
-      className={`${alexandria.variable} ${outfit.variable} h-full antialiased`}
+      className={`${alexandria.variable} h-full antialiased`}
     >
       <head>
-        {/* Microsoft Clarity Analytics */}
-        {/* <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window, document, "clarity", "script", "x80sprsik2");`,
-          }}
-        /> */}
       </head>
       <body className="min-h-full flex flex-col">
         <Providers>

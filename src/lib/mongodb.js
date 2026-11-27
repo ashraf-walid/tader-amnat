@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 
+// NOTE: Deferred refactor — moving this check inside connectToDatabase()
+// to avoid a module-level throw if MONGODB_URI is missing was intentionally skipped as not urgently needed.
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {

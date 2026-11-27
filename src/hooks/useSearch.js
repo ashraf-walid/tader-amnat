@@ -21,7 +21,6 @@ export function useSearch(allAccounts, setData) {
     setIsNegativeOnlyActive,
   } = useSearchStore();
   const searchInputRef = useRef(null);
-  const [isEnglishKeyboard, setIsEnglishKeyboard] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState(search);
 
   // Debounce the search input for better performance
@@ -30,10 +29,8 @@ export function useSearch(allAccounts, setData) {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Detect English keyboard typing
-  useEffect(() => {
-    setIsEnglishKeyboard(isEnglishTyping(search));
-  }, [search]);
+  // Derived state: Detect English keyboard typing synchronously without extra render cascade
+  const isEnglishKeyboard = Boolean(search && isEnglishTyping(search));
 
   // Build all search query variants once
   const queryVariants = useMemo(() => {
@@ -122,7 +119,6 @@ export function useSearch(allAccounts, setData) {
     search,
     setSearch,
     isEnglishKeyboard,
-    setIsEnglishKeyboard,
     isTransactionsOnlyActive,
     setIsTransactionsOnlyActive,
     isNegativeOnlyActive,

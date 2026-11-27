@@ -7,7 +7,7 @@ export const STORAGE_CONFIG = {
   // Global Settings
   GLOBAL: {
     VAT_RATE: 0.14, // 14% Value Added Tax
-    DEFAULT_EXCHANGE_RATE: Number(process.env.NEXT_PUBLIC_DEFAULT_EXCHANGE_RATE),
+    DEFAULT_EXCHANGE_RATE: Number(process.env.NEXT_PUBLIC_DEFAULT_EXCHANGE_RATE) || null,
     MARTYR_STAMP_FEE: 5, // Martyr Stamp Fee (5 EGP fixed on the invoice)
     BASE_CURRENCY: 'EGP',
     STORAGE_CURRENCY: 'USD'

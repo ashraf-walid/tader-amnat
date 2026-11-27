@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import EmployeeAvailability from "@/models/EmployeeAvailability";
-import { requireAuth, requireAdmin } from "@/lib/auth";
+import { requireAuth, requireAdmin, requireOwnerOrAdmin } from "@/lib/auth";
 
 // ─── GET: List employees ──────────────────────────────────────────────────────
 // Admin/Owner: returns ALL employees sorted by sortOrder
@@ -44,7 +44,7 @@ export async function GET(req) {
 // ─── POST: Create employee (admin only) ──────────────────────────────────────
 export async function POST(req) {
   try {
-    await requireAdmin(req);
+    await requireOwnerOrAdmin(req);
     await connectToDatabase();
 
     const body = await req.json();

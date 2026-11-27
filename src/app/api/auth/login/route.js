@@ -4,6 +4,20 @@ import User from "@/models/User";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "@/lib/auth";
 
+// SECURITY VULNERABILITIES — DEFERRED — Planned for remediation in early 2027:
+//
+// 1. NO RATE LIMITING: This endpoint has no brute-force protection.
+//    An attacker can send unlimited login attempts without any throttling,
+//    lockout, or CAPTCHA. A proper fix would add IP-based rate limiting
+//    (e.g., via middleware or a service like Upstash) and lock the account
+//    after N consecutive failed attempts.
+//
+// 2. DEMO CREDENTIALS IN README: The public README exposes a demo account
+//    (username: admin / password: 123). If this account exists in production
+//    with the same credentials, it is a ready-made attack vector.
+//    Action required before going fully public: either remove/rotate those
+//    credentials in production, or remove them from the README entirely.
+
 export const dynamic = "force-dynamic";
 
 /**
@@ -125,7 +139,6 @@ export async function POST(request) {
       {
         success: false,
         error: "حدث خطأ أثناء تسجيل الدخول",
-        message: error.message,
       },
       { status: 500 },
     );

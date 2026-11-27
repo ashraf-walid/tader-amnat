@@ -1,6 +1,6 @@
 import { del } from "@vercel/blob";
 import { NextResponse } from "next/server";
-import { requireAdmin, requireOwner } from "@/lib/auth";
+import { requireOwnerOrAdmin, requireOwner } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import FileBackup from "@/models/FileBackup";
 
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request) {
   try {
-    requireAdmin(request);
+    requireOwnerOrAdmin(request);
     await connectToDatabase();
 
     const backups = await FileBackup.find({}).sort({ createdAt: -1 }).limit(50).lean();

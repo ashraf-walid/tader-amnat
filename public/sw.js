@@ -8,9 +8,7 @@ self.addEventListener('install', (event) => {
   const staticAssets = [
     '/offline.html',
     '/manifest.json',
-    '/icons/tader.png',
     '/icons/tader192.png',
-    '/icons/tadernoback.png',
     '/icons/screenshot-mobile.png',
     '/icons/screenshot-wide.png'
   ];

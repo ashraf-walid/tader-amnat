@@ -1,6 +1,4 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { verifyToken } from "@/lib/auth";
+import { requireAuthPage } from "@/lib/auth";
 import { STORAGE_CONFIG } from "@/lib/storageConstants";
 import StorageCalculator from "./StorageCalculator";
 import cache, { CacheKeys, CacheTTL } from "@/lib/cache";
@@ -14,18 +12,7 @@ export const revalidate = 0;
 const DEFAULT_RATE = STORAGE_CONFIG.GLOBAL.DEFAULT_EXCHANGE_RATE;
 
 export default async function Page() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth-token")?.value;
-
-  if (!token) {
-    redirect("/login");
-  }
-
-  try {
-    verifyToken(token);
-  } catch {
-    redirect("/login");
-  }
+  await requireAuthPage();
 
   let exchangeRate = DEFAULT_RATE;
   let previousExchangeRate = null;

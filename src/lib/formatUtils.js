@@ -51,21 +51,6 @@ export function formatCurrency(amount, currency = "ج.م", decimals = 2) {
 }
 
 /**
- * Format balance with color coding (positive = green, negative = red)
- * @param {number} balance - The balance amount
- * @param {string} currency - Currency symbol (default: "ج.م")
- * @returns {object} - {text: string, className: string}
- */
-export function formatBalance(balance, currency = "ج.م") {
-  const formattedAmount = formatCurrency(balance, currency);
-
-  return {
-    text: formattedAmount,
-    className: balance >= 0 ? "text-green-400" : "text-red-400"
-  };
-}
-
-/**
  * Get tooltip text with full number for abbreviated values
  * @param {number} num - The original number
  * @returns {string} - Full formatted number for tooltip

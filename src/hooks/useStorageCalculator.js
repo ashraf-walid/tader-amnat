@@ -542,7 +542,8 @@ export function useStorageCalculator(adminExchangeRate) {
     hasCargoStripping, hasCargoStorage, isExternalStorage, isLCLStorage,
     isHolidayRelease, hasDangerYard20, hasDangerYard40,
     services, serviceQuantities,
-    exchangeRate, days, effectivePrevDays, nsMultiplier20, nsMultiplier40, cargoExitDate
+    exchangeRate, days, effectivePrevDays, nsMultiplier20, nsMultiplier40, cargoExitDate,
+    setResult
   ]);
 
   // Reset dirty flag when any form input changes
@@ -562,7 +563,7 @@ export function useStorageCalculator(adminExchangeRate) {
     if (hasCargoStorage && !hasCargoStripping) {
       setHasCargoStripping(true);
     }
-  }, [hasCargoStorage]);
+  }, [hasCargoStorage, hasCargoStripping]);
 
   useEffect(() => {
     if (isLCLStorage) {

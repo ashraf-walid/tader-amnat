@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import AccountData from "@/models/AccountData";
-import { requireAdmin } from "@/lib/auth";
+import { requireOwnerOrAdmin } from "@/lib/auth";
 import { invalidateCache } from "@/lib/cache";
 import { logActivity } from "@/lib/activityLog";
 
@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request) {
   try {
-    const actor = requireAdmin(request);
+    const actor = requireOwnerOrAdmin(request);
 
     const body = await request.json();
     const { targetDate } = body;

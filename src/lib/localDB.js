@@ -53,52 +53,6 @@ export async function getAllAccounts() {
 }
 
 /**
- * Get a single account by code
- * @param {string} accountCode - account code
- * @returns {Promise<Object|null>}
- */
-export async function getAccountByCode(accountCode) {
-  try {
-    const account = await db.accounts.get(accountCode);
-    return account || null;
-  } catch (error) {
-    console.error(`Error getting account ${accountCode}:`, error);
-    return null;
-  }
-}
-
-/**
- * Search in accounts (by name or code)
- * @param {string} query - text to search for
- * @returns {Promise<Array>}
- */
-export async function searchAccounts(query) {
-  try {
-    if (!query || query.trim() === '') {
-      return await getAllAccounts();
-    }
-
-    const normalizedQuery = normalizeArabicText(query);
-
-    // Search in both account name and account code
-    const results = await db.accounts
-      .filter(account => {
-        const normalizedAccountName = normalizeArabicText(account.account || '');
-        const normalizedAccountCode = normalizeArabicText(account.accountCode || '');
-
-        return normalizedAccountName.includes(normalizedQuery) ||
-          normalizedAccountCode.includes(normalizedQuery);
-      })
-      .toArray();
-
-    return results;
-  } catch (error) {
-    console.error('Error searching accounts:', error);
-    return [];
-  }
-}
-
-/**
  * الحصول على الحسابات التي لديها معاملات فقط
  * @returns {Promise<Array>}
  */
@@ -116,78 +70,6 @@ export async function getAccountsWithTransactions() {
   } catch (error) {
     console.error('Error getting accounts with transactions:', error);
     return [];
-  }
-}
-
-/**
- * الحصول على الحسابات مع pagination محلي
- * @param {number} page - رقم الصفحة (يبدأ من 1)
- * @param {number} limit - عدد العناصر في الصفحة
- * @param {string} searchQuery - نص البحث (اختياري)
- * @param {boolean} transactionsOnly - عرض الحسابات التي لديها معاملات فقط
- * @returns {Promise<Object>} - {data, pagination}
- */
-export async function getAccountsPaginated(page = 1, limit = 50, searchQuery = '', transactionsOnly = false) {
-  try {
-    let query = db.accounts;
-
-    // تطبيق الفلاتر
-    if (transactionsOnly) {
-      query = query.filter(account =>
-        account.transactions &&
-        Array.isArray(account.transactions) &&
-        account.transactions.length > 0
-      );
-    }
-
-    if (searchQuery && searchQuery.trim() !== '') {
-      const normalizedQuery = normalizeArabicText(searchQuery);
-      query = query.filter(account => {
-        const normalizedAccountName = normalizeArabicText(account.account || '');
-        const normalizedAccountCode = normalizeArabicText(account.accountCode || '');
-
-        return normalizedAccountName.includes(normalizedQuery) ||
-          normalizedAccountCode.includes(normalizedQuery);
-      });
-    }
-
-    // Calculate total
-    const total = await query.count();
-    const totalPages = Math.ceil(total / limit) || 1;
-
-    // حساب offset
-    const offset = (page - 1) * limit;
-
-    // جلب البيانات مع pagination
-    const data = await query
-      .offset(offset)
-      .limit(limit)
-      .toArray();
-
-    return {
-      data,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
-      },
-    };
-  } catch (error) {
-    console.error('Error getting paginated accounts:', error);
-    return {
-      data: [],
-      pagination: {
-        page: 1,
-        limit: 50,
-        total: 0,
-        totalPages: 1,
-        hasNextPage: false,
-        hasPrevPage: false,
-      },
-    };
   }
 }
 
@@ -212,23 +94,6 @@ export async function saveAllAccounts(accounts) {
     return true;
   } catch (error) {
     console.error('Error saving all accounts:', error);
-    return false;
-  }
-}
-
-/**
- * تحديث حساب واحد
- * @param {string} accountCode - كود الحساب
- * @param {Object} updatedData - البيانات المحدثة
- * @returns {Promise<boolean>}
- */
-export async function updateAccount(accountCode, updatedData) {
-  try {
-    await db.accounts.update(accountCode, updatedData);
-    console.log(`✅ تم تحديث الحساب ${accountCode}`);
-    return true;
-  } catch (error) {
-    console.error(`Error updating account ${accountCode}:`, error);
     return false;
   }
 }
@@ -348,50 +213,6 @@ export async function getDateRange() {
 // ═══════════════════════════════════════════════════════════════════════════════
 // 🛠️ عمليات الصيانة والتشخيص
 // ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * الحصول على إحصائيات قاعدة البيانات
- * @returns {Promise<Object>}
- */
-export async function getDatabaseStats() {
-  try {
-    const accountsCount = await db.accounts.count();
-    const withTransactions = await db.accounts
-      .filter(acc => acc.transactions && acc.transactions.length > 0)
-      .count();
-    const lastSync = await getLastSyncTimestamp();
-    const dateRange = await getDateRange();
-
-    return {
-      totalAccounts: accountsCount,
-      accountsWithTransactions: withTransactions,
-      lastSync: lastSync ? new Date(lastSync).toLocaleString('ar-EG') : 'لم تتم المزامنة بعد',
-      dateRange: dateRange || 'غير محدد',
-      databaseSize: await estimateSize(),
-    };
-  } catch (error) {
-    console.error('Error getting database stats:', error);
-    return null;
-  }
-}
-
-/**
- * تقدير حجم قاعدة البيانات (تقريبي)
- * @returns {Promise<string>}
- */
-async function estimateSize() {
-  try {
-    if (navigator.storage && navigator.storage.estimate) {
-      const estimate = await navigator.storage.estimate();
-      const usageMB = (estimate.usage / (1024 * 1024)).toFixed(2);
-      const quotaMB = (estimate.quota / (1024 * 1024)).toFixed(2);
-      return `${usageMB} MB / ${quotaMB} MB`;
-    }
-    return 'غير متوفر';
-  } catch (error) {
-    return 'غير متوفر';
-  }
-}
 
 /**
  * Check for IndexedDB support in your browser

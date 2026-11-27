@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import EmployeeAvailability from "@/models/EmployeeAvailability";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin, requireOwnerOrAdmin } from "@/lib/auth";
 
 // ─── PUT: Update employee (admin only) ───────────────────────────────────────
 export async function PUT(req, { params }) {
   try {
-    await requireAdmin(req);
+    await requireOwnerOrAdmin(req);
     await connectToDatabase();
 
     const { id } = await params;
@@ -73,7 +73,7 @@ export async function PUT(req, { params }) {
 // ─── DELETE: Remove employee (admin only) ────────────────────────────────────
 export async function DELETE(req, { params }) {
   try {
-    await requireAdmin(req);
+    await requireOwnerOrAdmin(req);
     await connectToDatabase();
 
     const { id } = await params;

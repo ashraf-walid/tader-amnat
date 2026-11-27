@@ -4,7 +4,7 @@ import User from "@/models/User";
 import bcrypt from "bcrypt";
 import mongoose from "mongoose";
 import { invalidateCache } from "@/lib/cache";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin, requireOwnerOrAdmin } from "@/lib/auth";
 import { logActivity } from "@/lib/activityLog";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 export async function PUT(request, { params }) {
   try {
     // 🔒 تحقق من صلاحيات المدير
-    const actor = requireAdmin(request);
+    const actor = requireOwnerOrAdmin(request);
 
     const { id } = await params;
     const body = await request.json();
@@ -153,7 +153,7 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     // 🔒 تحقق من صلاحيات المدير
-    const actor = requireAdmin(request);
+    const actor = requireOwnerOrAdmin(request);
 
     const { id } = await params;
 

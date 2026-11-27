@@ -6,7 +6,7 @@ import CalculationLog from "@/models/CalculationLog";
 import PageVisit from "@/models/PageVisit";
 import cache, { CacheKeys, CacheTTL, invalidateCache } from "@/lib/cache";
 import { logActivity } from "@/lib/activityLog";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin, requireOwnerOrAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -152,7 +152,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     // 🔒 تحقق من صلاحيات المدير
-    const actor = requireAdmin(request);
+    const actor = requireOwnerOrAdmin(request);
 
     const body = await request.json();
     const { username, password, phone, officeName, role, attempts, accountCode } = body;

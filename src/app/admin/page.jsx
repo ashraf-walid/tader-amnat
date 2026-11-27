@@ -361,7 +361,10 @@ export default function AdminPage() {
   }, []);
 
   // ─── Fetch Accounts Data ──────────────────────────────────────────────────
-  useEffect(() => { if (accounts.length === 0) fetchAccounts(); }, []);
+  useEffect(() => {
+    if (accounts.length === 0) fetchAccounts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ─── Employee CRUD ─────────────────────────────────────────────────────────
   const loadEmployees = () => {
